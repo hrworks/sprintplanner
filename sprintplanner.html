@@ -2749,34 +2749,34 @@
             content.innerHTML = `
                 <div class="form-group">
                     <label>Name</label>
-                    <input type="text" class="form-control" value="${phaseRef.name}" 
+                    <input type="text" class="form-control" id="phase-name" value="${phaseRef.name}" 
                            onchange="updatePhaseById('${phaseRef._id}', 'name', this.value)">
                 </div>
                 <div class="form-group">
                     <label>Untertitel (z.B. Personen)</label>
-                    <input type="text" class="form-control" value="${phaseRef.subtitle || ''}" 
+                    <input type="text" class="form-control" id="phase-subtitle" value="${phaseRef.subtitle || ''}" 
                            placeholder="z.B. Max, Anna, Tom"
                            onchange="updatePhaseById('${phaseRef._id}', 'subtitle', this.value)">
                 </div>
                 <div class="form-group">
                     <label>Startdatum</label>
-                    <input type="date" class="form-control" value="${phaseRef.start}" 
+                    <input type="date" class="form-control" id="phase-start" value="${phaseRef.start}" 
                            onblur="updatePhaseById('${phaseRef._id}', 'start', this.value)">
                 </div>
                 <div class="form-group">
                     <label>Enddatum</label>
-                    <input type="date" class="form-control" value="${phaseRef.end}" 
+                    <input type="date" class="form-control" id="phase-end" value="${phaseRef.end}" 
                            onblur="updatePhaseById('${phaseRef._id}', 'end', this.value)">
                 </div>
                 <div class="form-group">
                     <label>Link</label>
-                    <input type="url" class="form-control" value="${phaseRef.link || ''}" 
+                    <input type="url" class="form-control" id="phase-link" value="${phaseRef.link || ''}" 
                            placeholder="https://..."
                            onchange="updatePhaseById('${phaseRef._id}', 'link', this.value)">
                 </div>
                 <div class="form-group">
                     <label>Beschreibung</label>
-                    <textarea class="form-control auto-grow" placeholder="Details zur Phase..." 
+                    <textarea class="form-control auto-grow" id="phase-desc" placeholder="Details zur Phase..." 
                               oninput="this.style.height='';this.style.height=Math.min(this.scrollHeight,200)+'px'"
                               onchange="updatePhaseById('${phaseRef._id}', 'description', this.value)">${phaseRef.description || ''}</textarea>
                 </div>
@@ -2784,12 +2784,12 @@
                     <label>Milestone-Linien</label>
                     <div class="checkbox-group">
                         <label class="checkbox-label">
-                            <input type="checkbox" ${phaseRef.showStartLine ? 'checked' : ''} 
+                            <input type="checkbox" id="phase-startline" ${phaseRef.showStartLine ? 'checked' : ''} 
                                    onchange="updatePhaseById('${phaseRef._id}', 'showStartLine', this.checked)">
                             <span style="color: #4ade80;">▏</span> Startlinie anzeigen
                         </label>
                         <label class="checkbox-label">
-                            <input type="checkbox" ${phaseRef.showEndLine ? 'checked' : ''} 
+                            <input type="checkbox" id="phase-endline" ${phaseRef.showEndLine ? 'checked' : ''} 
                                    onchange="updatePhaseById('${phaseRef._id}', 'showEndLine', this.checked)">
                             <span style="color: #f97316;">▏</span> Endlinie anzeigen
                         </label>
@@ -2806,10 +2806,22 @@
                     </div>
                 </div>
                 <div class="form-group" style="margin-top: 20px;">
-                    <button class="btn btn-success" style="width: 100%; margin-bottom: 8px;" onclick="showSaveDialog()">💾 Speichern</button>
-                    <button class="btn btn-danger" style="width: 100%" onclick="confirmDeletePhase()">🗑 Phase löschen</button>
+                    <button class="btn btn-success" id="phase-save" style="width: 100%; margin-bottom: 8px;" onclick="savePhaseChanges()">💾 Speichern</button>
+                    <button class="btn btn-danger" id="phase-delete" style="width: 100%" onclick="confirmDeletePhase()">🗑 Phase löschen</button>
                 </div>
             `;
+            
+            // Setup tab order within detail panel
+            const tabOrder = ['phase-name', 'phase-subtitle', 'phase-start', 'phase-end', 'phase-link', 'phase-desc', 'phase-startline', 'phase-endline', 'phase-save', 'phase-delete'];
+            tabOrder.forEach((id, i) => {
+                const el = document.getElementById(id);
+                if (el) el.tabIndex = i + 1;
+            });
+        }
+
+        function savePhaseChanges() {
+            autoSave();
+            showAlert('Gespeichert', 'Änderungen wurden gespeichert.');
         }
 
         function confirmDeletePhase() {
