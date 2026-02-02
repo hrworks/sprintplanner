@@ -854,6 +854,20 @@
             opacity: 1;
         }
 
+        .resize-date-tooltip {
+            position: fixed;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            pointer-events: none;
+            z-index: 1000;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            display: none;
+        }
+
         .connection-delete {
             display: none;
         }
@@ -1327,6 +1341,8 @@
             <div class="modal-footer" id="modalFooter"></div>
         </div>
     </div>
+
+    <div class="resize-date-tooltip" id="resizeDateTooltip"></div>
 
     <div class="keyboard-hint" id="keyboardHint">
         <button class="icon-btn" onclick="document.getElementById('keyboardHint').style.display='none'" style="position:absolute;top:2px;right:2px;font-size:12px;">✕</button>
@@ -2181,10 +2197,12 @@
                     else if (rowHeight >= 70) fontSize = '12px';
                     else fontSize = '10px';
                     
+                    const tooltip = phase.name + (phase.subtitle ? ' - ' + phase.subtitle : '');
                     bodyHTML += `
                         <div class="phase-bar ${isSelected ? 'selected' : ''}" 
                              data-project="${project._id}" 
                              data-phase="${phase._id}"
+                             title="${tooltip}"
                              style="left: ${left}px; width: ${width}px; background: ${phase.color}; height: ${phaseHeight}px; top: ${phaseTop}px; font-size: ${fontSize};"
                              onmousedown="startDrag(event, '${project._id}', '${phase._id}', 'move')"
                              onclick="selectPhase('${project._id}', '${phase._id}')">
@@ -2412,12 +2430,14 @@
                     phase.end = formatDate(newEnd);
                     updateFieldTimestamp(phase, 'start');
                     updateFieldTimestamp(phase, 'end');
+                    showResizeTooltip(e, newStart);
                 } else if (dragState.mode === 'resize-left') {
                     const newStart = new Date(originalStart);
                     newStart.setDate(newStart.getDate() + deltaDays);
                     if (newStart < originalEnd) {
                         phase.start = formatDate(newStart);
                         updateFieldTimestamp(phase, 'start');
+                        showResizeTooltip(e, newStart);
                     }
                 } else if (dragState.mode === 'resize-right') {
                     const newEnd = new Date(originalEnd);
@@ -2425,6 +2445,7 @@
                     if (newEnd > originalStart) {
                         phase.end = formatDate(newEnd);
                         updateFieldTimestamp(phase, 'end');
+                        showResizeTooltip(e, newEnd);
                     }
                 }
                 
@@ -2507,6 +2528,7 @@
                 if (dragState.bar) {
                     dragState.bar.classList.remove('dragging');
                 }
+                hideResizeTooltip();
                 dragState = null;
                 autoSave();
             }
@@ -2678,6 +2700,21 @@
         function toggleConnections() {
             showConnections = document.getElementById('showConnectionsCheckbox').checked;
             updateGantt();
+        }
+
+        function showResizeTooltip(e, date) {
+            const tooltip = document.getElementById('resizeDateTooltip');
+            const weekdays = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+            const day = weekdays[date.getDay()];
+            const dateStr = date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            tooltip.textContent = `${day}, ${dateStr}`;
+            tooltip.style.left = (e.clientX - 40) + 'px';
+            tooltip.style.top = (e.clientY + 20) + 'px';
+            tooltip.style.display = 'block';
+        }
+
+        function hideResizeTooltip() {
+            document.getElementById('resizeDateTooltip').style.display = 'none';
         }
 
         function selectProject(projectId) {
