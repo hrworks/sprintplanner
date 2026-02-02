@@ -1608,18 +1608,27 @@
             return url.toString();
         }
 
+        function showAlert(title, message) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').innerHTML = `<p>${message}</p>`;
+            document.getElementById('modalFooter').innerHTML = `
+                <button class="btn btn-primary" onclick="closeModal()">OK</button>
+            `;
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+
         function copyShareLink() {
             const link = generateShareLink();
             navigator.clipboard.writeText(link).then(() => {
-                alert('Link wurde in die Zwischenablage kopiert!\n\nDer Link enthält alle Projektdaten.');
-            }).catch(err => {
+                showAlert('Link kopiert', 'Der Link wurde in die Zwischenablage kopiert. Er enthält alle Projektdaten.');
+            }).catch(() => {
                 const textarea = document.createElement('textarea');
                 textarea.value = link;
                 document.body.appendChild(textarea);
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
-                alert('Link wurde in die Zwischenablage kopiert!');
+                showAlert('Link kopiert', 'Der Link wurde in die Zwischenablage kopiert.');
             });
         }
 
@@ -2611,15 +2620,7 @@
         }
 
         function deletePhase() {
-            if (!selectedProject || !selectedPhase) return;
-            if (!confirm('Phase wirklich löschen?')) return;
-            
-            selectedProject.phases = selectedProject.phases.filter(ph => ph._id !== selectedPhase._id);
-            selectedPhase = null;
-            renderProjectList();
-            updateGantt();
-            autoSave();
-            document.getElementById('detailContent').innerHTML = '<p style="color: var(--text-secondary); text-align: center; margin-top: 50px;">Wählen Sie eine Phase aus</p>';
+            confirmDeletePhase();
         }
 
         function addProject() {
@@ -2772,12 +2773,14 @@
         }
 
         function deleteProject(projectId) {
-            if (confirm('Projekt wirklich löschen?')) {
+            const project = data.projects.find(p => p._id === projectId);
+            showConfirm('Projekt löschen', `Möchtest du das Projekt "${project.name}" wirklich löschen?`, () => {
                 data.projects = data.projects.filter(p => p._id !== projectId);
                 renderProjectList();
                 updateGantt();
                 autoSave();
-            }
+                closeModal();
+            });
         }
 
         function addPhase(projectId) {
@@ -2953,14 +2956,17 @@
         }
 
         function confirmDeleteFile(fileId) {
-            if (confirm('Datei wirklich löschen?')) {
+            const files = getStoredFiles();
+            const file = files[fileId];
+            showConfirm('Datei löschen', `Möchtest du "${file?.title || 'diese Datei'}" wirklich löschen?`, () => {
                 deleteFile(fileId);
                 if (currentFileId === fileId) {
                     currentFileId = null;
                     updateCurrentFileInfo(null);
                 }
+                closeModal();
                 showLoadDialog();
-            }
+            });
         }
 
         function joinChannelFromDialog() {
@@ -2975,10 +2981,14 @@
                 
                 // Show the full channel ID to user so they can share it
                 const shareUrl = url.toString();
-                if (confirm(`Channel erstellt!\n\nTeile diesen Link mit deinem Team:\n${shareUrl}\n\nJetzt beitreten?`)) {
+                showModal('Channel erstellt!', `
+                    <p>Teile diesen Link mit deinem Team:</p>
+                    <input type="text" class="form-control" value="${shareUrl}" readonly onclick="this.select()" style="margin: 10px 0;">
+                    <p style="font-size: 11px; color: var(--text-secondary);">Der Link wird beim Beitreten in die Zwischenablage kopiert.</p>
+                `, () => {
                     navigator.clipboard.writeText(shareUrl).catch(() => {});
                     window.location.href = shareUrl;
-                }
+                }, 'Beitreten');
             }
         }
 
@@ -3005,16 +3015,29 @@
                     currentFileId = fileId;
                     saveFile(fileId, title, data);
                     closeModal();
-                    alert('Datei gespeichert!');
+                    showAlert('Gespeichert', `"${title}" wurde gespeichert.`);
                 } else {
-                    alert('Bitte einen Dateinamen eingeben');
+                    showAlert('Fehler', 'Bitte einen Dateinamen eingeben.');
                 }
             });
         }
 
         function exportJSON() {
             const json = JSON.stringify(data, null, 2);
-            showModal('JSON Export', `<div class="json-preview">${escapeHtml(json)}</div>`, () => {
+            const shareLink = generateShareLink();
+            showModal('JSON Export', `
+                <div class="form-group">
+                    <label>Teilen-Link (enthält alle Daten)</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" class="form-control" id="exportShareLink" value="${shareLink}" readonly onclick="this.select()">
+                        <button class="btn btn-secondary" onclick="navigator.clipboard.writeText(document.getElementById('exportShareLink').value); this.textContent='✓'; setTimeout(() => this.textContent='📋', 1500)">📋</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>JSON-Daten</label>
+                    <div class="json-preview">${escapeHtml(json)}</div>
+                </div>
+            `, () => {
                 const blob = new Blob([json], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -3047,10 +3070,10 @@
                         renderProjectList();
                         updateGantt();
                         autoSave();
-                        alert('Import erfolgreich!');
+                        showAlert('Import erfolgreich', `${data.projects.length} Projekt(e) wurden importiert.`);
                     }
                 } catch (err) {
-                    alert('Fehler beim Import: ' + err.message);
+                    showAlert('Import fehlgeschlagen', 'Die Datei konnte nicht gelesen werden: ' + err.message);
                 }
             };
             reader.readAsText(file);
