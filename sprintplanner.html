@@ -807,6 +807,64 @@
             color: var(--text-primary);
         }
 
+        .phase-connector {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-secondary);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: crosshair;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 200;
+        }
+
+        .phase-connector.left { left: -6px; }
+        .phase-connector.right { right: -6px; }
+
+        .phase-bar:hover .phase-connector { opacity: 1; }
+
+        .phase-connector:hover {
+            background: var(--accent);
+            transform: translateY(-50%) scale(1.3);
+        }
+
+        .connection-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .connection-line {
+            fill: none;
+            stroke: var(--accent-secondary);
+            stroke-width: 2;
+            opacity: 0.7;
+            pointer-events: stroke;
+            cursor: pointer;
+        }
+
+        .connection-line:hover {
+            stroke-width: 4;
+            opacity: 1;
+        }
+
+        .connection-delete {
+            display: none;
+        }
+
+        .connection-preview {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+        }
+
         .today-line {
             position: absolute;
             top: 0;
@@ -1218,6 +1276,12 @@
                         <input type="range" class="zoom-slider" id="heightSlider" min="45" max="90" value="45" oninput="updateRowHeight()">
                         <span id="heightValue" style="font-size:11px;color:var(--text-secondary);width:35px;">45px</span>
                     </div>
+                    <div class="toolbar-group">
+                        <label class="checkbox-label" style="margin:0;">
+                            <input type="checkbox" id="showConnectionsCheckbox" checked onchange="toggleConnections()">
+                            Verbindungen
+                        </label>
+                    </div>
                     <div class="nav-buttons">
                         <button class="nav-btn" onclick="scrollToToday()">📍 Heute</button>
                         <button class="nav-btn" onclick="scrollByAmount(-300)">◀</button>
@@ -1284,6 +1348,7 @@
 
         let data = {
             projects: [],
+            connections: [],
             viewStart: null,
             viewEnd: null,
             _lastUpdated: Date.now()
@@ -1321,6 +1386,8 @@
         let chartEndDate = null;
         let expandedProjects = new Set();
         let projectDragState = null;
+        let connectionDragState = null;
+        let showConnections = true;
         const DRAG_THRESHOLD = 5;
 
         const STORAGE_KEY_FILES = 'ganttFiles';
@@ -1610,7 +1677,7 @@
 
         function showAlert(title, message) {
             document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalBody').innerHTML = `<p>${message}</p>`;
+            document.getElementById('modalBody').innerHTML = `<p style="font-size: 13px;">${message}</p>`;
             document.getElementById('modalFooter').innerHTML = `
                 <button class="btn btn-primary" onclick="closeModal()">OK</button>
             `;
@@ -2121,12 +2188,14 @@
                              style="left: ${left}px; width: ${width}px; background: ${phase.color}; height: ${phaseHeight}px; top: ${phaseTop}px; font-size: ${fontSize};"
                              onmousedown="startDrag(event, '${project._id}', '${phase._id}', 'move')"
                              onclick="selectPhase('${project._id}', '${phase._id}')">
+                            <div class="phase-connector left" style="background: ${phase.color};" onmousedown="event.stopPropagation(); startConnection(event, '${phase._id}', 'left')"></div>
                             <div class="resize-handle left" onmousedown="event.stopPropagation(); startDrag(event, '${project._id}', '${phase._id}', 'resize-left')"></div>
                             <div class="phase-bar-content">
                                 <div class="phase-bar-title">${titleContent}</div>
                                 ${subtitleHTML}
                             </div>
                             <div class="resize-handle right" onmousedown="event.stopPropagation(); startDrag(event, '${project._id}', '${phase._id}', 'resize-right')"></div>
+                            <div class="phase-connector right" style="background: ${phase.color};" onmousedown="event.stopPropagation(); startConnection(event, '${phase._id}', 'right')"></div>
                         </div>
                     `;
                 });
@@ -2136,6 +2205,16 @@
             
             bodyHTML += '</div>';
             chart.innerHTML += bodyHTML;
+            
+            // Render connections after DOM is ready
+            setTimeout(() => {
+                const ganttBody = document.querySelector('.gantt-body');
+                if (ganttBody && showConnections && data.connections?.length) {
+                    const svg = document.createElement('div');
+                    svg.innerHTML = renderConnections();
+                    if (svg.firstChild) ganttBody.appendChild(svg.firstChild);
+                }
+            }, 0);
         }
 
         function calculateSmartOverlaps(phases, startDate, endDate) {
@@ -2252,6 +2331,13 @@
         }
 
         function onMouseMove(e) {
+            if (connectionDragState) {
+                connectionDragState.currentX = e.clientX;
+                connectionDragState.currentY = e.clientY;
+                renderConnectionPreview();
+                return;
+            }
+            
             if (minimapDragState) {
                 const deltaX = e.clientX - minimapDragState.startX;
                 const minimap = document.getElementById('minimap');
@@ -2377,6 +2463,39 @@
         }
 
         function onMouseUp(e) {
+            if (connectionDragState) {
+                document.body.style.cursor = '';
+                // Find target phase under cursor
+                const target = document.elementFromPoint(e.clientX, e.clientY);
+                const connector = target?.closest('.phase-connector');
+                const bar = target?.closest('.phase-bar');
+                
+                if (connector && bar) {
+                    const toPhase = bar.dataset.phase;
+                    const toSide = connector.classList.contains('left') ? 'left' : 'right';
+                    
+                    // Only connect right->left or left->right, and not to same phase
+                    if (toPhase !== connectionDragState.fromPhase && toSide !== connectionDragState.fromSide) {
+                        const conn = {
+                            _id: generateId('conn'),
+                            from: connectionDragState.fromSide === 'right' ? connectionDragState.fromPhase : toPhase,
+                            to: connectionDragState.fromSide === 'right' ? toPhase : connectionDragState.fromPhase
+                        };
+                        if (!data.connections) data.connections = [];
+                        // Avoid duplicates
+                        if (!data.connections.some(c => c.from === conn.from && c.to === conn.to)) {
+                            data.connections.push(conn);
+                            autoSave();
+                        }
+                    }
+                }
+                
+                connectionDragState = null;
+                removeConnectionPreview();
+                updateGantt();
+                return;
+            }
+            
             if (minimapDragState) {
                 minimapDragState = null;
                 const viewport = document.getElementById('minimapViewport');
@@ -2471,6 +2590,96 @@
             };
         }
 
+        function startConnection(e, phaseId, side) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const bar = e.target.closest('.phase-bar');
+            const rect = bar.getBoundingClientRect();
+            
+            connectionDragState = {
+                fromPhase: phaseId,
+                fromSide: side,
+                startX: side === 'right' ? rect.right : rect.left,
+                startY: rect.top + rect.height / 2,
+                currentX: e.clientX,
+                currentY: e.clientY
+            };
+            
+            document.body.style.cursor = 'crosshair';
+        }
+
+        function renderConnectionPreview() {
+            removeConnectionPreview();
+            if (!connectionDragState) return;
+            
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.id = 'connectionPreviewSvg';
+            svg.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
+            
+            const {startX, startY, currentX, currentY} = connectionDragState;
+            const dx = Math.abs(currentX - startX) / 2;
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', `M${startX},${startY} C${startX + dx},${startY} ${currentX - dx},${currentY} ${currentX},${currentY}`);
+            path.setAttribute('class', 'connection-preview');
+            
+            svg.appendChild(path);
+            document.body.appendChild(svg);
+        }
+
+        function removeConnectionPreview() {
+            document.getElementById('connectionPreviewSvg')?.remove();
+        }
+
+        function getPhasePosition(phaseId, side) {
+            const bar = document.querySelector(`.phase-bar[data-phase="${phaseId}"]`);
+            if (!bar) return null;
+            
+            const ganttBody = document.querySelector('.gantt-body');
+            const bodyRect = ganttBody.getBoundingClientRect();
+            const barRect = bar.getBoundingClientRect();
+            
+            return {
+                x: (side === 'right' ? barRect.right : barRect.left) - bodyRect.left,
+                y: barRect.top - bodyRect.top + barRect.height / 2
+            };
+        }
+
+        function renderConnections() {
+            if (!showConnections || !data.connections?.length) return '';
+            
+            const ganttBody = document.querySelector('.gantt-body');
+            if (!ganttBody) return '';
+            
+            let paths = '';
+            for (const conn of data.connections) {
+                const from = getPhasePosition(conn.from, 'right');
+                const to = getPhasePosition(conn.to, 'left');
+                if (!from || !to) continue;
+                
+                const dx = Math.abs(to.x - from.x) / 2;
+                paths += `<path class="connection-line" d="M${from.x},${from.y} C${from.x + dx},${from.y} ${to.x - dx},${to.y} ${to.x},${to.y}" data-conn="${conn._id}" onclick="confirmDeleteConnection('${conn._id}')"/>`;
+            }
+            
+            return paths ? `<svg class="connection-svg" style="width:100%;height:100%;overflow:visible;">${paths}</svg>` : '';
+        }
+
+        function confirmDeleteConnection(connId) {
+            showConfirm('Verbindung löschen', 'Möchtest du diese Verbindung wirklich löschen?', () => {
+                if (data.connections) {
+                    data.connections = data.connections.filter(c => c._id !== connId);
+                    autoSave();
+                    updateGantt();
+                }
+                closeModal();
+            });
+        }
+
+        function toggleConnections() {
+            showConnections = document.getElementById('showConnectionsCheckbox').checked;
+            updateGantt();
+        }
+
         function selectProject(projectId) {
             selectedProject = data.projects.find(p => p._id === projectId);
             renderProjectList();
@@ -2559,7 +2768,7 @@
                     </div>
                 </div>
                 <div class="form-group" style="margin-top: 20px;">
-                    <button class="btn btn-primary" style="width: 100%; margin-bottom: 8px;" onclick="showSaveDialog()">💾 Speichern</button>
+                    <button class="btn btn-success" style="width: 100%; margin-bottom: 8px;" onclick="showSaveDialog()">💾 Speichern</button>
                     <button class="btn btn-danger" style="width: 100%" onclick="confirmDeletePhase()">🗑 Phase löschen</button>
                 </div>
             `;
@@ -2580,7 +2789,7 @@
 
         function showConfirm(title, message, onConfirm) {
             document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalBody').innerHTML = `<p>${message}</p>`;
+            document.getElementById('modalBody').innerHTML = `<p style="font-size: 13px;">${message}</p>`;
             document.getElementById('modalFooter').innerHTML = `
                 <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
                 <button class="btn btn-danger" id="modalConfirmBtn">Löschen</button>
@@ -2999,6 +3208,7 @@
                 <div class="form-group">
                     <label>Dateiname</label>
                     <input type="text" class="form-control" id="saveFileName" value="${currentTitle}" placeholder="z.B. Meine Roadmap 2024">
+                    <small id="saveFileError" style="color: var(--accent); display: none; margin-top: 4px;">Bitte einen Dateinamen eingeben.</small>
                 </div>
                 <div class="form-group">
                     <label style="display: flex; align-items: center; gap: 8px;">
@@ -3017,7 +3227,8 @@
                     closeModal();
                     showAlert('Gespeichert', `"${title}" wurde gespeichert.`);
                 } else {
-                    showAlert('Fehler', 'Bitte einen Dateinamen eingeben.');
+                    document.getElementById('saveFileError').style.display = 'block';
+                    document.getElementById('saveFileName').focus();
                 }
             });
         }
