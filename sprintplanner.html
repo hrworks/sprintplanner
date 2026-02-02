@@ -2141,7 +2141,8 @@
             }
             
             data.projects.forEach((project, idx) => {
-                bodyHTML += `<div class="gantt-row" data-project="${project._id}" data-index="${idx}" style="top: ${idx * rowHeight}px; width: ${totalWidth}px; height: ${rowHeight}px; position: absolute;"
+                const rowBg = project.color ? `background: ${project.color}15;` : '';
+                bodyHTML += `<div class="gantt-row" data-project="${project._id}" data-index="${idx}" style="top: ${idx * rowHeight}px; width: ${totalWidth}px; height: ${rowHeight}px; position: absolute; ${rowBg}"
                                   onmousedown="startCreate(event, '${project._id}')">`;
                 
                 const phaseLayouts = calculateSmartOverlaps(project.phases, startDate, endDate);
@@ -2901,6 +2902,7 @@
                 <div class="form-group">
                     <label>Farbe</label>
                     <div class="color-picker" id="newProjectColorPicker">
+                        <div class="color-option" style="background: linear-gradient(135deg, #666 45%, #fff 45%, #fff 55%, #666 55%); border: 1px solid var(--border);" onclick="selectProjectColor('', 'new')" title="Keine Farbe"></div>
                         ${defaultColors.map((color, i) => `
                             <div class="color-option ${i === 0 ? 'selected' : ''}" 
                                  style="background: ${color}" 
@@ -2953,8 +2955,10 @@
             const inputId = mode === 'new' ? 'newProjectColor' : 'editProjectColor';
             
             document.getElementById(inputId).value = color;
-            document.querySelectorAll(`#${pickerId} .color-option`).forEach(el => {
-                el.classList.toggle('selected', el.style.background === color);
+            document.querySelectorAll(`#${pickerId} .color-option`).forEach((el, i) => {
+                const isNoColor = i === 0 && color === '';
+                const isMatchingColor = el.style.background === color;
+                el.classList.toggle('selected', isNoColor || isMatchingColor);
             });
         }
 
@@ -2991,13 +2995,14 @@
                 <div class="form-group">
                     <label>Farbe</label>
                     <div class="color-picker" id="editProjectColorPicker">
+                        <div class="color-option ${!project.color ? 'selected' : ''}" style="background: linear-gradient(135deg, #666 45%, #fff 45%, #fff 55%, #666 55%); border: 1px solid var(--border);" onclick="selectProjectColor('', 'edit')" title="Keine Farbe"></div>
                         ${defaultColors.map(color => `
                             <div class="color-option ${project.color === color ? 'selected' : ''}" 
                                  style="background: ${color}" 
                                  onclick="selectProjectColor('${color}', 'edit')"></div>
                         `).join('')}
                     </div>
-                    <input type="hidden" id="editProjectColor" value="${project.color || defaultColors[0]}">
+                    <input type="hidden" id="editProjectColor" value="${project.color || ''}">
                 </div>
             `, () => {
                 project.name = document.getElementById('editProjectName').value;
