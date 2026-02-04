@@ -37,10 +37,10 @@ cp .env.example .env
 ### 3. Install & Run
 
 ```bash
-npm install
-npm run db:generate
-npm run db:migrate
-npm run start:dev
+bun install
+bun run db:generate
+bun run db:migrate
+bun run dev
 ```
 
 ## Deployment
@@ -48,7 +48,7 @@ npm run start:dev
 ### Docker
 
 ```bash
-npm run build
+bun run build
 docker-compose up -d
 ```
 
