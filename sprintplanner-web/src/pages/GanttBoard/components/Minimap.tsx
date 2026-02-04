@@ -53,12 +53,15 @@ export const Minimap = ({ scrollRef }: MinimapProps) => {
     const updateViewport = () => {
       if (!scrollRef.current) return;
       const container = scrollRef.current;
-      const scrollWidth = container.scrollWidth - 220;
-      const clientWidth = container.clientWidth - 220;
+      const chartWidth = totalDays * dayWidth;
       const scrollLeft = container.scrollLeft;
-      const width = (clientWidth / scrollWidth) * minimapWidth;
-      const left = (scrollLeft / scrollWidth) * minimapWidth;
-      setViewport({ left: Math.max(0, left), width });
+      const containerWidth = container.clientWidth - 220;
+      
+      // Calculate visible portion
+      const visibleRatio = Math.min(1, containerWidth / chartWidth);
+      const width = visibleRatio * minimapWidth;
+      const left = (scrollLeft / chartWidth) * minimapWidth;
+      setViewport({ left: Math.max(0, left), width: Math.max(20, width) });
     };
 
     const handleResize = () => {
@@ -75,7 +78,7 @@ export const Minimap = ({ scrollRef }: MinimapProps) => {
       window.removeEventListener('resize', handleResize);
       scrollRef.current?.removeEventListener('scroll', updateViewport);
     };
-  }, [scrollRef, minimapWidth, dayWidth]);
+  }, [scrollRef, minimapWidth, dayWidth, totalDays]);
 
   const handleMinimapClick = (e: React.MouseEvent) => {
     if (dragState.current || wasDragging.current) {
