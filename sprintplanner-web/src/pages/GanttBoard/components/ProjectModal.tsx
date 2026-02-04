@@ -15,14 +15,14 @@ export const ProjectModal = ({ project, onSave, onClose }: Props) => {
   const { theme } = useStore();
   const isEdit = !!project;
   
-  const [form, setForm] = useState({
+  const [form, setForm] = useState(() => ({
     name: project?.name || '',
     category: project?.category || '',
     description: project?.description || '',
     link: project?.link || '',
     status: (project?.status || '') as '' | 'ok' | 'warning' | 'delay' | 'complete',
     color: project?.color || DEFAULT_COLORS[Math.floor(Math.random() * DEFAULT_COLORS.length)]
-  });
+  }));
 
   const handleSave = () => {
     if (!form.name.trim()) return;
