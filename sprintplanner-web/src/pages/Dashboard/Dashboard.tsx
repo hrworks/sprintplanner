@@ -5,6 +5,7 @@ import { Button, Modal, Avatar, UserMenu } from '@/components';
 import { useStore } from '@/store';
 import { api } from '@/api';
 import { Board } from '@/api/types';
+import { ShareModal } from '../GanttBoard/components/ShareModal';
 
 interface BoardGroups {
   owned: Board[];
@@ -18,6 +19,7 @@ export const Dashboard = () => {
   const [boards, setBoards] = useState<BoardGroups>({ owned: [], shared: [], public: [] });
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [modal, setModal] = useState<{ type: 'create' | 'edit' | 'delete' | 'duplicate'; board?: Board } | null>(null);
+  const [shareModal, setShareModal] = useState<{ boardId: string; boardName: string } | null>(null);
   const [form, setForm] = useState({ name: '', description: '' });
 
   useEffect(() => {
@@ -91,9 +93,9 @@ export const Dashboard = () => {
     setMenuOpen(null);
   };
 
-  const shareBoard = (id: string) => {
+  const shareBoard = (board: Board) => {
     setMenuOpen(null);
-    openBoard(id);
+    setShareModal({ boardId: board.id, boardName: board.name });
   };
 
   const formatDate = (date: string) => new Date(date).toLocaleDateString('de-DE');
@@ -116,7 +118,7 @@ export const Dashboard = () => {
               onMenuToggle={() => setMenuOpen(menuOpen === board.id ? null : board.id)}
               onEdit={() => openEditModal(board)}
               onDuplicate={() => openDuplicateModal(board)}
-              onShare={() => shareBoard(board.id)}
+              onShare={() => shareBoard(board)}
               onDelete={() => openDeleteModal(board)}
               formatDate={formatDate}
             />
@@ -193,6 +195,15 @@ export const Dashboard = () => {
         }>
           <S.StyledInput $mode={theme} placeholder="Name für die Kopie" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} autoFocus />
         </Modal>
+      )}
+
+      {shareModal && (
+        <ShareModal
+          boardId={shareModal.boardId}
+          boardName={shareModal.boardName}
+          onClose={() => setShareModal(null)}
+          onUpdate={loadBoards}
+        />
       )}
     </S.StyledContainer>
   );

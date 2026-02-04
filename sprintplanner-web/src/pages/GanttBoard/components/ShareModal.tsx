@@ -15,13 +15,14 @@ interface Props {
   boardId: string;
   boardName?: string;
   onClose: () => void;
+  onUpdate?: () => void;
 }
 
 interface PendingInvite {
   email: string;
 }
 
-export const ShareModal = ({ boardId, boardName, onClose }: Props) => {
+export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => {
   const { theme, user } = useStore();
   const [members, setMembers] = useState<Member[]>([]);
   const [owner, setOwner] = useState<{ name: string; email: string; avatarUrl?: string } | null>(null);
@@ -97,11 +98,13 @@ export const ShareModal = ({ boardId, boardName, onClose }: Props) => {
     setPendingInvites([]);
     setMessage('');
     loadData();
+    onUpdate?.();
   };
 
   const handleRemove = async (memberId: string) => {
     await api.removeMember(boardId, memberId);
     loadData();
+    onUpdate?.();
   };
 
   const handleAccessChange = async (mode: 'restricted' | 'domain' | 'public') => {
@@ -486,6 +489,11 @@ const MemberRole = styled.div<{ $mode: string }>`
     color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#202124'};
     font-size: 14px;
     cursor: pointer;
+    
+    option {
+      background: ${p => p.$mode === 'dark' ? '#2d2d2d' : '#fff'};
+      color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#202124'};
+    }
   }
 `;
 
