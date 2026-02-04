@@ -19,7 +19,7 @@ COPY --from=backend-build /app/node_modules ./node_modules
 COPY --from=backend-build /app/package.json ./
 COPY --from=backend-build /app/drizzle ./drizzle
 EXPOSE 3000 3001
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]
 
 FROM nginx:alpine AS nginx
 COPY --from=frontend-build /app/dist /usr/share/nginx/html
