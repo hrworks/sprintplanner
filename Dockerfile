@@ -5,8 +5,10 @@ RUN bun install --frozen-lockfile
 COPY sprintplanner-web/ ./
 RUN bun run build
 
-FROM oven/bun:1 AS backend-build
+FROM node:20-alpine AS backend-build
 WORKDIR /app
+RUN apk add --no-cache python3 make g++
+RUN npm install -g bun
 COPY sprintplanner-api/package.json sprintplanner-api/bun.lock ./
 RUN bun install --frozen-lockfile
 COPY sprintplanner-api/ ./
