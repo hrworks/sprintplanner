@@ -86,7 +86,7 @@ export class CursorGateway implements OnModuleInit {
             userId: client.userId,
             name: client.userName,
             color: this.getAvatarColor(client.userName),
-            x: msg.x,
+            dayOffset: msg.dayOffset,
             y: msg.y,
           }, client.instanceId);
         }

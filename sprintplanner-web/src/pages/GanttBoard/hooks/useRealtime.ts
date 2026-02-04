@@ -44,7 +44,7 @@ export const useRealtime = (boardId: string | undefined) => {
       if (msg.type === 'connected') {
         instanceIdRef.current = msg.instanceId;
       } else if (msg.type === 'cursor' && cursorSettings.showOthers) {
-        updateRemoteCursor(msg.instanceId, msg.name, msg.color, msg.x, msg.y);
+        updateRemoteCursor(msg.instanceId, msg.name, msg.color, msg.dayOffset, msg.y);
       } else if (msg.type === 'cursor_leave') {
         removeRemoteCursor(msg.instanceId);
       } else if (msg.type === 'users') {
@@ -66,7 +66,6 @@ export const useRealtime = (boardId: string | undefined) => {
   useEffect(() => {
     let lastSent = 0;
     let wasInside = false;
-    const BASE_DAY_WIDTH = 10;
     const BASE_ROW_HEIGHT = 100;
     
     const handleMouseMove = (e: MouseEvent) => {
@@ -74,11 +73,13 @@ export const useRealtime = (boardId: string | undefined) => {
       if (!cursorSettings.showMy) return;
       
       const ganttBody = document.querySelector('.gantt-body');
-      if (!ganttBody) return;
-      const rect = ganttBody.getBoundingClientRect();
-      const isInside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+      const scrollContainer = document.querySelector('.gantt-scroll-container') as HTMLElement;
+      if (!ganttBody || !scrollContainer) return;
       
-      // Send leave event when cursor exits gantt chart
+      const bodyRect = ganttBody.getBoundingClientRect();
+      const containerRect = scrollContainer.getBoundingClientRect();
+      const isInside = e.clientX >= bodyRect.left && e.clientX <= bodyRect.right && e.clientY >= bodyRect.top && e.clientY <= bodyRect.bottom;
+      
       if (wasInside && !isInside) {
         if (wsRef.current?.readyState === WebSocket.OPEN) {
           wsRef.current.send(JSON.stringify({ type: 'leave' }));
@@ -92,12 +93,18 @@ export const useRealtime = (boardId: string | undefined) => {
       if (now - lastSent < 50) return;
       lastSent = now;
       
-      // Normalize position relative to gantt body and zoom/height
-      const relX = (e.clientX - rect.left) * (BASE_DAY_WIDTH / dayWidth);
-      const relY = (e.clientY - rect.top) * (BASE_ROW_HEIGHT / rowHeight);
+      const scrollLeft = scrollContainer.scrollLeft;
+      
+      // Calculate position in chart: mouse relative to container + scroll
+      // Container includes labels (220px), so we need to account for that
+      const labelsWidth = 220;
+      const relativeX = e.clientX - containerRect.left - labelsWidth;
+      const absoluteX = relativeX + scrollLeft;
+      const dayOffset = absoluteX / dayWidth;
+      const relY = (e.clientY - bodyRect.top) * (BASE_ROW_HEIGHT / rowHeight);
       
       if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({ type: 'cursor', x: relX, y: relY }));
+        wsRef.current.send(JSON.stringify({ type: 'cursor', dayOffset, y: relY }));
       }
     };
 
@@ -107,19 +114,35 @@ export const useRealtime = (boardId: string | undefined) => {
 };
 
 const remoteCursors = new Map<string, HTMLDivElement>();
-const BASE_DAY_WIDTH = 10;
 const BASE_ROW_HEIGHT = 100;
 
-function updateRemoteCursor(instanceId: string, name: string, color: string, x: number, y: number) {
-  const ganttBody = document.querySelector('.gantt-body');
-  if (!ganttBody) return;
+function updateRemoteCursor(instanceId: string, name: string, color: string, dayOffset: number, y: number) {
+  const ganttBody = document.querySelector('.gantt-body') as HTMLElement;
+  const scrollContainer = document.querySelector('.gantt-scroll-container') as HTMLElement;
+  if (!ganttBody || !scrollContainer) return;
   
   const { dayWidth, rowHeight } = useGanttStore.getState();
-  const rect = ganttBody.getBoundingClientRect();
   
-  // Denormalize position
-  const screenX = rect.left + x * (dayWidth / BASE_DAY_WIDTH);
-  const screenY = rect.top + y * (rowHeight / BASE_ROW_HEIGHT);
+  // Convert dayOffset to absolute position in chart
+  const chartAbsoluteX = dayOffset * dayWidth;
+  const chartAbsoluteY = y * (rowHeight / BASE_ROW_HEIGHT);
+  
+  // Get current scroll position
+  const scrollLeft = scrollContainer.scrollLeft;
+  
+  // Calculate viewport position
+  const bodyRect = ganttBody.getBoundingClientRect();
+  const containerRect = scrollContainer.getBoundingClientRect();
+  
+  // Position: body.left + chart position - scroll
+  const viewportX = bodyRect.left + chartAbsoluteX - scrollLeft;
+  const viewportY = bodyRect.top + chartAbsoluteY;
+  
+  // Check if cursor is in visible area (within scroll container)
+  const isVisible = viewportX >= containerRect.left && 
+                    viewportX <= containerRect.right && 
+                    viewportY >= containerRect.top && 
+                    viewportY <= containerRect.bottom;
   
   let cursor = remoteCursors.get(instanceId);
   if (!cursor) {
@@ -135,8 +158,11 @@ function updateRemoteCursor(instanceId: string, name: string, color: string, x: 
     document.body.appendChild(cursor);
     remoteCursors.set(instanceId, cursor);
   }
-  cursor.style.left = screenX + 'px';
-  cursor.style.top = screenY + 'px';
+  
+  // Show/hide based on visibility
+  cursor.style.display = isVisible ? 'block' : 'none';
+  cursor.style.left = viewportX + 'px';
+  cursor.style.top = viewportY + 'px';
 }
 
 function removeRemoteCursor(instanceId: string) {

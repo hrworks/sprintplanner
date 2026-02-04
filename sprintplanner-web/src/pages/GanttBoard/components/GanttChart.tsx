@@ -671,6 +671,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
 
   return (
     <StyledScrollContainer 
+      className="gantt-scroll-container"
       $mode={theme}
       ref={scrollRef} 
       onMouseMove={handleMouseMove}
