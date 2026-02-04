@@ -16,16 +16,16 @@ export const useRealtime = (boardId: string | undefined) => {
     if (!token) return;
 
     const sse = new EventSource(`/api/boards/${boardId}/stream?token=${token}`);
-    console.log('SSE connecting to board:', boardId);
+    // console.log('SSE connecting to board:', boardId);
     sse.onopen = () => console.log('SSE connected');
     sse.onerror = (e) => console.error('SSE error:', e);
     sse.onmessage = (e) => {
       const msg = JSON.parse(e.data);
-      console.log('SSE received:', msg);
+      // console.log('SSE received:', msg);
       
       // Handle granular actions from other clients
       if (msg.event === 'action' && msg.data?.clientId !== clientId) {
-        console.log('Applying remote action:', msg.data.action);
+        // console.log('Applying remote action:', msg.data.action);
         applyRemoteAction(msg.data.action);
       }
       
@@ -204,7 +204,7 @@ function removeRemoteCursor(instanceId: string) {
 function applyRemoteAction(action: any) {
   try {
     const { data } = useGanttStore.getState();
-    console.log('Current projects:', data.projects.map(p => p._id));
+    // console.log('Current projects:', data.projects.map(p => p._id));
     let newData = data;
 
     switch (action.type) {
@@ -225,9 +225,9 @@ function applyRemoteAction(action: any) {
         break;
       }
       case 'addPhase':
-        console.log('Adding phase to project', action.projectId);
+        // console.log('Adding phase to project', action.projectId);
         newData = { ...data, projects: data.projects.map(p => p._id === action.projectId ? { ...p, phases: [...p.phases, action.phase] } : p) };
-        console.log('New data:', newData);
+        // console.log('New data:', newData);
         break;
       case 'updatePhase':
         newData = { ...data, projects: data.projects.map(p => ({ ...p, phases: p.phases.map(ph => ph._id === action.phaseId ? { ...ph, ...action.updates } : ph) })) };
@@ -262,9 +262,9 @@ function applyRemoteAction(action: any) {
         break;
     }
 
-    console.log('Setting state with new data');
+    // console.log('Setting state with new data');
     useGanttStore.getState().setData(newData);
-    console.log('State updated');
+    // console.log('State updated');
   } catch (e) {
     console.error('Error applying remote action:', e);
   }
