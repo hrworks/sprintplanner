@@ -18,8 +18,9 @@ COPY --from=backend-build /app/dist ./dist
 COPY --from=backend-build /app/node_modules ./node_modules
 COPY --from=backend-build /app/package.json ./
 COPY --from=backend-build /app/drizzle ./drizzle
+COPY --from=backend-build /app/drizzle.config.js ./
 EXPOSE 3000 3001
-CMD ["node", "dist/src/main.js"]
+CMD ["sh", "-c", "npm run db:migrate && node dist/src/main.js"]
 
 FROM nginx:alpine AS nginx
 COPY --from=frontend-build /app/dist /usr/share/nginx/html
