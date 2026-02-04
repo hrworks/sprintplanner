@@ -59,7 +59,7 @@ export const useRealtime = (boardId: string | undefined) => {
         updateRemoteCursor(msg.instanceId, msg.name, msg.color, msg.dayOffset, msg.y);
       } else if (msg.type === 'cursor_leave') {
         removeRemoteCursor(msg.instanceId);
-        setRemoteSelection(msg.instanceId, null, '');
+        // Don't clear selection on cursor_leave - only on disconnect
       } else if (msg.type === 'users') {
         setActiveUsers(msg.users);
       } else if (msg.type === 'selection') {
