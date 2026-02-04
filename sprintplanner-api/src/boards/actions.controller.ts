@@ -133,6 +133,9 @@ function applyAction(data: any, action: BoardAction): any {
     case 'deleteConnection':
       return { ...data, connections: data.connections.filter((c: any) => c._id !== action.connectionId) };
 
+    case 'setDateRange':
+      return { ...data, viewStart: action.viewStart, viewEnd: action.viewEnd };
+
     default:
       return data;
   }

@@ -150,7 +150,11 @@ export const useGanttStore = create<GanttState>((set, get) => ({
     }
     return { rowHeight };
   }),
-  setDateRange: (chartStartDate, chartEndDate) => set({ chartStartDate, chartEndDate }),
+  setDateRange: (chartStartDate, chartEndDate) => {
+    const formatDate = (d: Date) => d.toISOString().split('T')[0];
+    actionQueue.push({ type: 'setDateRange', viewStart: formatDate(chartStartDate), viewEnd: formatDate(chartEndDate) });
+    set({ chartStartDate, chartEndDate });
+  },
   
   setCursorSettings: (cursorSettings) => set({ cursorSettings }),
   setActiveUsers: (activeUsers) => set({ activeUsers }),
