@@ -39,8 +39,8 @@ export const api = {
   
   // Board Members
   getMembers: (boardId: string) => fetchApi<{ id: string; email: string; role: string; user?: { name: string } }[]>(`/api/boards/${boardId}/members`),
-  inviteMember: (boardId: string, email: string, role: string) =>
-    fetchApi<void>(`/api/boards/${boardId}/members`, { method: 'POST', body: JSON.stringify({ email, role }) }),
+  inviteMember: (boardId: string, email: string, role: string, message?: string) =>
+    fetchApi<void>(`/api/boards/${boardId}/members`, { method: 'POST', body: JSON.stringify({ email, role, message }) }),
   removeMember: (boardId: string, memberId: string) =>
     fetchApi<void>(`/api/boards/${boardId}/members/${memberId}`, { method: 'DELETE' }),
   

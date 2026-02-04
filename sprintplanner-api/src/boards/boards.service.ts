@@ -54,9 +54,17 @@ export class BoardsService {
   }
 
   async findOne(id: string) {
-    return this.db.query.boards.findFirst({
+    const board = await this.db.query.boards.findFirst({
       where: eq(schema.boards.id, id),
     });
+    if (!board) return null;
+    
+    const owner = await this.db.query.users.findFirst({
+      where: eq(schema.users.id, board.ownerId),
+      columns: { name: true, email: true, avatarUrl: true },
+    });
+    
+    return { ...board, owner };
   }
 
   async create(ownerId: string, name: string) {
@@ -65,7 +73,7 @@ export class BoardsService {
     return this.findOne(id);
   }
 
-  async update(id: string, data: { name?: string; data?: string; isPublic?: boolean }) {
+  async update(id: string, data: { name?: string; data?: string; isPublic?: boolean; allowedDomain?: string | null }) {
     await this.db
       .update(schema.boards)
       .set({ ...data, updatedAt: new Date() })
@@ -88,8 +96,10 @@ export class BoardsService {
     this.boardEvents.emit(id, 'delete', { id });
   }
 
-  async getMemberRole(boardId: string, userId: string) {
-    const board = await this.findOne(boardId);
+  async getMemberRole(boardId: string, userId: string, userEmail?: string) {
+    const board = await this.db.query.boards.findFirst({
+      where: eq(schema.boards.id, boardId),
+    });
     if (!board) return null;
     if (board.ownerId === userId) return 'owner';
 
@@ -100,6 +110,13 @@ export class BoardsService {
       ),
     });
     if (member) return member.role;
+    
+    // Check domain access
+    if (board.allowedDomain && userEmail) {
+      const domain = userEmail.split('@')[1];
+      if (domain === board.allowedDomain) return 'viewer';
+    }
+    
     if (board.isPublic) return 'viewer';
     return null;
   }

@@ -18,8 +18,10 @@ export interface Board {
   data?: string;
   role: 'owner' | 'editor' | 'viewer';
   isPublic?: boolean;
+  allowedDomain?: string | null;
   updatedAt: string;
   members?: User[];
+  owner?: { name: string; email: string; avatarUrl?: string };
 }
 
 export interface BoardMember {

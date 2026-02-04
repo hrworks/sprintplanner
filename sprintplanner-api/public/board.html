@@ -688,6 +688,8 @@
             flex: 1;
             min-width: 0;
             overflow: hidden;
+            white-space: nowrap;
+        }
         }
 
         .phase-bar-title {
@@ -1569,6 +1571,7 @@
             
             const scrollContainer = document.getElementById('ganttScrollContainer');
             scrollContainer.addEventListener('scroll', updateMinimap);
+            scrollContainer.addEventListener('scroll', updateStickyLabels);
             
             scrollContainer.addEventListener('wheel', (e) => {
                 if (!e.shiftKey) {
@@ -1698,6 +1701,26 @@
             
             viewport.style.width = Math.max(30, viewportWidth) + 'px';
             viewport.style.left = Math.max(0, viewportLeft) + 'px';
+        }
+
+        function updateStickyLabels() {
+            const scrollContainer = document.getElementById('ganttScrollContainer');
+            const scrollLeft = scrollContainer.scrollLeft;
+            
+            document.querySelectorAll('.phase-bar').forEach(bar => {
+                const content = bar.querySelector('.phase-bar-content');
+                if (!content) return;
+                
+                const barLeft = parseFloat(bar.style.left) || 0;
+                const barWidth = parseFloat(bar.style.width) || 0;
+                
+                if (barLeft < scrollLeft && barLeft + barWidth > scrollLeft + 50) {
+                    const offset = Math.min(scrollLeft - barLeft, barWidth - 80);
+                    content.style.textIndent = Math.max(0, offset) + 'px';
+                } else {
+                    content.style.textIndent = '0';
+                }
+            });
         }
 
         function onMinimapMouseDown(e) {
@@ -2060,6 +2083,7 @@
                     svg.innerHTML = renderConnections();
                     if (svg.firstChild) ganttBody.appendChild(svg.firstChild);
                 }
+                updateStickyLabels();
             }, 0);
         }
 

@@ -49,6 +49,41 @@ const useHorizontalScroll = (ref: RefObject<HTMLDivElement>) => {
   }, [ref]);
 };
 
+// Hook for sticky phase labels
+const useStickyLabels = (ref: RefObject<HTMLDivElement>) => {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    
+    const updateStickyLabels = () => {
+      const scrollLeft = el.scrollLeft;
+      const labelsWidth = 220;
+      
+      el.querySelectorAll<HTMLElement>('[data-phase]').forEach(bar => {
+        const content = bar.querySelector<HTMLElement>('[data-content]');
+        if (!content) return;
+        
+        const barRect = bar.getBoundingClientRect();
+        const elRect = el.getBoundingClientRect();
+        // Position relative to chart area (after labels)
+        const barLeft = barRect.left - elRect.left - labelsWidth + scrollLeft;
+        const barWidth = barRect.width;
+        
+        if (barLeft < scrollLeft && barLeft + barWidth > scrollLeft + 60) {
+          const offset = scrollLeft - barLeft;
+          const maxOffset = barWidth - 60;
+          bar.style.paddingLeft = Math.min(offset, maxOffset) + 8 + 'px';
+        } else {
+          bar.style.paddingLeft = '8px';
+        }
+      });
+    };
+    
+    el.addEventListener('scroll', updateStickyLabels);
+    return () => el.removeEventListener('scroll', updateStickyLabels);
+  }, [ref]);
+};
+
 const StyledWrapper = styled.div`
   display: flex;
   min-width: max-content;
@@ -354,6 +389,9 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
 
   // Horizontal scroll with mouse wheel
   useHorizontalScroll(scrollRef);
+  
+  // Sticky phase labels
+  useStickyLabels(scrollRef);
 
   // Delete selected phase with Delete key
   useEffect(() => {
@@ -864,7 +902,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
                       >
                         <StyledConnector className="connector" data-connector="left" $side="left" $color={phase.color} onMouseDown={(e) => handleConnectorMouseDown(e, phase._id, 'left')} />
                         <StyledResizeHandle $side="left" onMouseDown={(e) => { e.stopPropagation(); handleBarMouseDown(e, project._id, phase, 'resize-left'); }} />
-                        <StyledBarContent>
+                        <StyledBarContent data-content>
                           <StyledBarTitle>{phase.name}</StyledBarTitle>
                           {phase.subtitle && <StyledBarSubtitle>{phase.subtitle}</StyledBarSubtitle>}
                         </StyledBarContent>

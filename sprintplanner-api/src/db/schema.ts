@@ -23,6 +23,7 @@ export const boards = sqliteTable('boards', {
   description: text('description'),
   data: text('data').notNull().default('{"projects":[],"connections":[]}'),
   isPublic: integer('is_public', { mode: 'boolean' }).notNull().default(false),
+  allowedDomain: text('allowed_domain'),
   ownerId: text('owner_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),

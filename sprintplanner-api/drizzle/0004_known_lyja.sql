@@ -1,0 +1,1 @@
+ALTER TABLE `boards` ADD `allowed_domain` text;
