@@ -50,6 +50,7 @@ const StyledInput = styled.input<{ $mode: string }>`
   border-radius: 4px;
   color: ${p => getColors(p.$mode as 'dark' | 'light').textPrimary};
   font-size: 12px;
+  color-scheme: ${p => p.$mode === 'dark' ? 'dark' : 'light'};
   &:focus { outline: none; border-color: ${p => getColors(p.$mode as 'dark' | 'light').accent}; }
 `;
 

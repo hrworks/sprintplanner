@@ -69,6 +69,15 @@ interface GanttState {
   
   addConnection: (conn: Connection) => void;
   deleteConnection: (id: string) => void;
+  
+  // Sync functions
+  syncPhases: (phaseIds: string[]) => void;
+  unsyncPhase: (phaseId: string) => void;
+  
+  // Multi-select
+  selectedPhaseIds: Set<string>;
+  togglePhaseSelection: (phaseId: string) => void;
+  clearSelection: () => void;
 }
 
 const generateId = (prefix = '') => {
@@ -78,7 +87,7 @@ const generateId = (prefix = '') => {
   return prefix ? `${prefix}-${id}` : id;
 };
 
-export const useGanttStore = create<GanttState>((set) => ({
+export const useGanttStore = create<GanttState>((set, get) => ({
   boardId: null,
   boardName: '',
   boardRole: null,
@@ -86,6 +95,7 @@ export const useGanttStore = create<GanttState>((set) => ({
   
   selectedProjectId: null,
   selectedPhaseId: null,
+  selectedPhaseIds: new Set(),
   expandedProjects: new Set(),
   showDetailPanel: false,
   showConnections: true,
@@ -299,6 +309,78 @@ export const useGanttStore = create<GanttState>((set) => ({
     actionQueue.push({ type: 'deleteConnection', connectionId: id });
     set(state => ({
       data: { ...state.data, connections: state.data.connections.filter(c => c._id !== id) }
+    }));
+  },
+  
+  // Multi-select
+  togglePhaseSelection: (phaseId) => set(state => {
+    const selected = new Set(state.selectedPhaseIds);
+    
+    // If there's a single selection, add it to multi-select first
+    if (state.selectedPhaseId && !selected.has(state.selectedPhaseId)) {
+      selected.add(state.selectedPhaseId);
+    }
+    
+    // Toggle the clicked phase
+    if (selected.has(phaseId)) {
+      selected.delete(phaseId);
+    } else {
+      selected.add(phaseId);
+    }
+    
+    return { selectedPhaseIds: selected, selectedPhaseId: null, showDetailPanel: false };
+  }),
+  clearSelection: () => set({ selectedPhaseIds: new Set() }),
+  
+  // Sync functions
+  syncPhases: (phaseIds) => {
+    // Collect all existing sync partners
+    const allIds = new Set(phaseIds);
+    const { data } = get();
+    data.projects.forEach(p => p.phases.forEach(ph => {
+      if (phaseIds.includes(ph._id) && ph.syncWith) {
+        ph.syncWith.forEach(id => allIds.add(id));
+      }
+    }));
+    
+    const syncArray = Array.from(allIds);
+    actionQueue.push({ type: 'syncPhases', phaseIds: syncArray });
+    
+    set(state => ({
+      data: {
+        ...state.data,
+        projects: state.data.projects.map(p => ({
+          ...p,
+          phases: p.phases.map(ph => 
+            allIds.has(ph._id) 
+              ? { ...ph, syncWith: syncArray.filter(id => id !== ph._id) }
+              : ph
+          )
+        }))
+      },
+      selectedPhaseIds: new Set()
+    }));
+  },
+  
+  unsyncPhase: (phaseId) => {
+    actionQueue.push({ type: 'unsyncPhase', phaseId });
+    set(state => ({
+      data: {
+        ...state.data,
+        projects: state.data.projects.map(p => ({
+          ...p,
+          phases: p.phases.map(ph => {
+            if (ph._id === phaseId) {
+              return { ...ph, syncWith: undefined };
+            }
+            if (ph.syncWith?.includes(phaseId)) {
+              const newSync = ph.syncWith.filter(id => id !== phaseId);
+              return { ...ph, syncWith: newSync.length ? newSync : undefined };
+            }
+            return ph;
+          })
+        }))
+      }
     }));
   },
 }));

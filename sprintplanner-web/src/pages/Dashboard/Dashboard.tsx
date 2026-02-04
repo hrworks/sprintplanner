@@ -180,7 +180,7 @@ export const Dashboard = () => {
             <Button $variant="danger" onClick={handleDelete}>Löschen</Button>
           </>
         }>
-          <p>Möchtest du "{modal.board?.name}" wirklich löschen?</p>
+          <p>Möchtest du das Board <strong>"{modal.board?.name}"</strong> wirklich löschen?</p>
         </Modal>
       )}
 

@@ -324,6 +324,26 @@ const StyledPhaseBarWrapper = styled.div`
   &:hover .connector { opacity: 1; }
 `;
 
+const StyledContextMenu = styled.div<{ $x: number; $y: number; $mode: string }>`
+  position: fixed;
+  left: ${p => p.$x}px;
+  top: ${p => p.$y}px;
+  background: ${p => getColors(p.$mode as 'dark' | 'light').bgSecondary};
+  border: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary};
+  border-radius: 6px;
+  padding: 4px 0;
+  min-width: 160px;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+`;
+
+const StyledContextMenuItem = styled.div<{ $mode: string; $danger?: boolean }>`
+  padding: 8px 12px;
+  cursor: pointer;
+  color: ${p => p.$danger ? '#e94560' : getColors(p.$mode as 'dark' | 'light').textPrimary};
+  &:hover { background: ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary}; }
+`;
+
 const StyledConnectionSvg = styled.svg`
   position: absolute;
   top: 0;
@@ -372,8 +392,10 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
   const { theme } = useStore();
   const { 
     data, dayWidth, rowHeight, chartStartDate, chartEndDate,
-    selectedProjectId, selectedPhaseId, boardRole, showConnections, remoteSelections,
-    selectProject, selectPhase, updatePhase, updatePhaseLocal, addPhase, addConnection, deleteConnection, deletePhase, movePhase, movePhaseLocal
+    selectedProjectId, selectedPhaseId, selectedPhaseIds, boardRole, showConnections, remoteSelections,
+    selectProject, selectPhase, togglePhaseSelection, clearSelection,
+    updatePhase, updatePhaseLocal, addPhase, addConnection, deleteConnection, deletePhase, movePhase, movePhaseLocal,
+    syncPhases, unsyncPhase
   } = useGanttStore();
 
   // Build map of phaseId -> color for remote selections
@@ -386,12 +408,20 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
   }, [remoteSelections]);
 
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; type: 'connection' } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; phaseId: string; projectId: string } | null>(null);
 
   // Horizontal scroll with mouse wheel
   useHorizontalScroll(scrollRef);
   
   // Sticky phase labels
   useStickyLabels(scrollRef);
+
+  // Close context menu on click outside
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    if (contextMenu) document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [contextMenu]);
 
   // Delete selected phase with Delete key
   useEffect(() => {
@@ -403,6 +433,15 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [selectedProjectId, selectedPhaseId, boardRole, deletePhase]);
+
+  // Helper to update phase and all synced phases
+  const updatePhaseWithSync = useCallback((phaseId: string, updates: { start?: string; end?: string }) => {
+    const phase = data.projects.flatMap(p => p.phases).find(ph => ph._id === phaseId);
+    updatePhaseLocal(phaseId, updates);
+    if (phase?.syncWith?.length) {
+      phase.syncWith.forEach(syncId => updatePhaseLocal(syncId, updates));
+    }
+  }, [data.projects, updatePhaseLocal]);
 
   const [dragState, setDragState] = useState<{
     projectId: string;
@@ -578,7 +617,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
         newStart.setDate(newStart.getDate() + deltaDays);
         const newEnd = new Date(originalEnd);
         newEnd.setDate(newEnd.getDate() + deltaDays);
-        updatePhaseLocal(dragState.phaseId, { start: formatDate(newStart), end: formatDate(newEnd) });
+        updatePhaseWithSync(dragState.phaseId, { start: formatDate(newStart), end: formatDate(newEnd) });
         
         // Check if dragging to different project row
         const ganttBody = document.querySelector('.gantt-body');
@@ -600,14 +639,14 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
         const newStart = new Date(originalStart);
         newStart.setDate(newStart.getDate() + deltaDays);
         if (newStart < originalEnd) {
-          updatePhaseLocal(dragState.phaseId, { start: formatDate(newStart) });
+          updatePhaseWithSync(dragState.phaseId, { start: formatDate(newStart) });
           setTooltip({ x: e.clientX + 10, y: e.clientY + 10, text: formatTooltipDate(newStart) });
         }
       } else if (dragState.mode === 'resize-right') {
         const newEnd = new Date(originalEnd);
         newEnd.setDate(newEnd.getDate() + deltaDays);
         if (newEnd > originalStart) {
-          updatePhaseLocal(dragState.phaseId, { end: formatDate(newEnd) });
+          updatePhaseWithSync(dragState.phaseId, { end: formatDate(newEnd) });
           setTooltip({ x: e.clientX + 10, y: e.clientY + 10, text: formatTooltipDate(newEnd) });
         }
       }
@@ -635,7 +674,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
         setTooltip({ x: e.clientX + 10, y: e.clientY + 10, text: `${formatTooltipDate(newStart)} – ${formatTooltipDate(newEnd)}` });
       }
     }
-  }, [dragState, createState, connectionState, dayWidth, chartStartDate, updatePhaseLocal, movePhaseLocal, rowHeight, data.projects]);
+  }, [dragState, createState, connectionState, dayWidth, chartStartDate, updatePhaseWithSync, movePhaseLocal, rowHeight, data.projects]);
 
   const handleMouseUp = useCallback((e: React.MouseEvent) => {
     if (connectionState) {
@@ -668,8 +707,11 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
         if (dragState.projectId !== dragState.originalProjectId) {
           movePhase(dragState.originalProjectId, dragState.projectId, dragState.phaseId);
         }
-        // Send final position
+        // Send final position for this phase and all synced phases
         updatePhase(dragState.phaseId, { start: phase.start, end: phase.end });
+        if (phase.syncWith?.length) {
+          phase.syncWith.forEach(syncId => updatePhase(syncId, { start: phase.start, end: phase.end }));
+        }
       }
     }
     
@@ -749,6 +791,9 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
     if (boardRole === 'viewer') return;
     e.preventDefault();
     e.stopPropagation();
+    
+    // Shift+Click is for multi-select, don't start drag
+    if (e.shiftKey) return;
     
     setDragState({
       projectId,
@@ -895,10 +940,23 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
                         $top={phaseTop}
                         $height={phaseBarHeight}
                         $color={phase.color}
-                        $selected={isSelected}
+                        $selected={isSelected || selectedPhaseIds.has(phase._id)}
                         $remoteColor={remoteColor}
                         onMouseDown={(e) => handleBarMouseDown(e, project._id, phase, 'move')}
-                        onClick={(e) => { e.stopPropagation(); selectPhase(project._id, phase._id); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (e.shiftKey) {
+                            togglePhaseSelection(phase._id);
+                          } else {
+                            clearSelection();
+                            selectPhase(project._id, phase._id);
+                          }
+                        }}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setContextMenu({ x: e.clientX, y: e.clientY, phaseId: phase._id, projectId: project._id });
+                        }}
                       >
                         <StyledConnector className="connector" data-connector="left" $side="left" $color={phase.color} onMouseDown={(e) => handleConnectorMouseDown(e, phase._id, 'left')} />
                         <StyledResizeHandle $side="left" onMouseDown={(e) => { e.stopPropagation(); handleBarMouseDown(e, project._id, phase, 'resize-left'); }} />
@@ -970,6 +1028,40 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
           onConfirm={() => deleteConnection(confirmDelete.id)}
           onClose={() => setConfirmDelete(null)}
         />
+      )}
+
+      {contextMenu && (
+        <StyledContextMenu $x={contextMenu.x} $y={contextMenu.y} $mode={theme}>
+          {selectedPhaseIds.size >= 2 ? (
+            <StyledContextMenuItem $mode={theme} onClick={() => { syncPhases(Array.from(selectedPhaseIds)); setContextMenu(null); }}>
+              🔗 Zeitraum synchronisieren
+            </StyledContextMenuItem>
+          ) : (
+            <>
+              <StyledContextMenuItem $mode={theme} onClick={() => {
+                const phase = data.projects.flatMap(p => p.phases).find(ph => ph._id === contextMenu.phaseId);
+                if (phase) {
+                  const newPhase = { ...phase, _id: '', name: phase.name + ' (Kopie)' };
+                  addPhase(contextMenu.projectId, newPhase);
+                }
+                setContextMenu(null);
+              }}>
+                📋 Duplizieren
+              </StyledContextMenuItem>
+              {(() => {
+                const phase = data.projects.flatMap(p => p.phases).find(ph => ph._id === contextMenu.phaseId);
+                return phase?.syncWith?.length ? (
+                  <StyledContextMenuItem $mode={theme} onClick={() => { unsyncPhase(contextMenu.phaseId); setContextMenu(null); }}>
+                    🔓 Sync auflösen
+                  </StyledContextMenuItem>
+                ) : null;
+              })()}
+              <StyledContextMenuItem $mode={theme} $danger onClick={() => { deletePhase(contextMenu.projectId, contextMenu.phaseId); setContextMenu(null); }}>
+                🗑️ Löschen
+              </StyledContextMenuItem>
+            </>
+          )}
+        </StyledContextMenu>
       )}
     </StyledScrollContainer>
   );

@@ -6,6 +6,7 @@ import { getColors } from '@/styles';
 import { Project, STATUS_ICONS } from '../types';
 import { ProjectModal } from './ProjectModal';
 import { PhaseModal } from './PhaseModal';
+import { ConfirmModal } from './ConfirmModal';
 
 const StyledSidebar = styled.div<{ $mode: string }>`
   width: 380px;
@@ -219,6 +220,7 @@ export const Sidebar = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [projectModal, setProjectModal] = useState<{ project?: Project } | null>(null);
   const [phaseModal, setPhaseModal] = useState<{ projectId: string } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ projectId: string; projectName: string } | null>(null);
 
   const handleSaveProject = (project: Project) => {
     if (projectModal?.project) {
@@ -342,7 +344,7 @@ export const Sidebar = () => {
                   <StyledActions>
                     <StyledIconBtn $mode={theme} onClick={e => { e.stopPropagation(); setPhaseModal({ projectId: project._id }); }}>+</StyledIconBtn>
                     <StyledIconBtn $mode={theme} onClick={e => { e.stopPropagation(); setProjectModal({ project }); }}>✎</StyledIconBtn>
-                    <StyledIconBtn $mode={theme} onClick={e => { e.stopPropagation(); deleteProject(project._id); }}>🗑</StyledIconBtn>
+                    <StyledIconBtn $mode={theme} onClick={e => { e.stopPropagation(); setDeleteConfirm({ projectId: project._id, projectName: project.name }); }}>🗑</StyledIconBtn>
                   </StyledActions>
                 )}
               </StyledProjectHeader>
@@ -375,6 +377,15 @@ export const Sidebar = () => {
           projectId={phaseModal.projectId}
           onSave={handleSavePhase}
           onClose={() => setPhaseModal(null)}
+        />
+      )}
+      
+      {deleteConfirm && (
+        <ConfirmModal
+          title="Projekt löschen"
+          message={`Möchtest du das Projekt "${deleteConfirm.projectName}" wirklich löschen?`}
+          onConfirm={() => deleteProject(deleteConfirm.projectId)}
+          onClose={() => setDeleteConfirm(null)}
         />
       )}
     </StyledSidebar>

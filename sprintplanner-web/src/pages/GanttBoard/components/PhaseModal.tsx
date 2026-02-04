@@ -97,6 +97,7 @@ const Label = styled.label<{ $mode: string }>`display: block; margin-bottom: 4px
 const Input = styled.input<{ $mode: string }>`
   width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid ${p => p.$mode === 'dark' ? '#444' : '#ddd'};
   background: ${p => p.$mode === 'dark' ? '#2a2a2a' : '#fff'}; color: ${p => p.$mode === 'dark' ? '#fff' : '#000'}; font-size: 13px;
+  color-scheme: ${p => p.$mode === 'dark' ? 'dark' : 'light'};
 `;
 const Textarea = styled.textarea<{ $mode: string }>`
   width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid ${p => p.$mode === 'dark' ? '#444' : '#ddd'};

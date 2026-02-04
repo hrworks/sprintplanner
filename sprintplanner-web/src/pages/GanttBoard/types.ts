@@ -9,6 +9,7 @@ export interface Phase {
   color: string;
   showStartLine?: boolean;
   showEndLine?: boolean;
+  syncWith?: string[];
   _fieldUpdates?: Record<string, number>;
 }
 
