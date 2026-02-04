@@ -16,7 +16,7 @@ export default defineConfig({
       '/auth': 'http://localhost:3000',
       '/board': 'http://localhost:3000',
       '/ws': {
-        target: 'ws://localhost:3000',
+        target: 'ws://localhost:3001',
         ws: true,
       },
     },

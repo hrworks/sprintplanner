@@ -1,0 +1,17 @@
+services:
+  backend:
+    build:
+      context: .
+      target: backend
+    env_file: ./sprintplanner-api/.env
+    volumes:
+      - ./sprintplanner-api/data.db:/app/data.db
+
+  nginx:
+    build:
+      context: .
+      target: nginx
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
