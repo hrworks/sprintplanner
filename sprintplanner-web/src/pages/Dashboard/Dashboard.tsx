@@ -38,7 +38,7 @@ export const Dashboard = () => {
   };
 
   const openBoard = (id: string) => {
-    window.location.href = `/board/${id}`;
+    window.location.href = `/gantt/${id}`;
   };
 
   const handleCreate = async () => {

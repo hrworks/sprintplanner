@@ -1,11 +1,11 @@
-import { Controller, Get, Res } from '@nestjs/common';
-import type { Response } from 'express';
-import { join } from 'path';
+import { Controller, Get, Redirect } from '@nestjs/common';
 
 @Controller()
 export class FrontendController {
   @Get('board/:id')
-  board(@Res() res: Response) {
-    res.sendFile(join(__dirname, '..', 'board.html'));
+  @Redirect()
+  redirectToGantt() {
+    // Redirect old /board/:id to /gantt/:id
+    return { url: '/gantt/:id', statusCode: 301 };
   }
 }
