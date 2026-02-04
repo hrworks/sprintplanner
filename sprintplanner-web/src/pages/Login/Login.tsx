@@ -26,8 +26,8 @@ export const Login = () => {
     window.location.href = '/auth/google';
   };
 
-  const handleDevLogin = async () => {
-    const res = await fetch('/auth/dev');
+  const handleDevLogin = async (email: string) => {
+    const res = await fetch(`/auth/dev?email=${encodeURIComponent(email)}`);
     const data = await res.json();
     if (data.token) {
       auth.setToken(data.token);
@@ -52,8 +52,11 @@ export const Login = () => {
             </svg>
             Mit Google anmelden
           </S.StyledGoogleBtn>
-          <S.StyledDevBtn $mode={theme} onClick={handleDevLogin}>
-            🔧 Dev Login
+          <S.StyledDevBtn $mode={theme} onClick={() => handleDevLogin('simon.franz@hrworks.de')}>
+            🔧 Dev Login (Admin)
+          </S.StyledDevBtn>
+          <S.StyledDevBtn $mode={theme} onClick={() => handleDevLogin('simon.franz+2@hrworks.de')}>
+            👤 Dev Login (User 2)
           </S.StyledDevBtn>
         </S.StyledButtons>
       </S.StyledCard>

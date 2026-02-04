@@ -24,14 +24,15 @@ export class AuthController {
   }
 
   @Get('dev')
-  async devLogin(@Res() res: Response) {
+  async devLogin(@Req() req: any, @Res() res: Response) {
     if (process.env.NODE_ENV === 'production') {
       res.status(404).send('Not found');
       return;
     }
-    const user = await this.authService.getOrCreateDevUser();
+    const email = req.query.email || 'simon.franz@hrworks.de';
+    const user = await this.authService.getOrCreateDevUser(email);
     const token = this.authService.generateToken(user);
-    res.json({ token });
+    res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
   }
 }
 

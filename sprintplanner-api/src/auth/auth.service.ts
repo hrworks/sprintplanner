@@ -56,20 +56,20 @@ export class AuthService {
     return user!;
   }
 
-  async getOrCreateDevUser() {
-    const devEmail = 'simon.franz@hrworks.de';
+  async getOrCreateDevUser(email: string = 'simon.franz@hrworks.de') {
     let user = await this.db.query.users.findFirst({
-      where: eq(schema.users.email, devEmail),
+      where: eq(schema.users.email, email),
     });
 
     if (!user) {
       const id = uuid();
+      const isAdmin = email === 'simon.franz@hrworks.de';
       await this.db.insert(schema.users).values({
         id,
-        email: devEmail,
-        name: 'Simon Franz',
+        email,
+        name: email === 'simon.franz@hrworks.de' ? 'Simon Franz' : 'Simon Franz 2',
         googleId: 'dev-' + id,
-        role: 'admin',
+        role: isAdmin ? 'admin' : 'user',
         status: 'active',
       });
       await this.db.insert(schema.userSettings).values({ userId: id });
