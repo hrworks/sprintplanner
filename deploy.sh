@@ -4,7 +4,7 @@ set -e
 echo "🚀 Deploying Sprint Planner..."
 
 # Configuration
-REPO_URL="git@github.com-sprintplanner:hrworks/sprintplanner.git"
+REPO_URL="git@github.com:hrworks/sprintplanner.git"
 DEPLOY_DIR="/opt/sprintplanner"
 BRANCH="main"
 
