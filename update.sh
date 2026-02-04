@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Fix Docker BuildKit colors for dark terminals
+export BUILDKIT_COLORS="run=green:warning=yellow:error=red:cancel=cyan"
+
 echo "🚀 Updating Sprint Planner..."
 
 # Pull latest changes
