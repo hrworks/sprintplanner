@@ -45,6 +45,7 @@ export const Minimap = ({ scrollRef }: MinimapProps) => {
   const [viewport, setViewport] = useState({ left: 0, width: 100 });
   const [minimapWidth, setMinimapWidth] = useState(0);
   const dragState = useRef<{ startX: number; startScrollLeft: number } | null>(null);
+  const wasDragging = useRef(false);
 
   const totalDays = Math.ceil((chartEndDate.getTime() - chartStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
@@ -77,7 +78,10 @@ export const Minimap = ({ scrollRef }: MinimapProps) => {
   }, [scrollRef, minimapWidth, dayWidth]);
 
   const handleMinimapClick = (e: React.MouseEvent) => {
-    if (dragState.current) return;
+    if (dragState.current || wasDragging.current) {
+      wasDragging.current = false;
+      return;
+    }
     if (!scrollRef.current) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -98,6 +102,7 @@ export const Minimap = ({ scrollRef }: MinimapProps) => {
     
     const handleMouseMove = (e: MouseEvent) => {
       if (!dragState.current || !scrollRef.current) return;
+      wasDragging.current = true;
       const deltaX = e.clientX - dragState.current.startX;
       const scrollWidth = scrollRef.current.scrollWidth - 220;
       const scrollDelta = (deltaX / minimapWidth) * scrollWidth;
