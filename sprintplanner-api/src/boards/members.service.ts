@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { v4 as uuid } from 'uuid';
 import { DATABASE } from '../db/database.module';
 import type { DbType } from '../db';
@@ -30,6 +30,18 @@ export class MembersService {
   }
 
   async invite(boardId: string, email: string, role: 'editor' | 'viewer', inviter: { id: string; name: string }) {
+    // Check if already invited
+    const existingMember = await this.db.query.boardMembers.findFirst({
+      where: and(
+        eq(schema.boardMembers.boardId, boardId),
+        eq(schema.boardMembers.invitedEmail, email)
+      ),
+    });
+
+    if (existingMember) {
+      throw new Error('User already invited to this board');
+    }
+
     let existingUser = await this.db.query.users.findFirst({
       where: eq(schema.users.email, email),
     });
