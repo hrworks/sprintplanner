@@ -609,7 +609,6 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
         // Determine side by checking if we're on left or right half of the bar
         const barRect = bar.getBoundingClientRect();
         const isLeftSide = e.clientX < barRect.left + barRect.width / 2;
-        const toSide = isLeftSide ? 'left' : 'right';
         
         if (toPhase !== connectionState.fromPhase) {
           const conn = {

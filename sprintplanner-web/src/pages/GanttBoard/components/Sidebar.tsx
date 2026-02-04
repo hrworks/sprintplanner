@@ -1,6 +1,5 @@
 import styled from '@emotion/styled';
 import { useRef, useState } from 'react';
-import { Button } from '@/components';
 import { useStore } from '@/store';
 import { useGanttStore } from '../store';
 import { getColors } from '@/styles';
