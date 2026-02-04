@@ -25,7 +25,7 @@ export class CursorGateway implements OnModuleInit {
   ) {}
 
   private getAvatarColor(name: string): string {
-    const colors = ['#e94560', '#0f3460', '#16c79a', '#f9a825', '#7b2cbf', '#2196f3', '#ff6b6b', '#4ade80'];
+    const colors = ['#e94560', '#4ade80', '#fbbf24', '#60a5fa', '#a78bfa', '#f472b6', '#34d399', '#fb923c'];
     let hash = 0;
     for (let i = 0; i < (name || '').length; i++) {
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
