@@ -28,7 +28,8 @@ export type BoardAction =
   | { type: 'deletePhase'; projectId: string; phaseId: string }
   | { type: 'movePhase'; fromProjectId: string; toProjectId: string; phaseId: string }
   | { type: 'addConnection'; connection: any }
-  | { type: 'deleteConnection'; connectionId: string };
+  | { type: 'deleteConnection'; connectionId: string }
+  | { type: 'setDateRange'; viewStart: string; viewEnd: string };
 
 @Controller('api/boards/:id/actions')
 export class ActionsController {

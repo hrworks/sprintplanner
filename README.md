@@ -4,8 +4,8 @@ Multi-User Gantt-Chart Roadmap Planning Tool mit React Frontend und NestJS Backe
 
 ## Voraussetzungen
 
-- Node.js 20+
-- npm
+- Node.js 20+ oder Bun 1.0+
+- bun (empfohlen) oder npm
 
 ## Setup
 
@@ -13,7 +13,7 @@ Multi-User Gantt-Chart Roadmap Planning Tool mit React Frontend und NestJS Backe
 
 ```bash
 cd sprintplanner-api
-npm install
+bun install
 ```
 
 ### 2. Umgebungsvariablen konfigurieren
@@ -33,14 +33,14 @@ Dann `.env` bearbeiten und die Werte anpassen:
 
 ```bash
 cd sprintplanner-api
-npm run db:migrate
+bun run db:migrate
 ```
 
 ### 4. Frontend einrichten
 
 ```bash
 cd sprintplanner-web
-npm install
+bun install
 ```
 
 ## Development starten
@@ -49,7 +49,7 @@ npm install
 
 ```bash
 cd sprintplanner-api
-npm run start:dev
+bun run dev
 ```
 
 Backend läuft auf http://localhost:3000
@@ -59,7 +59,7 @@ WebSocket Server läuft auf Port 3001
 
 ```bash
 cd sprintplanner-web
-npm run dev
+bun run dev
 ```
 
 Frontend läuft auf http://localhost:5173
@@ -70,7 +70,7 @@ Frontend läuft auf http://localhost:5173
 
 ```bash
 cd sprintplanner-web
-npm run build
+bun run build
 ```
 
 Die gebauten Dateien landen in `sprintplanner-web/dist/`.
@@ -79,7 +79,7 @@ Die gebauten Dateien landen in `sprintplanner-web/dist/`.
 
 ```bash
 cd sprintplanner-api
-npm run build
+bun run build
 ```
 
 ### Mit Docker
