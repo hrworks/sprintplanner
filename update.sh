@@ -6,14 +6,24 @@ echo "🚀 Updating Sprint Planner..."
 # Pull latest changes
 git pull origin main
 
+# Detect docker compose command
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+elif docker compose version &> /dev/null; then
+    DOCKER_COMPOSE="docker compose"
+else
+    echo "❌ Error: docker compose not found"
+    exit 1
+fi
+
 # Rebuild and restart containers
-docker-compose down
-docker-compose up -d --build
+$DOCKER_COMPOSE down
+$DOCKER_COMPOSE up -d --build
 
 echo "✅ Update complete!"
 echo "📊 Application running at http://localhost:8080"
 echo ""
 echo "Useful commands:"
-echo "  docker-compose logs -f          # View logs"
-echo "  docker-compose ps               # Check status"
-echo "  docker-compose restart          # Restart services"
+echo "  $DOCKER_COMPOSE logs -f          # View logs"
+echo "  $DOCKER_COMPOSE ps               # Check status"
+echo "  $DOCKER_COMPOSE restart          # Restart services"
