@@ -9,6 +9,7 @@ import { BoardsModule } from './boards/boards.module';
 import { UsersModule } from './users/users.module';
 import { MailModule } from './mail/mail.module';
 import { FrontendController } from './frontend.controller';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { FrontendController } from './frontend.controller';
     BoardsModule,
     UsersModule,
   ],
-  controllers: [FrontendController],
+  controllers: [FrontendController, HealthController],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_PIPE, useValue: new ValidationPipe({ whitelist: true, transform: true }) },
