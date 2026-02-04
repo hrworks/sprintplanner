@@ -8,11 +8,12 @@ import { DEFAULT_COLORS } from '../types';
 const StyledPanel = styled.div<{ $mode: string; $visible: boolean }>`
   width: 320px;
   background: ${p => getColors(p.$mode as 'dark' | 'light').bgSecondary};
-  border-left: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').border};
+  border-left: 2px solid ${p => p.$mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)'};
   display: ${p => p.$visible ? 'flex' : 'none'};
   flex-direction: column;
   overflow: hidden;
   flex-shrink: 0;
+  box-shadow: ${p => p.$mode === 'dark' ? '-4px 0 12px rgba(0,0,0,0.3)' : '-4px 0 12px rgba(0,0,0,0.1)'};
 `;
 
 const StyledHeader = styled.div<{ $mode: string }>`

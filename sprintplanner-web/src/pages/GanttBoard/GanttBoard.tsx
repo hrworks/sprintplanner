@@ -23,7 +23,7 @@ export const GanttBoard = () => {
   const [boardForm, setBoardForm] = useState({ name: '', description: '' });
   
   const {
-    boardName, boardRole, selectedPhaseId,
+    boardName, boardRole, selectedPhaseId, showDetailPanel,
     dayWidth, rowHeight, chartStartDate, chartEndDate,
     showConnections, cursorSettings, activeUsers,
     setBoard, setDayWidth, setRowHeight, setDateRange,
@@ -177,7 +177,7 @@ export const GanttBoard = () => {
                 Verbindungen
               </S.StyledToggleBtn>
             </S.StyledToolbarLeft>
-            {selectedPhaseId && (
+            {selectedPhaseId && !showDetailPanel && (
               <Button $variant="secondary" $size="small" onClick={toggleDetailPanel}>Details ☰</Button>
             )}
           </S.StyledChartToolbar>
