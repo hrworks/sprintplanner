@@ -1,9 +1,10 @@
 import styled from '@emotion/styled';
-import { RefObject, useState, useCallback, useEffect } from 'react';
+import { RefObject, useState, useCallback, useEffect, useMemo } from 'react';
 import { useStore } from '@/store';
 import { useGanttStore, generateId } from '../store';
 import { getColors } from '@/styles';
-import { Phase, DEFAULT_COLORS } from '../types';
+import { Phase, DEFAULT_COLORS, STATUS_ICONS } from '../types';
+import { ConfirmModal } from './ConfirmModal';
 
 const StyledScrollContainer = styled.div<{ $mode: string }>`
   flex: 1;
@@ -145,6 +146,7 @@ const StyledBody = styled.div<{ $width: number; $height: number }>`
   position: relative;
   width: ${p => p.$width}px;
   height: ${p => p.$height}px;
+  user-select: none;
 `;
 
 const StyledRow = styled.div<{ $mode: string; $top: number; $width: number; $height: number; $color?: string }>`
@@ -168,7 +170,19 @@ const StyledTodayLine = styled.div<{ $left: number }>`
   pointer-events: none;
 `;
 
-const StyledPhaseBar = styled.div<{ $left: number; $width: number; $top: number; $height: number; $color: string; $selected: boolean }>`
+const StyledMilestoneLine = styled.div<{ $left: number; $color: string }>`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: ${p => p.$left}px;
+  width: 2px;
+  background: ${p => p.$color};
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0.8;
+`;
+
+const StyledPhaseBar = styled.div<{ $left: number; $width: number; $top: number; $height: number; $color: string; $selected: boolean; $remoteColor?: string }>`
   position: absolute;
   left: ${p => p.$left}px;
   width: ${p => p.$width}px;
@@ -186,7 +200,11 @@ const StyledPhaseBar = styled.div<{ $left: number; $width: number; $top: number;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
   overflow: hidden;
   z-index: 10;
-  box-shadow: ${p => p.$selected ? '0 0 0 2px #fff, 0 0 15px rgba(0, 217, 255, 0.5)' : 'none'};
+  box-shadow: ${p => p.$selected 
+    ? '0 0 0 2px #fff, 0 0 15px rgba(0, 217, 255, 0.5)' 
+    : p.$remoteColor 
+      ? `0 0 0 3px ${p.$remoteColor}, 0 0 12px ${p.$remoteColor}` 
+      : 'none'};
   &:hover { box-shadow: 0 0 12px rgba(255,255,255,0.4); z-index: 100; transform: scaleY(1.05); }
 `;
 
@@ -307,6 +325,8 @@ const StyledCategoryBadge = styled.span<{ $color: string }>`
   color: white;
   background: ${p => p.$color};
   flex-shrink: 0;
+  min-width: 12px;
+  min-height: 12px;
 `;
 
 interface GanttChartProps {
@@ -317,9 +337,20 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
   const { theme } = useStore();
   const { 
     data, dayWidth, rowHeight, chartStartDate, chartEndDate,
-    selectedProjectId, selectedPhaseId, boardRole, showConnections,
-    selectProject, selectPhase, updatePhase, addPhase, addConnection, deleteConnection, deletePhase, movePhase
+    selectedProjectId, selectedPhaseId, boardRole, showConnections, remoteSelections,
+    selectProject, selectPhase, updatePhase, updatePhaseLocal, addPhase, addConnection, deleteConnection, deletePhase, movePhase, movePhaseLocal
   } = useGanttStore();
+
+  // Build map of phaseId -> color for remote selections
+  const remoteSelectionColors = useMemo(() => {
+    const map = new Map<string, string>();
+    remoteSelections.forEach(({ phaseId, color }) => {
+      if (phaseId && !map.has(phaseId)) map.set(phaseId, color);
+    });
+    return map;
+  }, [remoteSelections]);
+
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; type: 'connection' } | null>(null);
 
   // Horizontal scroll with mouse wheel
   useHorizontalScroll(scrollRef);
@@ -337,6 +368,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
 
   const [dragState, setDragState] = useState<{
     projectId: string;
+    originalProjectId: string;
     phaseId: string;
     mode: 'move' | 'resize-left' | 'resize-right';
     startX: number;
@@ -454,13 +486,27 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
 
   const handleRowMouseDown = (e: React.MouseEvent, projectId: string, rowIndex: number) => {
     if ((e.target as HTMLElement).closest('[data-phase]')) return;
+    
+    // Clear selection when clicking empty space
+    if (selectedPhaseId) {
+      selectProject(null);
+    }
+    
     if (boardRole === 'viewer') return;
     
-    const scrollLeft = scrollRef.current?.scrollLeft || 0;
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const x = e.clientX - rect.left + scrollLeft;
+    const x = e.clientX - rect.left;
     
     setCreateState({ projectId, startX: x, currentX: x, rowIndex });
+  };
+
+  const handleBodyClick = (e: React.MouseEvent) => {
+    // Clear selection when clicking empty space in body (not on a phase or row)
+    if (!(e.target as HTMLElement).closest('[data-phase]') && !(e.target as HTMLElement).closest('[data-row]')) {
+      if (selectedPhaseId) {
+        selectProject(null);
+      }
+    }
   };
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -494,7 +540,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
         newStart.setDate(newStart.getDate() + deltaDays);
         const newEnd = new Date(originalEnd);
         newEnd.setDate(newEnd.getDate() + deltaDays);
-        updatePhase(dragState.phaseId, { start: formatDate(newStart), end: formatDate(newEnd) });
+        updatePhaseLocal(dragState.phaseId, { start: formatDate(newStart), end: formatDate(newEnd) });
         
         // Check if dragging to different project row
         const ganttBody = document.querySelector('.gantt-body');
@@ -505,7 +551,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
           if (targetRowIdx >= 0 && targetRowIdx < data.projects.length) {
             const targetProjectId = data.projects[targetRowIdx]._id;
             if (targetProjectId !== dragState.projectId) {
-              movePhase(dragState.projectId, targetProjectId, dragState.phaseId);
+              movePhaseLocal(dragState.projectId, targetProjectId, dragState.phaseId);
               setDragState(prev => prev ? { ...prev, projectId: targetProjectId } : null);
             }
           }
@@ -516,27 +562,27 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
         const newStart = new Date(originalStart);
         newStart.setDate(newStart.getDate() + deltaDays);
         if (newStart < originalEnd) {
-          updatePhase(dragState.phaseId, { start: formatDate(newStart) });
+          updatePhaseLocal(dragState.phaseId, { start: formatDate(newStart) });
           setTooltip({ x: e.clientX + 10, y: e.clientY + 10, text: formatTooltipDate(newStart) });
         }
       } else if (dragState.mode === 'resize-right') {
         const newEnd = new Date(originalEnd);
         newEnd.setDate(newEnd.getDate() + deltaDays);
         if (newEnd > originalStart) {
-          updatePhase(dragState.phaseId, { end: formatDate(newEnd) });
+          updatePhaseLocal(dragState.phaseId, { end: formatDate(newEnd) });
           setTooltip({ x: e.clientX + 10, y: e.clientY + 10, text: formatTooltipDate(newEnd) });
         }
       }
     }
     
     if (createState) {
-      const scrollLeft = scrollRef.current?.scrollLeft || 0;
       const rect = (e.currentTarget as HTMLElement).querySelector('.gantt-body')?.getBoundingClientRect();
       if (rect) {
-        const x = e.clientX - rect.left + scrollLeft;
+        const x = e.clientX - rect.left;
         setCreateState(prev => prev ? { ...prev, currentX: x } : null);
         
-        const left = Math.min(createState.startX, x);
+        const scrollLeft = scrollRef.current?.scrollLeft || 0;
+        const left = Math.min(createState.startX, x) + scrollLeft;
         const width = Math.abs(x - createState.startX);
         const startDays = Math.floor(left / dayWidth);
         const endDays = Math.floor((left + width) / dayWidth);
@@ -551,19 +597,21 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
         setTooltip({ x: e.clientX + 10, y: e.clientY + 10, text: `${formatTooltipDate(newStart)} – ${formatTooltipDate(newEnd)}` });
       }
     }
-  }, [dragState, createState, connectionState, dayWidth, chartStartDate, updatePhase]);
+  }, [dragState, createState, connectionState, dayWidth, chartStartDate, updatePhaseLocal, movePhaseLocal, rowHeight, data.projects]);
 
   const handleMouseUp = useCallback((e: React.MouseEvent) => {
     if (connectionState) {
       const target = document.elementFromPoint(e.clientX, e.clientY);
-      const connector = target?.closest('[data-connector]') as HTMLElement;
       const bar = target?.closest('[data-phase]') as HTMLElement;
       
-      if (connector && bar) {
+      if (bar) {
         const toPhase = bar.dataset.phase!;
-        const toSide = connector.dataset.connector as 'left' | 'right';
+        // Determine side by checking if we're on left or right half of the bar
+        const barRect = bar.getBoundingClientRect();
+        const isLeftSide = e.clientX < barRect.left + barRect.width / 2;
+        const toSide = isLeftSide ? 'left' : 'right';
         
-        if (toPhase !== connectionState.fromPhase && toSide !== connectionState.fromSide) {
+        if (toPhase !== connectionState.fromPhase) {
           const conn = {
             _id: generateId('conn'),
             from: connectionState.fromSide === 'right' ? connectionState.fromPhase : toPhase,
@@ -576,6 +624,19 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
       }
       setConnectionState(null);
       return;
+    }
+    
+    // Send final update when drag ends
+    if (dragState?.dragging) {
+      const phase = data.projects.flatMap(p => p.phases).find(ph => ph._id === dragState.phaseId);
+      if (phase) {
+        // Check if moved to different project
+        if (dragState.projectId !== dragState.originalProjectId) {
+          movePhase(dragState.originalProjectId, dragState.projectId, dragState.phaseId);
+        }
+        // Send final position
+        updatePhase(dragState.phaseId, { start: phase.start, end: phase.end });
+      }
     }
     
     if (createState) {
@@ -613,7 +674,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
     setDragState(null);
     setCreateState(null);
     setTooltip(null);
-  }, [createState, connectionState, data.connections, dayWidth, chartStartDate, addPhase, addConnection, selectPhase]);
+  }, [createState, connectionState, dragState, data, dayWidth, chartStartDate, addPhase, addConnection, selectPhase, updatePhase, movePhase]);
 
   const handleConnectorMouseDown = (e: React.MouseEvent, phaseId: string, side: 'left' | 'right') => {
     if (boardRole === 'viewer') return;
@@ -633,9 +694,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
 
   const handleConnectionClick = (connId: string) => {
     if (boardRole === 'viewer') return;
-    if (confirm('Verbindung löschen?')) {
-      deleteConnection(connId);
-    }
+    setConfirmDelete({ id: connId, type: 'connection' });
   };
 
   const getPhasePosition = (phaseId: string, side: 'left' | 'right') => {
@@ -659,6 +718,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
     
     setDragState({
       projectId,
+      originalProjectId: projectId,
       phaseId: phase._id,
       mode,
       startX: e.clientX,
@@ -667,6 +727,11 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
       originalEnd: phase.end,
       dragging: false
     });
+    
+    // Select phase when starting to move (not resize)
+    if (mode === 'move') {
+      selectPhase(projectId, phase._id);
+    }
   };
 
   return (
@@ -691,7 +756,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
               onClick={() => selectProject(project._id)}
             >
               <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {project.name}
+                {STATUS_ICONS[project.status || '']} {project.name}
               </span>
               <StyledCategoryBadge $color={project.color}>
                 {(project.category || '').substring(0, 3)}
@@ -729,8 +794,25 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
           </StyledHeader>
 
           {/* Body */}
-          <StyledBody className="gantt-body" $width={totalWidth} $height={totalHeight}>
+          <StyledBody className="gantt-body" $width={totalWidth} $height={totalHeight} onClick={handleBodyClick}>
             {showTodayLine && <StyledTodayLine $left={todayOffset * dayWidth} />}
+            
+            {/* Milestone lines for phases with showStartLine/showEndLine */}
+            {data.projects.flatMap(p => p.phases).map(phase => {
+              const lines = [];
+              const phaseStart = parseDate(phase.start);
+              const phaseEnd = parseDate(phase.end);
+              
+              if (phase.showStartLine && phaseStart >= chartStartDate && phaseStart <= chartEndDate) {
+                const leftDays = Math.ceil((phaseStart.getTime() - chartStartDate.getTime()) / (1000 * 60 * 60 * 24));
+                lines.push(<StyledMilestoneLine key={`${phase._id}-start`} $left={leftDays * dayWidth} $color={phase.color} />);
+              }
+              if (phase.showEndLine && phaseEnd >= chartStartDate && phaseEnd <= chartEndDate) {
+                const leftDays = Math.ceil((phaseEnd.getTime() - chartStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                lines.push(<StyledMilestoneLine key={`${phase._id}-end`} $left={leftDays * dayWidth} $color={phase.color} />);
+              }
+              return lines;
+            })}
             
             {data.projects.map((project, idx) => {
               const { phaseToLane, laneCount, phaseOverlapCount } = projectLanes[idx];
@@ -740,6 +822,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
               return (
               <StyledRow
                 key={project._id}
+                data-row
                 $mode={theme}
                 $top={idx * rowHeight}
                 $width={totalWidth}
@@ -767,6 +850,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
                   const left = leftDays * dayWidth;
                   const width = durationDays * dayWidth;
                   const isSelected = selectedPhaseId === phase._id;
+                  const remoteColor = remoteSelectionColors.get(phase._id);
                   
                   return (
                     <StyledPhaseBarWrapper key={phase._id}>
@@ -778,6 +862,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
                         $height={phaseBarHeight}
                         $color={phase.color}
                         $selected={isSelected}
+                        $remoteColor={remoteColor}
                         onMouseDown={(e) => handleBarMouseDown(e, project._id, phase, 'move')}
                         onClick={(e) => { e.stopPropagation(); selectPhase(project._id, phase._id); }}
                       >
@@ -842,6 +927,15 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
         <StyledDragTooltip $x={tooltip.x} $y={tooltip.y} $visible={true}>
           {tooltip.text}
         </StyledDragTooltip>
+      )}
+
+      {confirmDelete && (
+        <ConfirmModal
+          title="Verbindung löschen"
+          message="Möchtest du diese Verbindung wirklich löschen?"
+          onConfirm={() => deleteConnection(confirmDelete.id)}
+          onClose={() => setConfirmDelete(null)}
+        />
       )}
     </StyledScrollContainer>
   );

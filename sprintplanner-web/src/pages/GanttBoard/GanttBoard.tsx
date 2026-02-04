@@ -23,7 +23,7 @@ export const GanttBoard = () => {
   const [boardForm, setBoardForm] = useState({ name: '', description: '' });
   
   const {
-    boardName, boardRole,
+    boardName, boardRole, selectedPhaseId,
     dayWidth, rowHeight, chartStartDate, chartEndDate,
     showConnections, cursorSettings, activeUsers,
     setBoard, setDayWidth, setRowHeight, setDateRange,
@@ -94,32 +94,44 @@ export const GanttBoard = () => {
     <S.StyledContainer $mode={theme}>
       {/* Top Toolbar */}
       <S.StyledToolbar $mode={theme}>
-        <Button $variant="secondary" $size="small" onClick={() => navigate('/dashboard')}>
-          ← Zurück
-        </Button>
+        <S.StyledBackBtn $mode={theme} onClick={() => navigate('/dashboard')}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+          </svg>
+        </S.StyledBackBtn>
         <S.StyledTitleGroup>
           <S.StyledBoardName>{boardName}</S.StyledBoardName>
           {boardRole !== 'viewer' && (
             <S.StyledIconBtn $mode={theme} title="Board bearbeiten" onClick={openEditBoard}>✏️</S.StyledIconBtn>
           )}
         </S.StyledTitleGroup>
-        <S.StyledCursorSettings $mode={theme}>
-          <label title="Meinen Cursor anderen zeigen">
-            <input type="checkbox" checked={cursorSettings.showMy} onChange={e => handleCursorSettingChange('showMy', e.target.checked)} /> 📤
-          </label>
-          <label title="Cursor anderer anzeigen">
-            <input type="checkbox" checked={cursorSettings.showOthers} onChange={e => handleCursorSettingChange('showOthers', e.target.checked)} /> 👁️
-          </label>
-        </S.StyledCursorSettings>
-        <S.StyledActiveUsers>
-          {activeUsers.slice(0, 5).map((u, i) => (
-            <Avatar key={`${u.id}-${i}`} name={u.name} avatarUrl={u.avatar} size={28} />
-          ))}
-          {activeUsers.length > 5 && <span style={{ fontSize: 11, color: '#888' }}>+{activeUsers.length - 5}</span>}
-        </S.StyledActiveUsers>
-        {boardRole === 'owner' && (
-          <Button $size="small" onClick={() => setShowShare(true)}>Teilen</Button>
-        )}
+        <S.StyledToolbarRight>
+          <S.StyledCursorDropdown $mode={theme}>
+            <S.StyledCursorDropdownBtn $mode={theme}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ verticalAlign: 'middle', marginTop: 2 }}>
+                <path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87c.48 0 .72-.58.38-.92L5.94 2.35a.5.5 0 0 0-.44.86z"/>
+              </svg>
+              ▾
+            </S.StyledCursorDropdownBtn>
+            <S.StyledCursorDropdownMenu $mode={theme}>
+              <S.StyledCursorDropdownItem $mode={theme} onClick={() => handleCursorSettingChange('showOthers', !cursorSettings.showOthers)}>
+                {cursorSettings.showOthers && '✓'} Cursor von Mitbearbeitern anzeigen
+              </S.StyledCursorDropdownItem>
+              <S.StyledCursorDropdownItem $mode={theme} onClick={() => handleCursorSettingChange('showMy', !cursorSettings.showMy)}>
+                {cursorSettings.showMy && '✓'} Meinen Cursor anzeigen
+              </S.StyledCursorDropdownItem>
+            </S.StyledCursorDropdownMenu>
+          </S.StyledCursorDropdown>
+          <S.StyledActiveUsers>
+            {activeUsers.slice(0, 5).map((u, i) => (
+              <Avatar key={`${u.id}-${i}`} name={u.name} avatarUrl={u.avatar} size={28} />
+            ))}
+            {activeUsers.length > 5 && <span style={{ fontSize: 11, color: '#888' }}>+{activeUsers.length - 5}</span>}
+          </S.StyledActiveUsers>
+          {boardRole === 'owner' && (
+            <Button $size="small" onClick={() => setShowShare(true)}>Teilen</Button>
+          )}
+        </S.StyledToolbarRight>
         <UserMenu />
       </S.StyledToolbar>
 
@@ -133,9 +145,11 @@ export const GanttBoard = () => {
           <S.StyledChartToolbar $mode={theme}>
             <S.StyledToolbarLeft>
               <S.StyledToolbarGroup $mode={theme}>
-                <label>Von:</label>
+                <S.StyledNavBtn $mode={theme} style={{ borderRadius: 16, padding: '4px 12px' }} onClick={scrollToToday}>Heute</S.StyledNavBtn>
+                <S.StyledNavBtn $mode={theme} onClick={() => scrollRef.current?.scrollBy({ left: -300, behavior: 'smooth' })}>‹</S.StyledNavBtn>
+                <S.StyledNavBtn $mode={theme} onClick={() => scrollRef.current?.scrollBy({ left: 300, behavior: 'smooth' })}>›</S.StyledNavBtn>
                 <S.StyledDateInput $mode={theme} type="date" value={formatDate(chartStartDate)} onChange={e => handleDateChange('start', e.target.value)} />
-                <label>Bis:</label>
+                <span style={{ margin: '0 4px' }}>–</span>
                 <S.StyledDateInput $mode={theme} type="date" value={formatDate(chartEndDate)} onChange={e => handleDateChange('end', e.target.value)} />
               </S.StyledToolbarGroup>
               <S.StyledToolbarGroup $mode={theme}>
@@ -148,19 +162,13 @@ export const GanttBoard = () => {
                 <S.StyledSlider type="range" min={45} max={135} value={rowHeight} onChange={e => setRowHeight(Number(e.target.value))} />
                 <span style={{ fontSize: 11, color: '#888', width: 35 }}>{rowHeight}px</span>
               </S.StyledToolbarGroup>
-              <S.StyledToolbarGroup $mode={theme}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={showConnections} onChange={toggleConnections} />
-                  Verbindungen
-                </label>
-              </S.StyledToolbarGroup>
-              <S.StyledNavButtons>
-                <S.StyledNavBtn $mode={theme} onClick={scrollToToday}>📍 Heute</S.StyledNavBtn>
-                <S.StyledNavBtn $mode={theme} onClick={() => scrollRef.current?.scrollBy({ left: -300, behavior: 'smooth' })}>◀</S.StyledNavBtn>
-                <S.StyledNavBtn $mode={theme} onClick={() => scrollRef.current?.scrollBy({ left: 300, behavior: 'smooth' })}>▶</S.StyledNavBtn>
-              </S.StyledNavButtons>
+              <S.StyledToggleBtn $mode={theme} $active={showConnections} onClick={toggleConnections}>
+                Verbindungen
+              </S.StyledToggleBtn>
             </S.StyledToolbarLeft>
-            <Button $variant="secondary" $size="small" onClick={toggleDetailPanel}>Details ☰</Button>
+            {selectedPhaseId && (
+              <Button $variant="secondary" $size="small" onClick={toggleDetailPanel}>Details ☰</Button>
+            )}
           </S.StyledChartToolbar>
 
           {/* Gantt Chart */}

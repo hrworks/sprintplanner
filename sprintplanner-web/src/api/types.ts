@@ -6,6 +6,9 @@ export interface User {
   role: 'admin' | 'user';
   status: 'pending' | 'active';
   createdAt?: string;
+  owned?: number;
+  editor?: number;
+  viewer?: number;
 }
 
 export interface Board {

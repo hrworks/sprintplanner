@@ -76,6 +76,13 @@ export class BoardsService {
     return board;
   }
 
+  async updateData(id: string, data: string) {
+    await this.db
+      .update(schema.boards)
+      .set({ data, updatedAt: new Date() })
+      .where(eq(schema.boards.id, id));
+  }
+
   async delete(id: string) {
     await this.db.delete(schema.boards).where(eq(schema.boards.id, id));
     this.boardEvents.emit(id, 'delete', { id });

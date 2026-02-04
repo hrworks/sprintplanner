@@ -71,6 +71,9 @@ export const Users = () => {
                     <S.StyledUserName $mode={theme}>{u.name || u.email}</S.StyledUserName>
                     <S.StyledUserEmail $mode={theme}>{u.email}</S.StyledUserEmail>
                   </S.StyledUserInfo>
+                  <S.StyledBoardStats $mode={theme}>
+                    {u.owned || 0} Boards · {u.editor || 0} Editor · {u.viewer || 0} Viewer
+                  </S.StyledBoardStats>
                   <S.StyledStatus $mode={theme} $status={u.status}>
                     {u.status === 'active' ? 'Aktiv' : 'Ausstehend'}
                   </S.StyledStatus>

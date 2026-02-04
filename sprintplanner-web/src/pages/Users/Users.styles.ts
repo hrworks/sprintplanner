@@ -53,7 +53,7 @@ export const StyledTable = styled.div<{ $mode: ThemeMode }>`
 
 export const StyledRow = styled.div<{ $mode: ThemeMode }>`
   display: grid;
-  grid-template-columns: auto 1fr auto auto auto;
+  grid-template-columns: auto 1fr auto auto auto auto;
   gap: 16px;
   padding: 16px;
   border-bottom: 1px solid ${p => getColors(p.$mode).border};
@@ -66,6 +66,11 @@ export const StyledRow = styled.div<{ $mode: ThemeMode }>`
   &:hover {
     background: ${p => getColors(p.$mode).bgTertiary};
   }
+`;
+
+export const StyledBoardStats = styled.span<{ $mode: ThemeMode }>`
+  font-size: 12px;
+  color: ${p => getColors(p.$mode).textSecondary};
 `;
 
 export const StyledUserInfo = styled.div``;
@@ -123,5 +128,5 @@ export const S = {
   StyledContainer, StyledHeader, StyledTitle, StyledContent,
   StyledSection, StyledSectionHeader, StyledSectionTitle,
   StyledTable, StyledRow, StyledUserInfo, StyledUserName, StyledUserEmail,
-  StyledStatus, StyledSelect, StyledRoleLabel, StyledInput, StyledEmpty
+  StyledStatus, StyledSelect, StyledRoleLabel, StyledInput, StyledEmpty, StyledBoardStats
 };

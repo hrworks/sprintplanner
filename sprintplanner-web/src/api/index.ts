@@ -30,6 +30,8 @@ export const api = {
     fetchApi<Board>('/api/boards', { method: 'POST', body: JSON.stringify({ name, description, data }) }),
   updateBoard: (id: string, data: Partial<Board>) => 
     fetchApi<Board>(`/api/boards/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  sendAction: (boardId: string, action: any, clientId: string) =>
+    fetchApi<void>(`/api/boards/${boardId}/actions`, { method: 'POST', body: JSON.stringify({ action, clientId }) }),
   deleteBoard: (id: string) => 
     fetchApi<void>(`/api/boards/${id}`, { method: 'DELETE' }),
   setVisibility: (id: string, isPublic: boolean) =>

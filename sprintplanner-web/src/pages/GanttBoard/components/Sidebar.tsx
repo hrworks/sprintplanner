@@ -27,7 +27,64 @@ const StyledHeader = styled.div<{ $mode: string }>`
 const StyledBtnGroup = styled.div`
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
+  align-items: center;
+`;
+
+const StyledCreateBtn = styled.button<{ $mode: string }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #e94560;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: box-shadow 0.2s, background 0.2s;
+  &:hover { 
+    background: #d63850;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  }
+`;
+
+const StyledMenuDropdown = styled.div<{ $mode: string }>`
+  position: relative;
+  &:hover > div:last-child { display: block; }
+`;
+
+const StyledMenuBtn = styled.button<{ $mode: string }>`
+  background: ${p => getColors(p.$mode as 'dark' | 'light').bgSecondary};
+  border: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').border};
+  border-radius: 6px;
+  color: ${p => getColors(p.$mode as 'dark' | 'light').textPrimary};
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 16px;
+  &:hover { background: ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary}; }
+`;
+
+const StyledMenuDropdownContent = styled.div<{ $mode: string }>`
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: ${p => getColors(p.$mode as 'dark' | 'light').bgSecondary};
+  border: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').border};
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 1000;
+  min-width: 140px;
+`;
+
+const StyledMenuItem = styled.div<{ $mode: string }>`
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  color: ${p => getColors(p.$mode as 'dark' | 'light').textPrimary};
+  &:hover { background: ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary}; }
 `;
 
 const StyledProjectList = styled.div`
@@ -235,12 +292,20 @@ export const Sidebar = () => {
       <StyledHeader $mode={theme}>
         <StyledBtnGroup>
           {boardRole !== 'viewer' && (
-            <Button $size="small" onClick={() => setProjectModal({})}>+ Projekt</Button>
+            <StyledCreateBtn $mode={theme} onClick={() => setProjectModal({})}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+              </svg>
+              Projekt
+            </StyledCreateBtn>
           )}
-        </StyledBtnGroup>
-        <StyledBtnGroup style={{ marginTop: 8 }}>
-          <Button $variant="secondary" $size="small" onClick={handleExport}>Export</Button>
-          <Button $variant="secondary" $size="small" onClick={() => fileInputRef.current?.click()}>Import</Button>
+          <StyledMenuDropdown $mode={theme}>
+            <StyledMenuBtn $mode={theme}>⋮</StyledMenuBtn>
+            <StyledMenuDropdownContent $mode={theme}>
+              <StyledMenuItem $mode={theme} onClick={handleExport}>Export JSON</StyledMenuItem>
+              <StyledMenuItem $mode={theme} onClick={() => fileInputRef.current?.click()}>Import JSON</StyledMenuItem>
+            </StyledMenuDropdownContent>
+          </StyledMenuDropdown>
           <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
         </StyledBtnGroup>
       </StyledHeader>

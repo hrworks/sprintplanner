@@ -91,6 +91,17 @@ export class CursorGateway implements OnModuleInit {
           }, client.instanceId);
         }
         break;
+
+      case 'selection':
+        if (client.boardId) {
+          this.broadcastToBoard(client.boardId, {
+            type: 'selection',
+            instanceId: client.instanceId,
+            phaseId: msg.phaseId,
+            color: this.getAvatarColor(client.userName),
+          }, client.instanceId);
+        }
+        break;
     }
   }
 

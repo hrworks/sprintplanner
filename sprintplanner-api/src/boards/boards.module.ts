@@ -9,6 +9,7 @@ import { MembersService } from './members.service';
 import { InviteController } from './invite.controller';
 import { BoardEventsService } from './board-events.service';
 import { StreamController } from './stream.controller';
+import { ActionsController } from './actions.controller';
 import { CursorGateway } from './cursor.gateway';
 
 @Module({
@@ -20,7 +21,7 @@ import { CursorGateway } from './cursor.gateway';
       }),
     }),
   ],
-  controllers: [BoardsController, MembersController, InviteController, StreamController],
+  controllers: [BoardsController, MembersController, InviteController, StreamController, ActionsController],
   providers: [BoardsService, BoardAccessGuard, MembersService, BoardEventsService, CursorGateway],
   exports: [BoardsService, BoardEventsService],
 })

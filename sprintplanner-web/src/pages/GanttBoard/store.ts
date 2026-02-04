@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { BoardData, Project, Phase, Connection, CursorSettings, RemoteUser, RemoteCursor } from './types';
 
+// Unique client ID for this browser tab
+export const clientId = Math.random().toString(36).slice(2);
+
+// Action queue for syncing
+export const actionQueue: any[] = [];
+
 interface GanttState {
   // Board data
   boardId: string | null;
@@ -25,6 +31,7 @@ interface GanttState {
   cursorSettings: CursorSettings;
   activeUsers: RemoteUser[];
   remoteCursors: Map<string, RemoteCursor>;
+  remoteSelections: Map<string, { phaseId: string; color: string }>;
   
   // Actions
   setBoard: (id: string, name: string, role: 'owner' | 'editor' | 'viewer', data: BoardData) => void;
@@ -45,6 +52,7 @@ interface GanttState {
   setActiveUsers: (users: RemoteUser[]) => void;
   updateRemoteCursor: (cursor: RemoteCursor) => void;
   removeRemoteCursor: (userId: string) => void;
+  setRemoteSelection: (instanceId: string, phaseId: string | null, color: string) => void;
   
   // Project/Phase CRUD
   addProject: (project: Project) => void;
@@ -54,8 +62,10 @@ interface GanttState {
   
   addPhase: (projectId: string, phase: Phase) => void;
   updatePhase: (phaseId: string, updates: Partial<Phase>) => void;
+  updatePhaseLocal: (phaseId: string, updates: Partial<Phase>) => void;
   deletePhase: (projectId: string, phaseId: string) => void;
   movePhase: (fromProjectId: string, toProjectId: string, phaseId: string) => void;
+  movePhaseLocal: (fromProjectId: string, toProjectId: string, phaseId: string) => void;
   
   addConnection: (conn: Connection) => void;
   deleteConnection: (id: string) => void;
@@ -88,6 +98,7 @@ export const useGanttStore = create<GanttState>((set) => ({
   cursorSettings: { showMy: true, showOthers: true },
   activeUsers: [],
   remoteCursors: new Map(),
+  remoteSelections: new Map(),
   
   setBoard: (id, name, role, data) => {
     // Load user settings for this board from localStorage
@@ -143,80 +154,153 @@ export const useGanttStore = create<GanttState>((set) => ({
     cursors.delete(userId);
     return { remoteCursors: cursors };
   }),
-  
-  addProject: (project) => set(state => ({
-    data: { ...state.data, projects: [...state.data.projects, { ...project, _id: project._id || generateId('p') }] }
-  })),
-  updateProject: (id, updates) => set(state => ({
-    data: {
-      ...state.data,
-      projects: state.data.projects.map(p => p._id === id ? { ...p, ...updates } : p)
+  setRemoteSelection: (instanceId, phaseId, color) => set(state => {
+    const selections = new Map(state.remoteSelections);
+    if (phaseId) {
+      selections.set(instanceId, { phaseId, color });
+    } else {
+      selections.delete(instanceId);
     }
-  })),
-  deleteProject: (id) => set(state => ({
-    data: { ...state.data, projects: state.data.projects.filter(p => p._id !== id) }
-  })),
-  reorderProjects: (fromIndex, toIndex) => set(state => {
-    const projects = [...state.data.projects];
-    const [moved] = projects.splice(fromIndex, 1);
-    projects.splice(toIndex, 0, moved);
-    return { data: { ...state.data, projects } };
+    return { remoteSelections: selections };
   }),
   
-  addPhase: (projectId, phase) => set(state => ({
-    data: {
-      ...state.data,
-      projects: state.data.projects.map(p => 
-        p._id === projectId 
-          ? { ...p, phases: [...p.phases, { ...phase, _id: phase._id || generateId('ph') }] }
-          : p
-      )
-    }
-  })),
-  updatePhase: (phaseId, updates) => set(state => ({
-    data: {
-      ...state.data,
-      projects: state.data.projects.map(p => ({
-        ...p,
-        phases: p.phases.map(ph => ph._id === phaseId ? { ...ph, ...updates } : ph)
-      }))
-    }
-  })),
-  deletePhase: (projectId, phaseId) => set(state => ({
-    data: {
-      ...state.data,
-      projects: state.data.projects.map(p => 
-        p._id === projectId ? { ...p, phases: p.phases.filter(ph => ph._id !== phaseId) } : p
-      ),
-      connections: state.data.connections.filter(c => c.from !== phaseId && c.to !== phaseId)
-    }
-  })),
-  movePhase: (fromProjectId, toProjectId, phaseId) => set(state => {
-    const fromProject = state.data.projects.find(p => p._id === fromProjectId);
-    const phase = fromProject?.phases.find(ph => ph._id === phaseId);
-    if (!phase) return state;
-    
-    return {
+  addProject: (project) => {
+    const newProject = { ...project, _id: project._id || generateId('p') };
+    actionQueue.push({ type: 'addProject', project: newProject });
+    set(state => ({
+      data: { ...state.data, projects: [...state.data.projects, newProject] }
+    }));
+  },
+  updateProject: (id, updates) => {
+    actionQueue.push({ type: 'updateProject', projectId: id, updates });
+    set(state => ({
       data: {
         ...state.data,
-        projects: state.data.projects.map(p => {
-          if (p._id === fromProjectId) return { ...p, phases: p.phases.filter(ph => ph._id !== phaseId) };
-          if (p._id === toProjectId) return { ...p, phases: [...p.phases, phase] };
-          return p;
-        })
+        projects: state.data.projects.map(p => p._id === id ? { ...p, ...updates } : p)
       }
-    };
-  }),
+    }));
+  },
+  deleteProject: (id) => {
+    actionQueue.push({ type: 'deleteProject', projectId: id });
+    set(state => ({
+      data: { ...state.data, projects: state.data.projects.filter(p => p._id !== id) }
+    }));
+  },
+  reorderProjects: (fromIndex, toIndex) => {
+    actionQueue.push({ type: 'reorderProjects', fromIndex, toIndex });
+    set(state => {
+      const projects = [...state.data.projects];
+      const [moved] = projects.splice(fromIndex, 1);
+      projects.splice(toIndex, 0, moved);
+      return { data: { ...state.data, projects } };
+    });
+  },
   
-  addConnection: (conn) => set(state => ({
-    data: {
-      ...state.data,
-      connections: [...state.data.connections, { ...conn, _id: conn._id || generateId('conn') }]
-    }
-  })),
-  deleteConnection: (id) => set(state => ({
-    data: { ...state.data, connections: state.data.connections.filter(c => c._id !== id) }
-  })),
+  addPhase: (projectId, phase) => {
+    const newPhase = { ...phase, _id: phase._id || generateId('ph') };
+    actionQueue.push({ type: 'addPhase', projectId, phase: newPhase });
+    set(state => ({
+      data: {
+        ...state.data,
+        projects: state.data.projects.map(p => 
+          p._id === projectId 
+            ? { ...p, phases: [...p.phases, newPhase] }
+            : p
+        )
+      }
+    }));
+  },
+  updatePhase: (phaseId, updates) => {
+    actionQueue.push({ type: 'updatePhase', phaseId, updates });
+    set(state => ({
+      data: {
+        ...state.data,
+        projects: state.data.projects.map(p => ({
+          ...p,
+          phases: p.phases.map(ph => ph._id === phaseId ? { ...ph, ...updates } : ph)
+        }))
+      }
+    }));
+  },
+  updatePhaseLocal: (phaseId, updates) => {
+    // Local only - no action queued (for dragging)
+    set(state => ({
+      data: {
+        ...state.data,
+        projects: state.data.projects.map(p => ({
+          ...p,
+          phases: p.phases.map(ph => ph._id === phaseId ? { ...ph, ...updates } : ph)
+        }))
+      }
+    }));
+  },
+  deletePhase: (projectId, phaseId) => {
+    actionQueue.push({ type: 'deletePhase', projectId, phaseId });
+    set(state => ({
+      data: {
+        ...state.data,
+        projects: state.data.projects.map(p => 
+          p._id === projectId ? { ...p, phases: p.phases.filter(ph => ph._id !== phaseId) } : p
+        ),
+        connections: state.data.connections.filter(c => c.from !== phaseId && c.to !== phaseId)
+      }
+    }));
+  },
+  movePhase: (fromProjectId, toProjectId, phaseId) => {
+    actionQueue.push({ type: 'movePhase', fromProjectId, toProjectId, phaseId });
+    set(state => {
+      const fromProject = state.data.projects.find(p => p._id === fromProjectId);
+      const phase = fromProject?.phases.find(ph => ph._id === phaseId);
+      if (!phase) return state;
+      
+      return {
+        data: {
+          ...state.data,
+          projects: state.data.projects.map(p => {
+            if (p._id === fromProjectId) return { ...p, phases: p.phases.filter(ph => ph._id !== phaseId) };
+            if (p._id === toProjectId) return { ...p, phases: [...p.phases, phase] };
+            return p;
+          })
+        }
+      };
+    });
+  },
+  movePhaseLocal: (fromProjectId, toProjectId, phaseId) => {
+    // Local only - no action queued (for dragging)
+    set(state => {
+      const fromProject = state.data.projects.find(p => p._id === fromProjectId);
+      const phase = fromProject?.phases.find(ph => ph._id === phaseId);
+      if (!phase) return state;
+      
+      return {
+        data: {
+          ...state.data,
+          projects: state.data.projects.map(p => {
+            if (p._id === fromProjectId) return { ...p, phases: p.phases.filter(ph => ph._id !== phaseId) };
+            if (p._id === toProjectId) return { ...p, phases: [...p.phases, phase] };
+            return p;
+          })
+        }
+      };
+    });
+  },
+  
+  addConnection: (conn) => {
+    const newConn = { ...conn, _id: conn._id || generateId('conn') };
+    actionQueue.push({ type: 'addConnection', connection: newConn });
+    set(state => ({
+      data: {
+        ...state.data,
+        connections: [...state.data.connections, newConn]
+      }
+    }));
+  },
+  deleteConnection: (id) => {
+    actionQueue.push({ type: 'deleteConnection', connectionId: id });
+    set(state => ({
+      data: { ...state.data, connections: state.data.connections.filter(c => c._id !== id) }
+    }));
+  },
 }));
 
 export { generateId };

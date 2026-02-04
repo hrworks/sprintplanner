@@ -1,26 +1,35 @@
 import { useEffect, useRef } from 'react';
-import { useGanttStore } from '../store';
+import { useGanttStore, actionQueue, clientId } from '../store';
 import { api } from '@/api';
 
 export const useAutoSave = () => {
-  const { boardId, boardRole, data, chartStartDate, chartEndDate } = useGanttStore();
-  const lastSavedRef = useRef<string>('');
-  const timeoutRef = useRef<number>();
+  const { boardId, boardRole } = useGanttStore();
+  const pendingRef = useRef(false);
 
   useEffect(() => {
     if (!boardId || boardRole === 'viewer') return;
 
-    const dataStr = JSON.stringify({ ...data, viewStart: chartStartDate.toISOString().split('T')[0], viewEnd: chartEndDate.toISOString().split('T')[0] });
-    
-    if (dataStr === lastSavedRef.current) return;
+    const flush = () => {
+      pendingRef.current = false;
+      if (actionQueue.length === 0) return;
+      
+      const actions = actionQueue.splice(0, actionQueue.length);
+      console.log('Flushing actions:', actions);
+      actions.forEach(action => {
+        api.sendAction(boardId, action, clientId).catch(e => console.error('Action failed:', e));
+      });
+    };
 
-    // Debounce save by 500ms
-    clearTimeout(timeoutRef.current);
-    timeoutRef.current = window.setTimeout(() => {
-      lastSavedRef.current = dataStr;
-      api.updateBoard(boardId, { data: dataStr }).catch(e => console.error('Save failed:', e));
-    }, 500);
+    const interval = setInterval(() => {
+      if (actionQueue.length > 0 && !pendingRef.current) {
+        pendingRef.current = true;
+        setTimeout(flush, 100);
+      }
+    }, 50);
 
-    return () => clearTimeout(timeoutRef.current);
-  }, [boardId, boardRole, data, chartStartDate, chartEndDate]);
+    return () => {
+      clearInterval(interval);
+      flush();
+    };
+  }, [boardId, boardRole]);
 };

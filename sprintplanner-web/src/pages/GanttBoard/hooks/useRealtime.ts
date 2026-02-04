@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { useGanttStore } from '../store';
+import { useGanttStore, clientId } from '../store';
 import { auth } from '@/api';
 
-const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}:3001`;
+const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
 
 export const useRealtime = (boardId: string | undefined) => {
   const sseRef = useRef<EventSource | null>(null);
@@ -16,8 +16,20 @@ export const useRealtime = (boardId: string | undefined) => {
     if (!token) return;
 
     const sse = new EventSource(`/api/boards/${boardId}/stream?token=${token}`);
+    console.log('SSE connecting to board:', boardId);
+    sse.onopen = () => console.log('SSE connected');
+    sse.onerror = (e) => console.error('SSE error:', e);
     sse.onmessage = (e) => {
       const msg = JSON.parse(e.data);
+      console.log('SSE received:', msg);
+      
+      // Handle granular actions from other clients
+      if (msg.event === 'action' && msg.data?.clientId !== clientId) {
+        console.log('Applying remote action:', msg.data.action);
+        applyRemoteAction(msg.data.action);
+      }
+      
+      // Handle full board updates (for initial load or fallback)
       if (msg.event === 'update' && msg.data?.data) {
         const { boardName, boardRole, setBoard } = useGanttStore.getState();
         const boardData = JSON.parse(msg.data.data);
@@ -29,7 +41,7 @@ export const useRealtime = (boardId: string | undefined) => {
     return () => sse.close();
   }, [boardId]);
 
-  // WebSocket for cursors
+  // WebSocket for cursors and selections
   useEffect(() => {
     if (!boardId) return;
     const token = auth.getToken();
@@ -39,7 +51,7 @@ export const useRealtime = (boardId: string | undefined) => {
     ws.onopen = () => ws.send(JSON.stringify({ type: 'join', boardId }));
     ws.onmessage = (e) => {
       const msg = JSON.parse(e.data);
-      const { cursorSettings, setActiveUsers } = useGanttStore.getState();
+      const { cursorSettings, setActiveUsers, setRemoteSelection } = useGanttStore.getState();
       
       if (msg.type === 'connected') {
         instanceIdRef.current = msg.instanceId;
@@ -47,8 +59,11 @@ export const useRealtime = (boardId: string | undefined) => {
         updateRemoteCursor(msg.instanceId, msg.name, msg.color, msg.dayOffset, msg.y);
       } else if (msg.type === 'cursor_leave') {
         removeRemoteCursor(msg.instanceId);
+        setRemoteSelection(msg.instanceId, null, '');
       } else if (msg.type === 'users') {
         setActiveUsers(msg.users);
+      } else if (msg.type === 'selection') {
+        setRemoteSelection(msg.instanceId, msg.phaseId, msg.color);
       }
     };
     wsRef.current = ws;
@@ -61,6 +76,19 @@ export const useRealtime = (boardId: string | undefined) => {
       remoteCursors.clear();
     };
   }, [boardId]);
+
+  // Send selection changes
+  const lastSelectionRef = useRef<string | null>(null);
+  const selectedPhaseId = useGanttStore(state => state.selectedPhaseId);
+  
+  useEffect(() => {
+    if (selectedPhaseId !== lastSelectionRef.current) {
+      lastSelectionRef.current = selectedPhaseId;
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ type: 'selection', phaseId: selectedPhaseId }));
+      }
+    }
+  }, [selectedPhaseId]);
 
   // Send cursor position (normalized for zoom/height)
   useEffect(() => {
@@ -170,5 +198,74 @@ function removeRemoteCursor(instanceId: string) {
   if (cursor) {
     cursor.remove();
     remoteCursors.delete(instanceId);
+  }
+}
+
+function applyRemoteAction(action: any) {
+  try {
+    const { data } = useGanttStore.getState();
+    console.log('Current projects:', data.projects.map(p => p._id));
+    let newData = data;
+
+    switch (action.type) {
+      case 'addProject':
+        newData = { ...data, projects: [...data.projects, action.project] };
+        break;
+      case 'updateProject':
+        newData = { ...data, projects: data.projects.map(p => p._id === action.projectId ? { ...p, ...action.updates } : p) };
+        break;
+      case 'deleteProject':
+        newData = { ...data, projects: data.projects.filter(p => p._id !== action.projectId) };
+        break;
+      case 'reorderProjects': {
+        const projects = [...data.projects];
+        const [moved] = projects.splice(action.fromIndex, 1);
+        projects.splice(action.toIndex, 0, moved);
+        newData = { ...data, projects };
+        break;
+      }
+      case 'addPhase':
+        console.log('Adding phase to project', action.projectId);
+        newData = { ...data, projects: data.projects.map(p => p._id === action.projectId ? { ...p, phases: [...p.phases, action.phase] } : p) };
+        console.log('New data:', newData);
+        break;
+      case 'updatePhase':
+        newData = { ...data, projects: data.projects.map(p => ({ ...p, phases: p.phases.map(ph => ph._id === action.phaseId ? { ...ph, ...action.updates } : ph) })) };
+        break;
+      case 'deletePhase':
+        newData = {
+          ...data,
+          projects: data.projects.map(p => p._id === action.projectId ? { ...p, phases: p.phases.filter(ph => ph._id !== action.phaseId) } : p),
+          connections: data.connections.filter(c => c.from !== action.phaseId && c.to !== action.phaseId)
+        };
+        break;
+      case 'movePhase': {
+        const fromProject = data.projects.find(p => p._id === action.fromProjectId);
+        const phase = fromProject?.phases.find(ph => ph._id === action.phaseId);
+        if (phase) {
+          newData = {
+            ...data,
+            projects: data.projects.map(p => {
+              if (p._id === action.fromProjectId) return { ...p, phases: p.phases.filter(ph => ph._id !== action.phaseId) };
+              if (p._id === action.toProjectId) return { ...p, phases: [...p.phases, phase] };
+              return p;
+            })
+          };
+        }
+        break;
+      }
+      case 'addConnection':
+        newData = { ...data, connections: [...data.connections, action.connection] };
+        break;
+      case 'deleteConnection':
+        newData = { ...data, connections: data.connections.filter(c => c._id !== action.connectionId) };
+        break;
+    }
+
+    console.log('Setting state with new data');
+    useGanttStore.getState().setData(newData);
+    console.log('State updated');
+  } catch (e) {
+    console.error('Error applying remote action:', e);
   }
 }

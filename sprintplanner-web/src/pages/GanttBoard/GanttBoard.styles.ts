@@ -28,6 +28,28 @@ export const StyledTitleGroup = styled.div`
   flex: 1;
 `;
 
+export const StyledToolbarRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+export const StyledBackBtn = styled.button<{ $mode: ThemeMode }>`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  color: ${p => getColors(p.$mode).textSecondary};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &:hover { 
+    background: ${p => getColors(p.$mode).bgTertiary};
+    color: ${p => getColors(p.$mode).textPrimary};
+  }
+`;
+
 export const StyledBoardName = styled.span`
   font-weight: 600;
   font-size: 16px;
@@ -60,6 +82,44 @@ export const StyledCursorSettings = styled.div<{ $mode: ThemeMode }>`
 export const StyledActiveUsers = styled.div`
   display: flex;
   gap: 4px;
+  align-items: center;
+`;
+
+export const StyledCursorDropdown = styled.div<{ $mode: ThemeMode }>`
+  position: relative;
+  &:hover > div:last-child { display: block; }
+`;
+
+export const StyledCursorDropdownBtn = styled.button<{ $mode: ThemeMode }>`
+  background: transparent;
+  border: none;
+  color: ${p => getColors(p.$mode).textSecondary};
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 12px;
+  &:hover { color: ${p => getColors(p.$mode).textPrimary}; }
+`;
+
+export const StyledCursorDropdownMenu = styled.div<{ $mode: ThemeMode }>`
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: ${p => getColors(p.$mode).bgSecondary};
+  border: 1px solid ${p => getColors(p.$mode).border};
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 1000;
+  min-width: 250px;
+`;
+
+export const StyledCursorDropdownItem = styled.div<{ $mode: ThemeMode }>`
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  color: ${p => getColors(p.$mode).textPrimary};
+  white-space: nowrap;
+  &:hover { background: ${p => getColors(p.$mode).bgTertiary}; }
 `;
 
 export const StyledMainContainer = styled.div`
@@ -127,32 +187,33 @@ export const StyledToolbarGroup = styled.div<{ $mode: ThemeMode }>`
   align-items: center;
   gap: 8px;
   background: ${p => getColors(p.$mode).bgPrimary};
-  padding: 6px 12px;
-  border-radius: 5px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  height: 36px;
+  box-sizing: border-box;
   
   label {
-    font-size: 11px;
+    font-size: 12px;
     color: ${p => getColors(p.$mode).textSecondary};
   }
 `;
 
 export const StyledDateInput = styled.input<{ $mode: ThemeMode }>`
-  background: ${p => getColors(p.$mode).bgTertiary};
-  border: 1px solid ${p => getColors(p.$mode).bgPrimary};
+  background: transparent;
+  border: none;
   color: ${p => getColors(p.$mode).textPrimary};
-  padding: 5px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  width: 130px;
+  padding: 4px 8px;
+  font-size: 13px;
+  width: 120px;
+  color-scheme: ${p => p.$mode === 'dark' ? 'dark' : 'light'};
   &:focus {
     outline: none;
-    border-color: ${p => getColors(p.$mode).accent};
   }
 `;
 
 export const StyledSlider = styled.input`
   width: 80px;
-  accent-color: var(--accent);
+  accent-color: #e94560;
 `;
 
 export const StyledNavButtons = styled.div`
@@ -161,17 +222,31 @@ export const StyledNavButtons = styled.div`
 `;
 
 export const StyledNavBtn = styled.button<{ $mode: ThemeMode }>`
-  background: ${p => getColors(p.$mode).bgPrimary};
-  border: 1px solid ${p => getColors(p.$mode).border};
-  color: ${p => getColors(p.$mode).textPrimary};
-  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  color: ${p => getColors(p.$mode).textSecondary};
+  padding: 4px 8px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
   &:hover {
-    background: ${p => getColors(p.$mode).accent};
-    border-color: ${p => getColors(p.$mode).accent};
-    color: white;
+    color: ${p => getColors(p.$mode).textPrimary};
+    background: ${p => getColors(p.$mode).bgTertiary};
+  }
+`;
+
+export const StyledToggleBtn = styled.button<{ $mode: ThemeMode; $active: boolean }>`
+  background: ${p => p.$active ? '#e94560' : getColors(p.$mode).bgPrimary};
+  border: none;
+  color: ${p => p.$active ? 'white' : getColors(p.$mode).textSecondary};
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  height: 36px;
+  &:hover {
+    background: ${p => p.$active ? '#d63850' : getColors(p.$mode).bgSecondary};
+    color: ${p => p.$active ? 'white' : getColors(p.$mode).textPrimary};
   }
 `;
 
@@ -245,12 +320,22 @@ export const StyledTextarea = styled.textarea<{ $mode: ThemeMode }>`
   resize: vertical;
 `;
 
+export const StyledKwBadge = styled.span<{ $mode: ThemeMode }>`
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  background: ${p => getColors(p.$mode).bgTertiary};
+  color: ${p => getColors(p.$mode).textSecondary};
+  margin-left: 8px;
+`;
+
 export const S = {
-  StyledContainer, StyledToolbar, StyledTitleGroup, StyledBoardName, StyledIconBtn,
-  StyledCursorSettings, StyledActiveUsers, StyledMainContainer, StyledSidebar,
+  StyledContainer, StyledToolbar, StyledTitleGroup, StyledToolbarRight, StyledBackBtn, StyledBoardName, StyledIconBtn,
+  StyledCursorSettings, StyledActiveUsers, StyledCursorDropdown, StyledCursorDropdownBtn,
+  StyledCursorDropdownMenu, StyledCursorDropdownItem, StyledMainContainer, StyledSidebar,
   StyledSidebarHeader, StyledBtnGroup, StyledProjectList, StyledMainContent,
   StyledChartToolbar, StyledToolbarLeft, StyledToolbarGroup, StyledDateInput,
-  StyledSlider, StyledNavButtons, StyledNavBtn, StyledGanttOuter,
+  StyledSlider, StyledNavButtons, StyledNavBtn, StyledToggleBtn, StyledGanttOuter,
   StyledDetailPanel, StyledDetailHeader, StyledDetailContent,
-  StyledFormGroup, StyledLabel, StyledInput, StyledTextarea
+  StyledFormGroup, StyledLabel, StyledInput, StyledTextarea, StyledKwBadge
 };

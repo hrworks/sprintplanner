@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { DATABASE } from '../db/database.module';
 import type { DbType } from '../db';
 import { schema } from '../db';
@@ -20,7 +20,7 @@ export class UsersService {
   }
 
   async findAll() {
-    return this.db.query.users.findMany({
+    const users = await this.db.query.users.findMany({
       columns: {
         id: true,
         email: true,
@@ -31,6 +31,18 @@ export class UsersService {
         createdAt: true,
       },
     });
+
+    const stats = await this.db.all<{ userId: string; owned: number; editor: number; viewer: number }>(sql`
+      SELECT 
+        u.id as userId,
+        (SELECT COUNT(*) FROM boards WHERE owner_id = u.id) as owned,
+        (SELECT COUNT(*) FROM board_members WHERE user_id = u.id AND role = 'editor') as editor,
+        (SELECT COUNT(*) FROM board_members WHERE user_id = u.id AND role = 'viewer') as viewer
+      FROM users u
+    `);
+
+    const statsMap = Object.fromEntries(stats.map(s => [s.userId, s]));
+    return users.map(u => ({ ...u, ...statsMap[u.id] }));
   }
 
   async inviteUser(email: string) {

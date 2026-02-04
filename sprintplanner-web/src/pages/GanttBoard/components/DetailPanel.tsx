@@ -137,7 +137,7 @@ export const DetailPanel = () => {
   };
 
   return (
-    <StyledPanel $mode={theme} $visible={showDetailPanel}>
+    <StyledPanel $mode={theme} $visible={showDetailPanel && !!phase}>
       <StyledHeader $mode={theme}>
         <h3>Phase bearbeiten</h3>
         <StyledIconBtn $mode={theme} onClick={toggleDetailPanel}>✕</StyledIconBtn>
