@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { v4 as uuid } from 'uuid';
 import { DATABASE } from '../db/database.module';
 import type { DbType } from '../db';
@@ -36,21 +36,21 @@ export class AuthService {
         user = existing;
       } else {
         const id = uuid();
+        // Check if this is the first user (make them admin)
+        const userCount = await this.db.select({ count: sql`count(*)` }).from(schema.users);
+        const isFirstUser = userCount[0]?.count === 0;
+        
         await this.db.insert(schema.users).values({ 
           id, 
           ...profile,
-          role: 'user',
-          status: 'pending',
+          role: isFirstUser ? 'admin' : 'user',
+          status: 'active', // Auto-activate all users
         });
         await this.db.insert(schema.userSettings).values({ userId: id });
         user = await this.db.query.users.findFirst({
           where: eq(schema.users.id, id),
         });
       }
-    }
-
-    if (user?.status !== 'active') {
-      throw new Error('Account not activated. Please contact an administrator.');
     }
 
     return user!;
