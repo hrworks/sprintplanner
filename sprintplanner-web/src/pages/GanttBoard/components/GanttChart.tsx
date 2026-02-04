@@ -58,13 +58,16 @@ const useStickyLabels = (ref: RefObject<HTMLDivElement>) => {
     const updateStickyLabels = () => {
       const scrollLeft = el.scrollLeft;
       const labelsWidth = 220;
+      const elRect = el.getBoundingClientRect();
       
       el.querySelectorAll<HTMLElement>('[data-phase]').forEach(bar => {
+        if (!bar) return;
         const content = bar.querySelector<HTMLElement>('[data-content]');
         if (!content) return;
         
         const barRect = bar.getBoundingClientRect();
-        const elRect = el.getBoundingClientRect();
+        if (!barRect.width) return;
+        
         // Position relative to chart area (after labels)
         const barLeft = barRect.left - elRect.left - labelsWidth + scrollLeft;
         const barWidth = barRect.width;
@@ -535,25 +538,72 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
   const barPadding = 4;
   const barHeight = rowHeight - barPadding * 2;
 
-  // Generate months for header
-  const months: { name: string; days: number; startDay: number }[] = [];
-  let current = new Date(chartStartDate);
-  while (current <= chartEndDate) {
-    const year = current.getFullYear();
-    const month = current.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const startDay = current.getDate();
-    const endOfMonth = new Date(year, month + 1, 0);
-    const lastDay = endOfMonth > chartEndDate ? chartEndDate.getDate() : daysInMonth;
-    const days = lastDay - startDay + 1;
-    
-    months.push({
-      name: current.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' }),
-      days,
-      startDay
-    });
-    
-    current = new Date(year, month + 1, 1);
+  // Determine header granularity based on zoom level
+  type HeaderMode = 'days' | 'months' | 'quarters' | 'years';
+  const headerMode: HeaderMode = dayWidth >= 3 ? 'days' : dayWidth >= 1 ? 'quarters' : 'years';
+
+  // Generate time periods for header based on mode
+  const headerPeriods: { label: string; width: number; subLabel?: string }[] = [];
+  
+  if (headerMode === 'years') {
+    let year = chartStartDate.getFullYear();
+    while (year <= chartEndDate.getFullYear()) {
+      const yearStart = new Date(Math.max(new Date(year, 0, 1).getTime(), chartStartDate.getTime()));
+      const yearEnd = new Date(Math.min(new Date(year, 11, 31).getTime(), chartEndDate.getTime()));
+      const days = Math.ceil((yearEnd.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      headerPeriods.push({ label: String(year), width: days * dayWidth });
+      year++;
+    }
+  } else if (headerMode === 'quarters') {
+    let current = new Date(chartStartDate);
+    while (current <= chartEndDate) {
+      const quarter = Math.floor(current.getMonth() / 3);
+      const quarterStart = new Date(Math.max(new Date(current.getFullYear(), quarter * 3, 1).getTime(), chartStartDate.getTime()));
+      const quarterEnd = new Date(Math.min(new Date(current.getFullYear(), quarter * 3 + 3, 0).getTime(), chartEndDate.getTime()));
+      const days = Math.ceil((quarterEnd.getTime() - quarterStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      headerPeriods.push({ label: `Q${quarter + 1}`, subLabel: String(current.getFullYear()), width: days * dayWidth });
+      current = new Date(current.getFullYear(), (quarter + 1) * 3, 1);
+    }
+  } else {
+    // months or days mode - generate months
+    let current = new Date(chartStartDate);
+    while (current <= chartEndDate) {
+      const year = current.getFullYear();
+      const month = current.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const startDay = current.getDate();
+      const endOfMonth = new Date(year, month + 1, 0);
+      const lastDay = endOfMonth > chartEndDate ? chartEndDate.getDate() : daysInMonth;
+      const days = lastDay - startDay + 1;
+      
+      headerPeriods.push({
+        label: current.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' }),
+        width: days * dayWidth,
+        subLabel: headerMode === 'days' ? `${startDay}-${lastDay}` : undefined
+      });
+      
+      current = new Date(year, month + 1, 1);
+    }
+  }
+
+  // For day cells (only in days mode)
+  const months: { name: string; days: number; startDay: number; monthIndex: number }[] = [];
+  if (headerMode === 'days') {
+    let current = new Date(chartStartDate);
+    let monthIdx = 0;
+    while (current <= chartEndDate) {
+      const year = current.getFullYear();
+      const month = current.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const startDay = current.getDate();
+      const endOfMonth = new Date(year, month + 1, 0);
+      const lastDay = endOfMonth > chartEndDate ? chartEndDate.getDate() : daysInMonth;
+      const days = lastDay - startDay + 1;
+      
+      months.push({ name: '', days, startDay, monthIndex: monthIdx });
+      current = new Date(year, month + 1, 1);
+      monthIdx++;
+    }
   }
 
   const today = new Date();
@@ -681,8 +731,8 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
       const target = document.elementFromPoint(e.clientX, e.clientY);
       const bar = target?.closest('[data-phase]') as HTMLElement;
       
-      if (bar) {
-        const toPhase = bar.dataset.phase!;
+      if (bar && bar.dataset?.phase) {
+        const toPhase = bar.dataset.phase;
         
         if (toPhase !== connectionState.fromPhase) {
           const conn = {
@@ -848,28 +898,42 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
         <StyledChart>
           {/* Header */}
           <StyledHeader $mode={theme}>
-            {months.map((month, i) => (
-              <StyledMonth key={i} $mode={theme} $width={month.days * dayWidth}>
-                <StyledMonthName $mode={theme}>{month.name}</StyledMonthName>
-                <StyledDayRow>
-                  {Array.from({ length: month.days }, (_, d) => {
-                    const day = month.startDay + d;
-                    const date = new Date(chartStartDate);
-                    date.setMonth(date.getMonth() + i);
-                    date.setDate(day);
-                    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-                    const isToday = date.getTime() === today.getTime();
-                    const showDay = dayWidth >= 25 && day % (dayWidth < 35 ? 7 : 1) === 1;
-                    
-                    return (
-                      <StyledDayCell key={d} $mode={theme} $width={dayWidth} $weekend={isWeekend} $today={isToday}>
-                        {showDay ? day : ''}
-                      </StyledDayCell>
-                    );
-                  })}
-                </StyledDayRow>
-              </StyledMonth>
-            ))}
+            {headerMode === 'days' ? (
+              // Days/Months mode - show month names with day cells
+              months.map((month, i) => (
+                <StyledMonth key={i} $mode={theme} $width={month.days * dayWidth}>
+                  <StyledMonthName $mode={theme}>{headerPeriods[i]?.label}</StyledMonthName>
+                  <StyledDayRow>
+                    {Array.from({ length: month.days }, (_, d) => {
+                      const day = month.startDay + d;
+                      const date = new Date(chartStartDate);
+                      date.setMonth(date.getMonth() + month.monthIndex);
+                      date.setDate(day);
+                      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                      const isToday = date.getTime() === today.getTime();
+                      const isMonday = date.getDay() === 1;
+                      // Show day number: always on Mondays if zoom >= 10px, every day if zoom >= 35px
+                      const showDay = dayWidth >= 35 || (dayWidth >= 10 && isMonday);
+                      
+                      return (
+                        <StyledDayCell key={d} $mode={theme} $width={dayWidth} $weekend={isWeekend} $today={isToday}>
+                          {showDay ? day : ''}
+                        </StyledDayCell>
+                      );
+                    })}
+                  </StyledDayRow>
+                </StyledMonth>
+              ))
+            ) : (
+              // Quarters/Years mode - simple labels
+              headerPeriods.map((period, i) => (
+                <StyledMonth key={i} $mode={theme} $width={period.width}>
+                  <StyledMonthName $mode={theme}>
+                    {period.label}{period.subLabel ? ` ${period.subLabel}` : ''}
+                  </StyledMonthName>
+                </StyledMonth>
+              ))
+            )}
           </StyledHeader>
 
           {/* Body */}
@@ -918,7 +982,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
                   const clampedStart = phaseStart < chartStartDate ? chartStartDate : phaseStart;
                   const clampedEnd = phaseEnd > chartEndDate ? chartEndDate : phaseEnd;
                   
-                  const leftDays = Math.ceil((clampedStart.getTime() - chartStartDate.getTime()) / (1000 * 60 * 60 * 24));
+                  const leftDays = Math.floor((clampedStart.getTime() - chartStartDate.getTime()) / (1000 * 60 * 60 * 24));
                   const lane = phaseToLane[phase._id] || 0;
                   const overlapCount = phaseOverlapCount[phase._id] || 1;
                   // Height based on how many phases this one overlaps with

@@ -51,7 +51,18 @@ export const GanttBoard = () => {
       setBoard(board.id, board.name, board.role, boardData);
       
       if (boardData.viewStart && boardData.viewEnd) {
-        setDateRange(new Date(boardData.viewStart), new Date(boardData.viewEnd));
+        // Use internal setter to avoid sending action on load
+        useGanttStore.setState({ 
+          chartStartDate: new Date(boardData.viewStart), 
+          chartEndDate: new Date(boardData.viewEnd) 
+        });
+      } else {
+        // Reset to current year for new boards (also don't send action)
+        const year = new Date().getFullYear();
+        useGanttStore.setState({ 
+          chartStartDate: new Date(year, 0, 1), 
+          chartEndDate: new Date(year, 11, 31) 
+        });
       }
     } catch {
       navigate('/dashboard');
@@ -148,13 +159,13 @@ export const GanttBoard = () => {
                 <S.StyledNavBtn $mode={theme} style={{ borderRadius: 16, padding: '4px 12px' }} onClick={scrollToToday}>Heute</S.StyledNavBtn>
                 <S.StyledNavBtn $mode={theme} onClick={() => scrollRef.current?.scrollBy({ left: -300, behavior: 'smooth' })}>‹</S.StyledNavBtn>
                 <S.StyledNavBtn $mode={theme} onClick={() => scrollRef.current?.scrollBy({ left: 300, behavior: 'smooth' })}>›</S.StyledNavBtn>
-                <S.StyledDateInput $mode={theme} type="date" value={formatDate(chartStartDate)} onChange={e => handleDateChange('start', e.target.value)} />
+                <S.StyledDateInput $mode={theme} type="date" defaultValue={formatDate(chartStartDate)} onBlur={e => handleDateChange('start', e.target.value)} />
                 <span style={{ margin: '0 4px' }}>–</span>
-                <S.StyledDateInput $mode={theme} type="date" value={formatDate(chartEndDate)} onChange={e => handleDateChange('end', e.target.value)} />
+                <S.StyledDateInput $mode={theme} type="date" defaultValue={formatDate(chartEndDate)} onBlur={e => handleDateChange('end', e.target.value)} />
               </S.StyledToolbarGroup>
               <S.StyledToolbarGroup $mode={theme}>
                 <label>Zoom:</label>
-                <S.StyledSlider type="range" min={2} max={60} value={dayWidth} onChange={e => setDayWidth(Number(e.target.value))} />
+                <S.StyledSlider type="range" min={0.5} max={60} step={0.5} value={dayWidth} onChange={e => setDayWidth(Number(e.target.value))} />
                 <span style={{ fontSize: 11, color: '#888', width: 35 }}>{dayWidth}px</span>
               </S.StyledToolbarGroup>
               <S.StyledToolbarGroup $mode={theme}>
