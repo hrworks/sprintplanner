@@ -37,6 +37,8 @@ export const Login = () => {
     }
   };
 
+  const isDev = import.meta.env.DEV;
+
   return (
     <S.StyledContainer $mode={theme}>
       <S.StyledCard $mode={theme}>
@@ -52,12 +54,16 @@ export const Login = () => {
             </svg>
             Mit Google anmelden
           </S.StyledGoogleBtn>
-          <S.StyledDevBtn $mode={theme} onClick={() => handleDevLogin('simon.franz@hrworks.de')}>
-            🔧 Dev Login (Admin)
-          </S.StyledDevBtn>
-          <S.StyledDevBtn $mode={theme} onClick={() => handleDevLogin('simon.franz+2@hrworks.de')}>
-            👤 Dev Login (User 2)
-          </S.StyledDevBtn>
+          {isDev && (
+            <>
+              <S.StyledDevBtn $mode={theme} onClick={() => handleDevLogin('simon.franz@hrworks.de')}>
+                🔧 Dev Login (Admin)
+              </S.StyledDevBtn>
+              <S.StyledDevBtn $mode={theme} onClick={() => handleDevLogin('simon.franz+2@hrworks.de')}>
+                👤 Dev Login (User 2)
+              </S.StyledDevBtn>
+            </>
+          )}
         </S.StyledButtons>
       </S.StyledCard>
     </S.StyledContainer>
