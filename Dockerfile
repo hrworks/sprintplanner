@@ -1,16 +1,16 @@
-FROM node:20-alpine AS frontend-build
+FROM oven/bun:1 AS frontend-build
 WORKDIR /app
-COPY sprintplanner-web/package*.json ./
-RUN npm ci
+COPY sprintplanner-web/package.json sprintplanner-web/bun.lock ./
+RUN bun install --frozen-lockfile
 COPY sprintplanner-web/ ./
-RUN npm run build
+RUN bun run build
 
-FROM node:20-alpine AS backend-build
+FROM oven/bun:1 AS backend-build
 WORKDIR /app
-COPY sprintplanner-api/package*.json ./
-RUN npm ci
+COPY sprintplanner-api/package.json sprintplanner-api/bun.lock ./
+RUN bun install --frozen-lockfile
 COPY sprintplanner-api/ ./
-RUN npm run build
+RUN bun run build
 
 FROM node:20-alpine AS backend
 WORKDIR /app
