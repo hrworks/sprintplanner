@@ -45,6 +45,7 @@ export class ActionsController {
     @Req() req: any,
     @Body() body: { action: BoardAction; clientId: string },
   ) {
+    console.log('Received action:', body.action.type, 'for board:', boardId);
     const role = await this.boardsService.getMemberRole(boardId, req.user.id);
     if (!role || role === 'viewer') throw new ForbiddenException();
 
@@ -54,6 +55,7 @@ export class ActionsController {
 
       const data = JSON.parse(board.data || '{"projects":[],"connections":[]}');
       const newData = applyAction(data, body.action);
+      console.log('After action, projects:', newData.projects?.length, 'connections:', newData.connections?.length);
 
       await this.boardsService.updateData(boardId, JSON.stringify(newData));
       this.boardEvents.emit(boardId, 'action', { action: body.action, clientId: body.clientId });
