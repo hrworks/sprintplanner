@@ -84,8 +84,13 @@ export const ImportBoardModal = ({ onImport, onClose }: Props) => {
     <BoardItem key={board.id}>
       <BoardHeader $mode={theme} onClick={() => toggleBoard(board)}>
         <Arrow $expanded={expandedBoard === board.id}>▶</Arrow>
-        <span>{board.name}</span>
-        {board.owner && <OwnerName $mode={theme}>{board.owner.name}</OwnerName>}
+        <BoardName>{board.name}</BoardName>
+        {board.owner && (
+          <OwnerInfo>
+            <OwnerAvatar $name={board.owner.name}>{board.owner.name.charAt(0)}</OwnerAvatar>
+            <OwnerName $mode={theme}>{board.owner.name}</OwnerName>
+          </OwnerInfo>
+        )}
       </BoardHeader>
       {expandedBoard === board.id && (
         <ProjectList>
@@ -219,7 +224,30 @@ const BoardHeader = styled.div<{ $mode: string }>`
   gap: 8px;
   color: ${p => getColors(p.$mode as 'dark' | 'light').textPrimary};
   &:hover { opacity: 0.9; }
-  & > span:first-of-type { flex: 1; }
+`;
+
+const BoardName = styled.span`
+  flex: 1;
+`;
+
+const OwnerInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const avatarColors = ['#e94560', '#6366f1', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4'];
+const OwnerAvatar = styled.div<{ $name: string }>`
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: ${p => avatarColors[p.$name.charCodeAt(0) % avatarColors.length]};
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const OwnerName = styled.span<{ $mode: string }>`
