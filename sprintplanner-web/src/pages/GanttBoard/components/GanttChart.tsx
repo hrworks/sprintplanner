@@ -49,9 +49,11 @@ const useHorizontalScroll = (ref: RefObject<HTMLDivElement>) => {
       // Ctrl+wheel = row height
       if (e.ctrlKey) {
         e.preventDefault();
-        const { rowHeight, setRowHeight } = useGanttStore.getState();
+        const { rowHeight, setRowHeight, data } = useGanttStore.getState();
         const delta = e.deltaY > 0 ? -5 : 5;
-        const newHeight = Math.max(25, Math.min(100, rowHeight + delta));
+        const projectCount = data.projects.length || 1;
+        const maxHeight = Math.floor(el.clientHeight / projectCount);
+        const newHeight = Math.max(25, Math.min(maxHeight, rowHeight + delta));
         setRowHeight(newHeight);
         return;
       }
