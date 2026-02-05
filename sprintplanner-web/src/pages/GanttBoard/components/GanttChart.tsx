@@ -5,6 +5,7 @@ import { useGanttStore, generateId } from '../store';
 import { t, ThemeMode } from '@/styles';
 import { Phase, DEFAULT_COLORS, STATUS_ICONS, STATUS_COLORS } from '../types';
 import { ConfirmModal } from './ConfirmModal';
+import { generatePhaseName } from '../utils/nameGenerator';
 
 const StyledScrollContainer = styled.div<{ $mode: ThemeMode }>`
   flex: 1;
@@ -816,7 +817,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
         
         const newPhase: Phase = {
           _id: generateId('ph'),
-          name: 'Neue Phase',
+          name: generatePhaseName(),
           subtitle: '',
           description: '',
           link: '',
@@ -829,7 +830,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
         };
         
         addPhase(createState.projectId, newPhase);
-        selectPhase(createState.projectId, newPhase._id);
+        selectPhase(createState.projectId, newPhase._id, false);
       }
     }
     

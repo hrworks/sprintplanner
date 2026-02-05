@@ -5,6 +5,7 @@ import { useStore } from '@/store';
 import { t, ThemeMode } from '@/styles';
 import { DEFAULT_COLORS, STATUS_ICONS, Project } from '../types';
 import { generateId } from '../store';
+import { generatePhaseName } from '../utils/nameGenerator';
 
 interface Props {
   project?: Project;
@@ -17,7 +18,7 @@ export const ProjectModal = ({ project, onSave, onClose }: Props) => {
   const isEdit = !!project;
   
   const [form, setForm] = useState(() => ({
-    name: project?.name || '',
+    name: project?.name || generatePhaseName(),
     category: project?.category || '',
     description: project?.description || '',
     link: project?.link || '',
@@ -49,7 +50,10 @@ export const ProjectModal = ({ project, onSave, onClose }: Props) => {
     }>
       <FormGroup>
         <Label $mode={theme}>Projektname</Label>
-        <Input $mode={theme} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="z.B. Workflow Automation" autoFocus />
+        <InputWrapper>
+          <Input $mode={theme} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="z.B. Workflow Automation" autoFocus />
+          {form.name && <ClearBtn $mode={theme} onClick={() => setForm({ ...form, name: '' })}>×</ClearBtn>}
+        </InputWrapper>
       </FormGroup>
       <FormGroup>
         <Label $mode={theme}>Kategorie</Label>
@@ -87,6 +91,26 @@ export const ProjectModal = ({ project, onSave, onClose }: Props) => {
 
 const FormGroup = styled.div`
   margin-bottom: ${t('dark').space.md};
+`;
+
+const InputWrapper = styled.div`
+  position: relative;
+`;
+
+const ClearBtn = styled.button<{ $mode: ThemeMode }>`
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: ${p => t(p.$mode).inkMuted};
+  padding: 4px;
+  line-height: 1;
+  
+  &:hover { color: ${p => t(p.$mode).ink}; }
 `;
 
 const Label = styled.label<{ $mode: ThemeMode }>`

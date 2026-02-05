@@ -38,7 +38,10 @@ export const DetailPanel = () => {
           <>
             <FormGroup>
               <Label $mode={theme}>Name</Label>
-              <Input $mode={theme} value={phase.name} onChange={e => handleChange('name', e.target.value)} disabled={boardRole === 'viewer'} />
+              <InputWrapper>
+                <Input $mode={theme} value={phase.name} onChange={e => handleChange('name', e.target.value)} disabled={boardRole === 'viewer'} />
+                {phase.name && boardRole !== 'viewer' && <ClearInputBtn $mode={theme} onClick={() => handleChange('name', '')}>×</ClearInputBtn>}
+              </InputWrapper>
             </FormGroup>
             <FormGroup>
               <Label $mode={theme}>Untertitel</Label>
@@ -147,6 +150,26 @@ const Empty = styled.p<{ $mode: ThemeMode }>`
 
 const FormGroup = styled.div`
   margin-bottom: ${t('dark').space.md};
+`;
+
+const InputWrapper = styled.div`
+  position: relative;
+`;
+
+const ClearInputBtn = styled.button<{ $mode: ThemeMode }>`
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: ${p => t(p.$mode).inkMuted};
+  padding: 4px;
+  line-height: 1;
+  
+  &:hover { color: ${p => t(p.$mode).ink}; }
 `;
 
 const Label = styled.label<{ $mode: ThemeMode }>`
