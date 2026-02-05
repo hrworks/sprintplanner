@@ -47,6 +47,26 @@ export const Title = styled.h1<{ $mode: ThemeMode }>`
   gap: ${t('dark').space.sm};
 `;
 
+export const SearchBtn = styled.button<{ $mode: ThemeMode }>`
+  display: flex;
+  align-items: center;
+  gap: ${t('dark').space.sm};
+  padding: ${t('dark').space.sm} ${t('dark').space.md};
+  background: ${p => t(p.$mode).panel};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  color: ${p => t(p.$mode).inkMuted};
+  font-size: ${t('dark').fontSize.sm};
+  cursor: pointer;
+  transition: all ${t('dark').transition.fast};
+  margin-right: ${t('dark').space.md};
+  
+  &:hover {
+    border-color: ${p => t(p.$mode).action};
+    color: ${p => t(p.$mode).ink};
+  }
+`;
+
 export const Content = styled.main`
   max-width: 1200px;
   margin: 0 auto;
@@ -80,7 +100,7 @@ export const SectionCount = styled.span<{ $mode: ThemeMode }>`
 
 export const Empty = styled.div<{ $mode: ThemeMode }>`
   color: ${p => t(p.$mode).inkMuted};
-  padding: ${t('dark').space.xxl};
+  padding: ${t('dark').space.lg};
   text-align: center;
   background: ${p => t(p.$mode).board};
   border: 1px dashed ${p => t(p.$mode).stroke};
@@ -88,8 +108,8 @@ export const Empty = styled.div<{ $mode: ThemeMode }>`
 `;
 
 export const EmptyIcon = styled.div<{ $mode: ThemeMode }>`
-  font-size: 48px;
-  margin-bottom: ${t('dark').space.md};
+  font-size: 32px;
+  margin-bottom: ${t('dark').space.sm};
   opacity: 0.3;
 `;
 
@@ -105,6 +125,14 @@ export const Grid = styled.div`
 `;
 
 // === CARD ===
+import { Link } from 'react-router-dom';
+
+export const CardLink = styled(Link)`
+  text-decoration: none;
+  color: inherit;
+  display: block;
+`;
+
 export const Card = styled.div<{ $mode: ThemeMode }>`
   background: ${p => t(p.$mode).board};
   border: 1px solid ${p => t(p.$mode).stroke};
@@ -313,36 +341,6 @@ export const MenuBtn = styled.button<{ $mode: ThemeMode }>`
   }
 `;
 
-export const MenuDropdown = styled.div<{ $mode: ThemeMode; $visible: boolean }>`
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: ${p => t(p.$mode).panel};
-  border: 1px solid ${p => t(p.$mode).stroke};
-  border-radius: ${t('dark').radius.md};
-  min-width: 140px;
-  display: ${p => p.$visible ? 'block' : 'none'};
-  z-index: 10;
-  box-shadow: ${t('dark').shadow.lg};
-  overflow: hidden;
-`;
-
-export const MenuItem = styled.button<{ $mode: ThemeMode; $danger?: boolean }>`
-  width: 100%;
-  padding: ${t('dark').space.sm} ${t('dark').space.md};
-  background: none;
-  border: none;
-  color: ${p => p.$danger ? t(p.$mode).danger : t(p.$mode).ink};
-  cursor: pointer;
-  text-align: left;
-  font-size: ${t('dark').fontSize.sm};
-  transition: background ${t('dark').transition.fast};
-  
-  &:hover {
-    background: ${p => p.$danger ? t(p.$mode).dangerMuted : t(p.$mode).actionMuted};
-  }
-`;
-
 // === FAB ===
 export const Fab = styled.button<{ $mode: ThemeMode }>`
   position: fixed;
@@ -436,12 +434,12 @@ export const SkeletonCard = styled(Skeleton)`
 
 // Export als S für Kompatibilität
 export const S = {
-  Container, Header, HeaderLeft, Nav, NavItem, Title, Content,
+  Container, Header, HeaderLeft, Nav, NavItem, Title, SearchBtn, Content,
   Section, SectionHeader, SectionTitle, SectionCount, Empty, EmptyIcon, EmptyText, Grid,
-  Card, CardHeader, CardTitle, CardDesc, CardBody, CardMeta, CardFooter,
+  CardLink, Card, CardHeader, CardTitle, CardDesc, CardBody, CardMeta, CardFooter,
   TimelinePreview, TimelineSegment, Minimap, MinimapRow, MinimapPhase, MinimapToday, CardProgress, ProgressDot,
   CardMembers, MemberOverflow, BadgeGroup, Badge,
-  Menu, MenuBtn, MenuDropdown, MenuItem,
+  Menu, MenuBtn,
   Fab, Input, Textarea,
   Skeleton, SkeletonCard,
 };
