@@ -11,9 +11,14 @@ export const StyledHeader = styled.header<{ $mode: ThemeMode }>`
   background: ${p => getColors(p.$mode).bgSecondary};
   padding: 20px 40px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid ${p => getColors(p.$mode).border};
+`;
+
+export const StyledHeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
 `;
 
 export const StyledTitle = styled.h1<{ $mode: ThemeMode }>`
@@ -125,7 +130,7 @@ export const StyledEmpty = styled.div<{ $mode: ThemeMode }>`
 `;
 
 export const S = {
-  StyledContainer, StyledHeader, StyledTitle, StyledContent,
+  StyledContainer, StyledHeader, StyledHeaderLeft, StyledTitle, StyledContent,
   StyledSection, StyledSectionHeader, StyledSectionTitle,
   StyledTable, StyledRow, StyledUserInfo, StyledUserName, StyledUserEmail,
   StyledStatus, StyledSelect, StyledRoleLabel, StyledInput, StyledEmpty, StyledBoardStats

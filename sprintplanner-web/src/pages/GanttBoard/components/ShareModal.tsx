@@ -118,6 +118,7 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
     } else {
       await api.updateBoard(boardId, { isPublic: false, allowedDomain: null });
     }
+    onUpdate?.();
   };
 
   const copyLink = () => {

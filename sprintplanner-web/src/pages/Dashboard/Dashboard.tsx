@@ -24,6 +24,11 @@ export const Dashboard = () => {
 
   useEffect(() => {
     loadBoards();
+    
+    // Reload boards when returning to dashboard
+    const handleFocus = () => loadBoards();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   const loadBoards = async () => {
@@ -98,6 +103,11 @@ export const Dashboard = () => {
     setShareModal({ boardId: board.id, boardName: board.name });
   };
 
+  const handleShareClose = () => {
+    setShareModal(null);
+    loadBoards(); // Reload to show updated sharing status
+  };
+
   const formatDate = (date: string) => new Date(date).toLocaleDateString('de-DE');
 
   const renderSection = (title: string, list: Board[], canEdit: boolean) => (
@@ -132,7 +142,10 @@ export const Dashboard = () => {
     <S.StyledContainer $mode={theme}>
       <S.StyledHeader $mode={theme}>
         <S.StyledHeaderLeft>
-          <S.StyledTitle $mode={theme}>📋 Sprint Planner</S.StyledTitle>
+          <S.StyledTitle $mode={theme}>
+            <img src="/favicon.png" alt="" style={{ width: 24, height: 24, marginRight: 8, verticalAlign: 'middle' }} />
+            Sprint Planner
+          </S.StyledTitle>
           <S.StyledNav>
             <S.StyledNavItem $mode={theme} $active>Boards</S.StyledNavItem>
             {user?.role === 'admin' && (
@@ -249,6 +262,26 @@ const BoardCard = ({ board, theme, menuOpen, canEdit, onOpen, onMenuToggle, onEd
           {board.members.slice(0, 4).map((m, i) => <Avatar key={i} name={m.name} avatarUrl={m.avatarUrl} size={24} />)}
           {board.members.length > 4 && <span style={{ fontSize: 11, color: '#888' }}>+{board.members.length - 4}</span>}
         </S.StyledCardMembers>
+      )}
+      {(board.isPublic || board.allowedDomain) && (
+        <S.StyledCardFooter>
+          {board.isPublic && (
+            <S.StyledBadge $mode={theme}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+              </svg>
+              Öffentlich (Lesezugriff)
+            </S.StyledBadge>
+          )}
+          {board.allowedDomain && (
+            <S.StyledBadge $mode={theme}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/>
+              </svg>
+              @{board.allowedDomain} (Lesezugriff)
+            </S.StyledBadge>
+          )}
+        </S.StyledCardFooter>
       )}
     </S.StyledCard>
   );

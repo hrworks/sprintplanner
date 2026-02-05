@@ -120,6 +120,25 @@ export const StyledCardMembers = styled.div`
   align-items: center;
 `;
 
+export const StyledCardFooter = styled.div`
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+`;
+
+export const StyledBadge = styled.span<{ $mode: ThemeMode }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  background: ${p => getColors(p.$mode).bgTertiary};
+  color: ${p => getColors(p.$mode).accent};
+  border: 1px solid ${p => getColors(p.$mode).border};
+`;
+
 export const StyledMenu = styled.div`
   position: relative;
 `;
@@ -207,7 +226,7 @@ export const StyledTextarea = styled.textarea<{ $mode: ThemeMode }>`
 export const S = {
   StyledContainer, StyledHeader, StyledHeaderLeft, StyledNav, StyledNavItem, StyledTitle, StyledContent,
   StyledSection, StyledSectionTitle, StyledEmpty, StyledGrid,
-  StyledCard, StyledCardHeader, StyledCardTitle, StyledCardDesc, StyledCardMeta, StyledCardMembers,
+  StyledCard, StyledCardHeader, StyledCardTitle, StyledCardDesc, StyledCardMeta, StyledCardMembers, StyledCardFooter, StyledBadge,
   StyledMenu, StyledMenuBtn, StyledMenuDropdown, StyledMenuItem,
   StyledFab, StyledInput, StyledTextarea
 };

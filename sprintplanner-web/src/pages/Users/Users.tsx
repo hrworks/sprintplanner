@@ -49,8 +49,10 @@ export const Users = () => {
   return (
     <S.StyledContainer $mode={theme}>
       <S.StyledHeader $mode={theme}>
-        <S.StyledTitle $mode={theme}>👥 Benutzerverwaltung</S.StyledTitle>
-        <Button $variant="secondary" onClick={() => navigate('/dashboard')}>← Zurück zum Dashboard</Button>
+        <S.StyledHeaderLeft>
+          <Button $variant="secondary" $size="small" onClick={() => navigate('/dashboard')}>← Dashboard</Button>
+          <S.StyledTitle $mode={theme}>Benutzerverwaltung</S.StyledTitle>
+        </S.StyledHeaderLeft>
       </S.StyledHeader>
 
       <S.StyledContent>
