@@ -29,10 +29,12 @@ if [ ! -f "$DEPLOY_DIR/sprintplanner-api/.env" ]; then
 fi
 
 # Build and start with Docker
-echo "🐳 Building and starting containers..."
+echo "🐳 Building containers..."
 cd "$DEPLOY_DIR"
-docker-compose down
-docker-compose up -d --build
+docker-compose build
+
+echo "🔄 Restarting services..."
+docker-compose up -d
 
 echo "✅ Deployment complete!"
 echo "📊 Application running at http://localhost:8080"
