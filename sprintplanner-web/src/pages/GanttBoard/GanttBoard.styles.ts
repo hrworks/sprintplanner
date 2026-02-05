@@ -35,6 +35,12 @@ export const ToolbarRight = styled.div`
   gap: ${t('dark').space.md};
 `;
 
+import { Link } from 'react-router-dom';
+
+export const BackLink = styled(Link)`
+  text-decoration: none;
+`;
+
 export const BackBtn = styled.button<{ $mode: ThemeMode }>`
   background: none;
   border: none;
@@ -56,6 +62,16 @@ export const BackBtn = styled.button<{ $mode: ThemeMode }>`
 export const BoardName = styled.span`
   font-weight: 600;
   font-size: ${t('dark').fontSize.md};
+`;
+
+export const BoardDesc = styled.span<{ $mode: ThemeMode }>`
+  font-size: ${t('dark').fontSize.sm};
+  color: ${p => t(p.$mode).inkMuted};
+  margin-left: ${t('dark').space.md};
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 export const IconBtn = styled.button<{ $mode: ThemeMode }>`
@@ -388,8 +404,10 @@ export const S = {
   StyledToolbar: Toolbar,
   StyledTitleGroup: TitleGroup,
   StyledToolbarRight: ToolbarRight,
+  StyledBackLink: BackLink,
   StyledBackBtn: BackBtn,
   StyledBoardName: BoardName,
+  StyledBoardDesc: BoardDesc,
   StyledIconBtn: IconBtn,
   StyledCursorSettings: CursorSettings,
   StyledActiveUsers: ActiveUsers,

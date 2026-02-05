@@ -23,10 +23,10 @@ export const GanttBoard = () => {
   const [boardForm, setBoardForm] = useState({ name: '', description: '' });
   
   const {
-    boardName, boardRole, selectedPhaseId, showDetailPanel,
+    boardName, boardDescription, boardRole, selectedPhaseId, showDetailPanel,
     dayWidth, rowHeight, chartStartDate, chartEndDate,
     showConnections, cursorSettings, activeUsers,
-    setBoard, setDayWidth, setRowHeight, setDateRange,
+    setBoard, setBoardDescription, setDayWidth, setRowHeight, setDateRange,
     toggleDetailPanel, toggleConnections, setCursorSettings
   } = useGanttStore();
 
@@ -49,6 +49,7 @@ export const GanttBoard = () => {
       const board = await api.getBoard(id);
       const boardData = JSON.parse(board.data || '{"projects":[],"connections":[]}');
       setBoard(board.id, board.name, board.role, boardData);
+      setBoardDescription(board.description || '');
       
       if (boardData.viewStart && boardData.viewEnd) {
         // Use internal setter to avoid sending action on load
@@ -105,13 +106,16 @@ export const GanttBoard = () => {
     <S.StyledContainer $mode={theme}>
       {/* Top Toolbar */}
       <S.StyledToolbar $mode={theme}>
-        <S.StyledBackBtn $mode={theme} onClick={() => navigate('/dashboard')}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-          </svg>
-        </S.StyledBackBtn>
+        <S.StyledBackLink to="/dashboard">
+          <S.StyledBackBtn $mode={theme} as="span">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+          </S.StyledBackBtn>
+        </S.StyledBackLink>
         <S.StyledTitleGroup>
           <S.StyledBoardName>{boardName}</S.StyledBoardName>
+          {boardDescription && <S.StyledBoardDesc $mode={theme} title={boardDescription}>{boardDescription}</S.StyledBoardDesc>}
           {boardRole !== 'viewer' && (
             <S.StyledIconBtn $mode={theme} title="Board bearbeiten" onClick={openEditBoard}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -144,7 +148,7 @@ export const GanttBoard = () => {
             {activeUsers.length > 5 && <span style={{ fontSize: 11, color: '#888' }}>+{activeUsers.length - 5}</span>}
           </S.StyledActiveUsers>
           {boardRole === 'owner' && (
-            <Button $size="small" onClick={() => setShowShare(true)}>Teilen</Button>
+            <Button onClick={() => setShowShare(true)}>Teilen</Button>
           )}
         </S.StyledToolbarRight>
         <UserMenu />
@@ -197,7 +201,7 @@ export const GanttBoard = () => {
         <DetailPanel />
       </S.StyledMainContainer>
 
-      {showShare && id && <ShareModal boardId={id} onClose={() => setShowShare(false)} />}
+      {showShare && id && <ShareModal boardId={id} boardName={boardName} onClose={() => setShowShare(false)} />}
       
       {showEditBoard && (
         <Modal title="Board bearbeiten" onClose={() => setShowEditBoard(false)} footer={

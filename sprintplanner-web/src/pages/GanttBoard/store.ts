@@ -11,6 +11,7 @@ interface GanttState {
   // Board data
   boardId: string | null;
   boardName: string;
+  boardDescription: string;
   boardRole: 'owner' | 'editor' | 'viewer' | null;
   data: BoardData;
   
@@ -35,12 +36,13 @@ interface GanttState {
   
   // Actions
   setBoard: (id: string, name: string, role: 'owner' | 'editor' | 'viewer', data: BoardData) => void;
+  setBoardDescription: (description: string) => void;
   setData: (data: BoardData) => void;
   updateData: (updater: (data: BoardData) => BoardData) => void;
   importData: (data: BoardData) => void;
   
   selectProject: (id: string | null) => void;
-  selectPhase: (projectId: string, phaseId: string) => void;
+  selectPhase: (projectId: string, phaseId: string, openPanel?: boolean) => void;
   toggleProjectExpanded: (id: string) => void;
   toggleDetailPanel: () => void;
   toggleConnections: () => void;
@@ -91,6 +93,7 @@ const generateId = (prefix = '') => {
 export const useGanttStore = create<GanttState>((set, get) => ({
   boardId: null,
   boardName: '',
+  boardDescription: '',
   boardRole: null,
   data: { projects: [], connections: [] },
   
@@ -117,13 +120,14 @@ export const useGanttStore = create<GanttState>((set, get) => ({
     const settings = savedSettings ? JSON.parse(savedSettings) : {};
     set({ 
       boardId: id, 
-      boardName: name, 
+      boardName: name,
       boardRole: role, 
       data,
       dayWidth: settings.dayWidth || 20,
       rowHeight: settings.rowHeight || 45
     });
   },
+  setBoardDescription: (description) => set({ boardDescription: description }),
   setData: (data) => set({ data }),
   updateData: (updater) => set(state => ({ data: updater(state.data) })),
   
@@ -152,7 +156,7 @@ export const useGanttStore = create<GanttState>((set, get) => ({
   },
   
   selectProject: (id) => set({ selectedProjectId: id, selectedPhaseId: null }),
-  selectPhase: (projectId, phaseId) => set({ selectedProjectId: projectId, selectedPhaseId: phaseId, showDetailPanel: true }),
+  selectPhase: (projectId, phaseId, openPanel = true) => set({ selectedProjectId: projectId, selectedPhaseId: phaseId, showDetailPanel: openPanel ? true : undefined }),
   toggleProjectExpanded: (id) => set(state => {
     const expanded = new Set(state.expandedProjects);
     expanded.has(id) ? expanded.delete(id) : expanded.add(id);
@@ -176,7 +180,7 @@ export const useGanttStore = create<GanttState>((set, get) => ({
     return { rowHeight };
   }),
   setDateRange: (chartStartDate, chartEndDate) => {
-    const formatDate = (d: Date) => d.toISOString().split('T')[0];
+    const formatDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     actionQueue.push({ type: 'setDateRange', viewStart: formatDate(chartStartDate), viewEnd: formatDate(chartEndDate) });
     set({ chartStartDate, chartEndDate });
   },
