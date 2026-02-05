@@ -103,11 +103,6 @@ export const Dashboard = () => {
     setShareModal({ boardId: board.id, boardName: board.name });
   };
 
-  const handleShareClose = () => {
-    setShareModal(null);
-    loadBoards(); // Reload to show updated sharing status
-  };
-
   const formatDate = (date: string) => new Date(date).toLocaleDateString('de-DE');
 
   const renderSection = (title: string, list: Board[], canEdit: boolean) => (
