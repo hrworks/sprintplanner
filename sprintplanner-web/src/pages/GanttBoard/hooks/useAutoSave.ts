@@ -29,7 +29,13 @@ export const useAutoSave = () => {
 
     return () => {
       clearInterval(interval);
-      flush();
+      // Flush remaining actions synchronously on unmount
+      if (actionQueue.length > 0) {
+        const actions = actionQueue.splice(0, actionQueue.length);
+        actions.forEach(action => {
+          api.sendAction(boardId, action, clientId).catch(e => console.error('Action failed:', e));
+        });
+      }
     };
   }, [boardId, boardRole]);
 };

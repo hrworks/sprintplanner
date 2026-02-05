@@ -425,7 +425,18 @@ export const Sidebar = () => {
 
       {importBoardModal && (
         <ImportBoardModal
-          onImport={(projects) => projects.forEach(p => addProject({ ...p, color: p.color || '#6366f1' }))}
+          onImport={(projects) => projects.forEach(p => {
+            const newProjectId = `p_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+            addProject({
+              ...p,
+              _id: newProjectId,
+              color: p.color || '#6366f1',
+              phases: p.phases.map(ph => ({
+                ...ph,
+                _id: `ph_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+              }))
+            });
+          })}
           onClose={() => setImportBoardModal(false)}
         />
       )}
