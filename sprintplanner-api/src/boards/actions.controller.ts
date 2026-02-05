@@ -66,6 +66,10 @@ export class ActionsController {
 }
 
 function applyAction(data: any, action: BoardAction): any {
+  // Ensure data has required arrays
+  if (!data.projects) data.projects = [];
+  if (!data.connections) data.connections = [];
+  
   switch (action.type) {
     case 'addProject':
       return { ...data, projects: [...data.projects, action.project] };
