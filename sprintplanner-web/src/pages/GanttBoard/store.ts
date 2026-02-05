@@ -131,6 +131,7 @@ export const useGanttStore = create<GanttState>((set, get) => ({
   importData: (imported: BoardData) => {
     // Queue actions for each project
     imported.projects.forEach(project => {
+      console.log('Queueing addProject:', project.name);
       actionQueue.push({ type: 'addProject', project });
     });
     imported.connections?.forEach(conn => {
@@ -139,6 +140,7 @@ export const useGanttStore = create<GanttState>((set, get) => ({
     if (imported.viewStart && imported.viewEnd) {
       actionQueue.push({ type: 'setDateRange', viewStart: imported.viewStart, viewEnd: imported.viewEnd });
     }
+    console.log('Action queue length:', actionQueue.length);
     set(state => ({
       data: {
         projects: [...state.data.projects, ...imported.projects],

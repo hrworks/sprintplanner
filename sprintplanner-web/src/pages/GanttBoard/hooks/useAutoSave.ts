@@ -14,9 +14,11 @@ export const useAutoSave = () => {
       if (actionQueue.length === 0) return;
       
       const actions = actionQueue.splice(0, actionQueue.length);
-      // console.log('Flushing actions:', actions);
+      console.log('Flushing actions:', actions.length, actions.map(a => a.type));
       actions.forEach(action => {
-        api.sendAction(boardId, action, clientId).catch(e => console.error('Action failed:', e));
+        api.sendAction(boardId, action, clientId)
+          .then(() => console.log('Action sent:', action.type))
+          .catch(e => console.error('Action failed:', action.type, e));
       });
     };
 
