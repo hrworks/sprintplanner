@@ -1,6 +1,5 @@
 import styled from '@emotion/styled';
-import { getColors } from '@/styles';
-import { ThemeMode } from '@/styles';
+import { t, ThemeMode } from '@/styles';
 
 export const StyledWrapper = styled.div`
   position: relative;
@@ -14,54 +13,56 @@ export const StyledDropdown = styled.div<{ $mode: ThemeMode; $visible: boolean }
   position: absolute;
   top: 100%;
   right: 0;
-  margin-top: 8px;
-  background: ${p => getColors(p.$mode).bgSecondary};
-  border: 1px solid ${p => getColors(p.$mode).border};
-  border-radius: 8px;
+  margin-top: ${t('dark').space.xs};
+  background: ${p => t(p.$mode).board};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
   min-width: 220px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: ${t('dark').shadow.lg};
   display: ${p => p.$visible ? 'block' : 'none'};
   z-index: 100;
+  overflow: hidden;
 `;
 
 export const StyledHeader = styled.div<{ $mode: ThemeMode }>`
-  padding: 12px;
+  padding: ${t('dark').space.md};
   display: flex;
-  gap: 12px;
+  gap: ${t('dark').space.md};
   align-items: center;
-  border-bottom: 1px solid ${p => getColors(p.$mode).border};
+  border-bottom: 1px solid ${p => t(p.$mode).stroke};
 `;
 
 export const StyledName = styled.div<{ $mode: ThemeMode }>`
   font-weight: 500;
-  color: ${p => getColors(p.$mode).textPrimary};
+  color: ${p => t(p.$mode).ink};
 `;
 
 export const StyledEmail = styled.div<{ $mode: ThemeMode }>`
-  font-size: 12px;
-  color: ${p => getColors(p.$mode).textSecondary};
+  font-size: ${t('dark').fontSize.xs};
+  color: ${p => t(p.$mode).inkMuted};
 `;
 
 export const StyledItem = styled.button<{ $mode: ThemeMode }>`
   width: 100%;
-  padding: 10px 12px;
+  padding: ${t('dark').space.sm} ${t('dark').space.md};
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: none;
   border: none;
-  color: ${p => getColors(p.$mode).textPrimary};
+  color: ${p => t(p.$mode).ink};
   cursor: pointer;
-  font-size: 14px;
+  font-size: ${t('dark').fontSize.sm};
+  transition: background ${t('dark').transition.fast};
   
   &:hover {
-    background: ${p => getColors(p.$mode).bgTertiary};
+    background: ${p => t(p.$mode).actionMuted};
   }
 `;
 
 export const StyledDivider = styled.div<{ $mode: ThemeMode }>`
   height: 1px;
-  background: ${p => getColors(p.$mode).border};
+  background: ${p => t(p.$mode).stroke};
 `;
 
 export const S = { StyledWrapper, StyledTrigger, StyledDropdown, StyledHeader, StyledName, StyledEmail, StyledItem, StyledDivider };

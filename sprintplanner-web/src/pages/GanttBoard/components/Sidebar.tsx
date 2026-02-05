@@ -8,6 +8,7 @@ import { ProjectModal } from './ProjectModal';
 import { PhaseModal } from './PhaseModal';
 import { ConfirmModal } from './ConfirmModal';
 import { ImportBoardModal } from './ImportBoardModal';
+import { DropdownMenu } from '@/components';
 
 // === SIDEBAR LAYOUT ===
 const Container = styled.div<{ $mode: ThemeMode }>`
@@ -56,7 +57,7 @@ const CreateBtn = styled.button<{ $mode: ThemeMode }>`
   &:hover { background: ${p => t(p.$mode).actionHover}; }
 `;
 
-const SplitBtn = styled.div<{ $mode: ThemeMode }>`
+const SplitBtn = styled.button<{ $mode: ThemeMode }>`
   display: flex;
   align-items: center;
   padding: ${t('dark').space.sm} ${t('dark').space.sm};
@@ -66,34 +67,14 @@ const SplitBtn = styled.div<{ $mode: ThemeMode }>`
   color: white;
   font-size: 10px;
   cursor: pointer;
-  position: relative;
   transition: background ${t('dark').transition.fast};
   
   &:hover { background: ${p => t(p.$mode).actionHover}; }
-  &:hover > div { display: block; }
-`;
-
-const DropdownContent = styled.div<{ $mode: ThemeMode }>`
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  padding-top: ${t('dark').space.xs};
-  z-index: 1000;
-  min-width: 220px;
-  
-  & > div {
-    background: ${p => t(p.$mode).board};
-    border: 1px solid ${p => t(p.$mode).stroke};
-    border-radius: ${t('dark').radius.md};
-    box-shadow: ${t('dark').shadow.lg};
-  }
 `;
 
 // === MENU DROPDOWN ===
-const MenuDropdown = styled.div`
+const MenuWrapper = styled.div`
   position: relative;
-  &:hover > div:last-child { display: block; }
 `;
 
 const MenuBtn = styled.button<{ $mode: ThemeMode }>`
@@ -112,30 +93,6 @@ const MenuBtn = styled.button<{ $mode: ThemeMode }>`
     background: ${p => t(p.$mode).panel};
     border-color: ${p => t(p.$mode).action};
   }
-`;
-
-const MenuDropdownContent = styled.div<{ $mode: ThemeMode }>`
-  display: none;
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: ${p => t(p.$mode).board};
-  border: 1px solid ${p => t(p.$mode).stroke};
-  border-radius: ${t('dark').radius.md};
-  box-shadow: ${t('dark').shadow.lg};
-  z-index: 1000;
-  min-width: 140px;
-  overflow: hidden;
-`;
-
-const MenuItem = styled.div<{ $mode: ThemeMode }>`
-  padding: ${t('dark').space.sm} ${t('dark').space.md};
-  cursor: pointer;
-  font-size: ${t('dark').fontSize.sm};
-  color: ${p => t(p.$mode).ink};
-  transition: background ${t('dark').transition.fast};
-  
-  &:hover { background: ${p => t(p.$mode).actionMuted}; }
 `;
 
 // === PROJECT LIST ===
@@ -233,7 +190,7 @@ const PhaseList = styled.div<{ $expanded: boolean }>`
   padding: ${p => p.$expanded ? t('dark').space.sm : '0'} ${p => p.$expanded ? t('dark').space.md : '0'};
   max-height: ${p => p.$expanded ? '1000px' : '0'};
   overflow: hidden;
-  transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+  transition: max-height 0.15s ease-out, padding 0.15s ease-out;
 `;
 
 const PhaseItem = styled.div<{ $mode: ThemeMode }>`
@@ -281,7 +238,7 @@ const AccordionToggle = styled.span<{ $expanded: boolean }>`
   font-size: ${t('dark').fontSize.xs};
   display: inline-block;
   transform: ${p => p.$expanded ? 'rotate(90deg)' : 'none'};
-  transition: transform 0.3s;
+  transition: transform 0.15s;
   margin-right: ${t('dark').space.xs};
 `;
 
@@ -304,6 +261,8 @@ export const Sidebar = () => {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [importBoardModal, setImportBoardModal] = useState(false);
+  const [splitMenuOpen, setSplitMenuOpen] = useState(false);
+  const [mainMenuOpen, setMainMenuOpen] = useState(false);
 
   const handleSaveProject = (project: Project) => {
     if (projectModal?.project) {
@@ -397,24 +356,33 @@ export const Sidebar = () => {
                   </svg>
                   Projekt
                 </CreateBtn>
-                <SplitBtn $mode={theme}>
+                <SplitBtn $mode={theme} onClick={() => setSplitMenuOpen(!splitMenuOpen)}>
                   ▼
-                  <DropdownContent $mode={theme}>
-                    <div>
-                      <MenuItem $mode={theme} onClick={() => setImportBoardModal(true)}>Von anderem Board importieren</MenuItem>
-                    </div>
-                  </DropdownContent>
                 </SplitBtn>
               </SplitBtnGroup>
+              {splitMenuOpen && (
+                <DropdownMenu
+                  items={[{ label: 'Von anderem Board importieren', onClick: () => setImportBoardModal(true) }]}
+                  onClose={() => setSplitMenuOpen(false)}
+                  align="left"
+                />
+              )}
             </div>
           )}
-          <MenuDropdown>
-            <MenuBtn $mode={theme}>⋮</MenuBtn>
-            <MenuDropdownContent $mode={theme}>
-              <MenuItem $mode={theme} onClick={handleExport}>Export JSON</MenuItem>
-              <MenuItem $mode={theme} onClick={() => fileInputRef.current?.click()}>Import JSON</MenuItem>
-            </MenuDropdownContent>
-          </MenuDropdown>
+          {boardRole !== 'viewer' && (
+            <MenuWrapper>
+              <MenuBtn $mode={theme} onClick={() => setMainMenuOpen(!mainMenuOpen)}>⋮</MenuBtn>
+              {mainMenuOpen && (
+                <DropdownMenu
+                  items={[
+                    { label: 'Export JSON', onClick: handleExport },
+                    { label: 'Import JSON', onClick: () => fileInputRef.current?.click() },
+                  ]}
+                  onClose={() => setMainMenuOpen(false)}
+                />
+              )}
+            </MenuWrapper>
+          )}
           <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
         </BtnGroup>
       </Header>
