@@ -41,10 +41,15 @@ export const Login = () => {
 
   return (
     <S.StyledContainer $mode={theme}>
-      <S.StyledCard $mode={theme}>
-        <S.StyledTitle $mode={theme}>📋 Sprint Planner</S.StyledTitle>
-        <S.StyledSubtitle $mode={theme}>Melde dich an, um fortzufahren</S.StyledSubtitle>
-        <S.StyledButtons>
+      <S.StyledWrapper>
+        <S.StyledBrand>
+          <S.StyledLogo src={theme === 'dark' ? '/logo_white.png' : '/logo_black.png'} alt="Sprint Planner" />
+          <S.StyledBrandName $mode={theme}>Sprint Planner</S.StyledBrandName>
+        </S.StyledBrand>
+        <S.StyledCard $mode={theme}>
+          <S.StyledTitle $mode={theme}>Willkommen</S.StyledTitle>
+          <S.StyledSubtitle $mode={theme}>Melde dich an, um fortzufahren</S.StyledSubtitle>
+          <S.StyledButtons>
           <S.StyledGoogleBtn $mode={theme} onClick={handleGoogleLogin}>
             <svg width="18" height="18" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -65,7 +70,8 @@ export const Login = () => {
             </>
           )}
         </S.StyledButtons>
-      </S.StyledCard>
+        </S.StyledCard>
+      </S.StyledWrapper>
     </S.StyledContainer>
   );
 };

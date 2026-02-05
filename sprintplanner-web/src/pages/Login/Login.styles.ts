@@ -1,73 +1,113 @@
 import styled from '@emotion/styled';
-import { getColors } from '@/styles';
-import { ThemeMode } from '@/styles';
+import { t, ThemeMode } from '@/styles';
 
-export const StyledContainer = styled.div<{ $mode: ThemeMode }>`
+export const Container = styled.div<{ $mode: ThemeMode }>`
   min-height: 100vh;
-  background: ${p => p.$mode === 'dark' 
-    ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'
-    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
+  background: ${p => t(p.$mode).canvas};
   display: flex;
   align-items: center;
   justify-content: center;
 `;
 
-export const StyledCard = styled.div<{ $mode: ThemeMode }>`
-  background: ${p => getColors(p.$mode).bgSecondary};
-  border: 1px solid ${p => getColors(p.$mode).border};
-  border-radius: 16px;
-  padding: 40px;
-  text-align: center;
-  min-width: 320px;
-`;
-
-export const StyledTitle = styled.h1<{ $mode: ThemeMode }>`
-  color: ${p => getColors(p.$mode).accent};
-  margin-bottom: 8px;
-  font-size: 2em;
-`;
-
-export const StyledSubtitle = styled.p<{ $mode: ThemeMode }>`
-  color: ${p => getColors(p.$mode).textSecondary};
-  margin-bottom: 30px;
-`;
-
-export const StyledButtons = styled.div`
+export const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  align-items: center;
 `;
 
-export const StyledGoogleBtn = styled.button<{ $mode: ThemeMode }>`
+export const Brand = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${t('dark').space.md};
+  margin-bottom: ${t('dark').space.lg};
+`;
+
+export const Logo = styled.img`
+  width: 40px;
+  height: 40px;
+`;
+
+export const BrandName = styled.span<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).ink};
+  font-size: 2.25rem;
+  font-weight: 600;
+`;
+
+export const Card = styled.div<{ $mode: ThemeMode }>`
+  background: ${p => t(p.$mode).board};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.lg};
+  padding: ${t('dark').space.xxl};
+  text-align: center;
+  min-width: 360px;
+  box-shadow: ${t('dark').shadow.lg};
+`;
+
+export const Title = styled.h1<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).ink};
+  margin: 0 0 ${t('dark').space.xs};
+  font-size: ${t('dark').fontSize.lg};
+  font-weight: 600;
+`;
+
+export const Subtitle = styled.p<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).inkMuted};
+  margin: 0 0 ${t('dark').space.lg};
+  font-size: ${t('dark').fontSize.sm};
+`;
+
+export const Buttons = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${t('dark').space.sm};
+`;
+
+export const GoogleBtn = styled.button<{ $mode: ThemeMode }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 12px 24px;
-  background: ${p => p.$mode === 'dark' ? '#2d2d2d' : 'white'};
-  color: ${p => p.$mode === 'dark' ? '#e0e0e0' : '#333'};
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
+  gap: ${t('dark').space.sm};
+  padding: ${t('dark').space.md};
+  background: ${p => t(p.$mode).panel};
+  color: ${p => t(p.$mode).ink};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  font-size: ${t('dark').fontSize.base};
   cursor: pointer;
+  transition: all ${t('dark').transition.fast};
   
   &:hover {
-    background: ${p => p.$mode === 'dark' ? '#3d3d3d' : '#f5f5f5'};
+    border-color: ${p => t(p.$mode).action};
+    background: ${p => t(p.$mode).actionMuted};
   }
 `;
 
-export const StyledDevBtn = styled.button<{ $mode: ThemeMode }>`
-  padding: 12px 24px;
-  background: ${p => getColors(p.$mode).bgTertiary};
-  color: ${p => getColors(p.$mode).textSecondary};
-  border: 1px solid ${p => getColors(p.$mode).border};
-  border-radius: 8px;
-  font-size: 14px;
+export const DevBtn = styled.button<{ $mode: ThemeMode }>`
+  padding: ${t('dark').space.md};
+  background: transparent;
+  color: ${p => t(p.$mode).inkMuted};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  font-size: ${t('dark').fontSize.sm};
   cursor: pointer;
+  transition: all ${t('dark').transition.fast};
   
   &:hover {
-    color: ${p => getColors(p.$mode).textPrimary};
+    color: ${p => t(p.$mode).ink};
+    border-color: ${p => t(p.$mode).inkMuted};
   }
 `;
 
-export const S = { StyledContainer, StyledCard, StyledTitle, StyledSubtitle, StyledButtons, StyledGoogleBtn, StyledDevBtn };
+export const S = { 
+  StyledContainer: Container,
+  StyledWrapper: Wrapper,
+  StyledBrand: Brand,
+  StyledLogo: Logo,
+  StyledBrandName: BrandName,
+  StyledCard: Card, 
+  StyledTitle: Title, 
+  StyledSubtitle: Subtitle, 
+  StyledButtons: Buttons, 
+  StyledGoogleBtn: GoogleBtn, 
+  StyledDevBtn: DevBtn 
+};
