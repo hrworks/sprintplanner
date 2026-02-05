@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { Avatar } from '@/components';
 import { useStore } from '@/store';
+import { t, ThemeMode } from '@/styles';
 import { api } from '@/api';
 
 interface Member {
@@ -51,7 +52,6 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
     if (board.owner) {
       setOwner({ name: board.owner.name, email: board.owner.email, avatarUrl: board.owner.avatarUrl });
     }
-    // Determine access mode
     if (board.isPublic) {
       setAccessMode('public');
     } else if (board.allowedDomain) {
@@ -141,7 +141,7 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
 
         {isInviteMode ? (
           <>
-            <InputRow $mode={theme}>
+            <InputRow>
               <ChipContainer $mode={theme}>
                 {pendingInvites.map(inv => (
                   <Chip key={inv.email} $mode={theme}>
@@ -179,14 +179,10 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
             />
 
             <Footer>
-              <LinkBtn $mode={theme} onClick={copyLink}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
-                </svg>
-              </LinkBtn>
+              <LinkBtn $mode={theme} onClick={copyLink}>🔗</LinkBtn>
               <FooterRight>
                 <CancelBtn $mode={theme} onClick={goBack}>Abbrechen</CancelBtn>
-                <SendBtn onClick={handleSend} disabled={pendingInvites.length === 0}>Senden</SendBtn>
+                <SendBtn $mode={theme} onClick={handleSend} disabled={pendingInvites.length === 0}>Senden</SendBtn>
               </FooterRight>
             </Footer>
           </>
@@ -199,6 +195,7 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
               value={email}
               onChange={handleEmailChange}
               onKeyDown={handleEmailKeyDown}
+              onPaste={handlePaste}
             />
 
             <Section>
@@ -236,7 +233,7 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
                         <option value="editor">Mitbearbeiter</option>
                         <option value="viewer">Betrachter</option>
                       </select>
-                      <RemoveBtn onClick={() => handleRemove(m.id)}>×</RemoveBtn>
+                      <RemoveBtn $mode={theme} onClick={() => handleRemove(m.id)}>×</RemoveBtn>
                     </MemberRole>
                   </MemberItem>
                 ))}
@@ -247,30 +244,22 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
               <SectionTitle $mode={theme}>Allgemeiner Zugriff</SectionTitle>
               <AccessWrapper>
                 <AccessRow $mode={theme} onClick={() => setShowAccessMenu(!showAccessMenu)}>
-                  <AccessIcon>
-                    {accessMode === 'public' ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                      </svg>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-                      </svg>
-                    )}
+                  <AccessIcon $mode={theme}>
+                    {accessMode === 'public' ? '🌐' : '🔒'}
                   </AccessIcon>
                   <AccessInfo>
                     <AccessTitleRow>
                       <AccessTitle $mode={theme}>
                         {accessMode === 'restricted' && 'Eingeschränkt'}
                         {accessMode === 'domain' && (allowedDomain?.split('.')[0]?.toUpperCase() || 'Domain')}
-                        {accessMode === 'public' && 'Jeder, der über den Link verfügt'}
+                        {accessMode === 'public' && 'Jeder mit dem Link'}
                       </AccessTitle>
                       <Chevron $mode={theme}>▼</Chevron>
                     </AccessTitleRow>
                     <AccessDesc $mode={theme}>
-                      {accessMode === 'restricted' && 'Nur Personen mit Zugriff können den Link öffnen'}
-                      {accessMode === 'domain' && `Jeder bei ${allowedDomain} kann dieses Board sehen`}
-                      {accessMode === 'public' && 'Jeder mit dem Link kann dieses Board sehen'}
+                      {accessMode === 'restricted' && 'Nur Personen mit Zugriff können öffnen'}
+                      {accessMode === 'domain' && `Jeder bei ${allowedDomain} kann sehen`}
+                      {accessMode === 'public' && 'Jeder mit dem Link kann sehen'}
                     </AccessDesc>
                   </AccessInfo>
                 </AccessRow>
@@ -285,7 +274,7 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
                       </AccessMenuItem>
                     )}
                     <AccessMenuItem $mode={theme} $active={accessMode === 'public'} onClick={() => handleAccessChange('public')}>
-                      <CheckMark $visible={accessMode === 'public'} />Jeder, der über den Link verfügt
+                      <CheckMark $visible={accessMode === 'public'} />Jeder mit dem Link
                     </AccessMenuItem>
                   </AccessMenu>
                 )}
@@ -294,12 +283,9 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
 
             <Footer>
               <LinkBtnText $mode={theme} onClick={copyLink}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: 6 }}>
-                  <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
-                </svg>
-                Link kopieren
+                🔗 Link kopieren
               </LinkBtnText>
-              <DoneBtn onClick={onClose}>Fertig</DoneBtn>
+              <DoneBtn $mode={theme} onClick={onClose}>Fertig</DoneBtn>
             </Footer>
           </>
         )}
@@ -308,90 +294,105 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
   );
 };
 
-const Overlay = styled.div<{ $mode: string }>`
+// === STYLES ===
+const Overlay = styled.div<{ $mode: ThemeMode }>`
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
 `;
 
-const Modal = styled.div<{ $mode: string }>`
-  background: ${p => p.$mode === 'dark' ? '#202124' : '#fff'};
-  border-radius: 8px;
-  width: 512px;
+const Modal = styled.div<{ $mode: ThemeMode }>`
+  background: ${p => t(p.$mode).board};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.lg};
+  width: 480px;
   max-height: 90vh;
-  overflow-y: visible;
-  padding: 20px 24px;
+  overflow-y: auto;
+  padding: ${t('dark').space.lg};
+  box-shadow: ${t('dark').shadow.lg};
 `;
 
-const Header = styled.div<{ $mode: string }>`
+const Header = styled.div<{ $mode: ThemeMode }>`
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: ${t('dark').space.md};
+  margin-bottom: ${t('dark').space.lg};
 `;
 
-const BackBtn = styled.button<{ $mode: string }>`
+const BackBtn = styled.button<{ $mode: ThemeMode }>`
   background: none;
   border: none;
   font-size: 20px;
   cursor: pointer;
-  color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#202124'};
-  padding: 4px 8px;
-  &:hover { background: ${p => p.$mode === 'dark' ? '#3c4043' : '#f1f3f4'}; border-radius: 4px; }
+  color: ${p => t(p.$mode).ink};
+  padding: ${t('dark').space.xs} ${t('dark').space.sm};
+  border-radius: ${t('dark').radius.sm};
+  transition: background ${t('dark').transition.fast};
+  
+  &:hover {
+    background: ${p => t(p.$mode).panel};
+  }
 `;
 
-const Title = styled.h2<{ $mode: string }>`
-  font-size: 22px;
-  font-weight: 400;
-  color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#202124'};
+const Title = styled.h2<{ $mode: ThemeMode }>`
+  font-size: ${t('dark').fontSize.lg};
+  font-weight: 600;
+  color: ${p => t(p.$mode).ink};
   margin: 0;
 `;
 
-const EmailInput = styled.input<{ $mode: string }>`
+const EmailInput = styled.input<{ $mode: ThemeMode }>`
   width: 100%;
-  padding: 14px 16px;
-  border: 1px solid ${p => p.$mode === 'dark' ? '#5f6368' : '#dadce0'};
-  border-radius: 8px;
-  background: transparent;
-  color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#202124'};
-  font-size: 14px;
-  margin-bottom: 20px;
-  box-sizing: border-box;
-  &:focus { outline: none; border-color: #1a73e8; }
-  &::placeholder { color: ${p => p.$mode === 'dark' ? '#9aa0a6' : '#5f6368'}; }
+  padding: ${t('dark').space.md};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  background: ${p => t(p.$mode).canvas};
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.base};
+  margin-bottom: ${t('dark').space.lg};
+  
+  &:focus {
+    outline: none;
+    border-color: ${p => t(p.$mode).action};
+  }
+  
+  &::placeholder {
+    color: ${p => t(p.$mode).inkFaint};
+  }
 `;
 
-const InputRow = styled.div<{ $mode: string }>`
+const InputRow = styled.div`
   display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: ${t('dark').space.md};
+  margin-bottom: ${t('dark').space.md};
 `;
 
-const ChipContainer = styled.div<{ $mode: string }>`
+const ChipContainer = styled.div<{ $mode: ThemeMode }>`
   flex: 1;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 2px solid #1a73e8;
-  border-radius: 8px;
+  gap: ${t('dark').space.sm};
+  padding: ${t('dark').space.sm};
+  border: 2px solid ${p => t(p.$mode).action};
+  border-radius: ${t('dark').radius.md};
   min-height: 44px;
   align-items: center;
 `;
 
-const Chip = styled.span<{ $mode: string }>`
+const Chip = styled.span<{ $mode: ThemeMode }>`
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: ${p => p.$mode === 'dark' ? '#3c4043' : '#e8f0fe'};
-  color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#1967d2'};
-  border-radius: 16px;
-  font-size: 13px;
+  gap: ${t('dark').space.xs};
+  padding: ${t('dark').space.xs} ${t('dark').space.sm};
+  background: ${p => t(p.$mode).actionMuted};
+  color: ${p => t(p.$mode).action};
+  border-radius: ${t('dark').radius.full};
+  font-size: ${t('dark').fontSize.sm};
 `;
 
 const ChipRemove = styled.button`
@@ -404,164 +405,183 @@ const ChipRemove = styled.button`
   line-height: 1;
 `;
 
-const ChipInput = styled.input<{ $mode: string }>`
+const ChipInput = styled.input<{ $mode: ThemeMode }>`
   flex: 1;
   min-width: 100px;
   border: none;
   background: transparent;
-  color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#202124'};
-  font-size: 14px;
-  &:focus { outline: none; }
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.base};
+  
+  &:focus {
+    outline: none;
+  }
 `;
 
-const RoleSelect = styled.select<{ $mode: string }>`
-  padding: 8px 12px;
-  border: 1px solid ${p => p.$mode === 'dark' ? '#5f6368' : '#dadce0'};
-  border-radius: 4px;
-  background: ${p => p.$mode === 'dark' ? '#202124' : '#fff'};
-  color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#202124'};
-  font-size: 14px;
+const RoleSelect = styled.select<{ $mode: ThemeMode }>`
+  padding: ${t('dark').space.sm} ${t('dark').space.md};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  background: ${p => t(p.$mode).canvas};
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.base};
   cursor: pointer;
 `;
 
-const NotifyRow = styled.label<{ $mode: string }>`
+const NotifyRow = styled.label<{ $mode: ThemeMode }>`
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#202124'};
-  font-size: 14px;
+  gap: ${t('dark').space.md};
+  margin-bottom: ${t('dark').space.md};
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.base};
   cursor: pointer;
 `;
 
 const Checkbox = styled.input`
   width: 18px;
   height: 18px;
-  accent-color: #1a73e8;
+  accent-color: #6366f1;
 `;
 
-const MessageArea = styled.textarea<{ $mode: string }>`
+const MessageArea = styled.textarea<{ $mode: ThemeMode }>`
   width: 100%;
-  padding: 12px;
-  border: 1px solid ${p => p.$mode === 'dark' ? '#5f6368' : '#dadce0'};
-  border-radius: 8px;
-  background: transparent;
-  color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#202124'};
-  font-size: 14px;
+  padding: ${t('dark').space.md};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  background: ${p => t(p.$mode).canvas};
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.base};
   resize: none;
-  box-sizing: border-box;
-  &:focus { outline: none; border-color: #1a73e8; }
-  &::placeholder { color: ${p => p.$mode === 'dark' ? '#9aa0a6' : '#5f6368'}; }
+  font-family: inherit;
+  
+  &:focus {
+    outline: none;
+    border-color: ${p => t(p.$mode).action};
+  }
+  
+  &::placeholder {
+    color: ${p => t(p.$mode).inkFaint};
+  }
 `;
 
 const Section = styled.div`
-  margin-bottom: 20px;
+  margin-bottom: ${t('dark').space.lg};
 `;
 
-const SectionTitle = styled.div<{ $mode: string }>`
-  font-size: 14px;
-  color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#202124'};
-  margin-bottom: 12px;
+const SectionTitle = styled.div<{ $mode: ThemeMode }>`
+  font-size: ${t('dark').fontSize.sm};
+  font-weight: 500;
+  color: ${p => t(p.$mode).inkMuted};
+  margin-bottom: ${t('dark').space.md};
 `;
 
 const MemberList = styled.div``;
 
-const MemberItem = styled.div<{ $mode: string }>`
+const MemberItem = styled.div<{ $mode: ThemeMode }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
+  padding: ${t('dark').space.sm} 0;
 `;
 
 const MemberInfo = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: ${t('dark').space.md};
 `;
 
 const MemberDetails = styled.div``;
 
-const MemberName = styled.div<{ $mode: string }>`
-  font-size: 14px;
-  color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#202124'};
+const MemberName = styled.div<{ $mode: ThemeMode }>`
+  font-size: ${t('dark').fontSize.base};
+  color: ${p => t(p.$mode).ink};
 `;
 
-const MemberEmail = styled.div<{ $mode: string }>`
-  font-size: 12px;
-  color: ${p => p.$mode === 'dark' ? '#9aa0a6' : '#5f6368'};
+const MemberEmail = styled.div<{ $mode: ThemeMode }>`
+  font-size: ${t('dark').fontSize.xs};
+  color: ${p => t(p.$mode).inkMuted};
 `;
 
-const RoleLabel = styled.span<{ $mode: string }>`
-  font-size: 14px;
-  color: ${p => p.$mode === 'dark' ? '#9aa0a6' : '#5f6368'};
+const RoleLabel = styled.span<{ $mode: ThemeMode }>`
+  font-size: ${t('dark').fontSize.sm};
+  color: ${p => t(p.$mode).inkMuted};
 `;
 
-const MemberRole = styled.div<{ $mode: string }>`
+const MemberRole = styled.div<{ $mode: ThemeMode }>`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: ${t('dark').space.sm};
   
   select {
     border: none;
     background: transparent;
-    color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#202124'};
-    font-size: 14px;
+    color: ${p => t(p.$mode).ink};
+    font-size: ${t('dark').fontSize.sm};
     cursor: pointer;
-    
-    option {
-      background: ${p => p.$mode === 'dark' ? '#2d2d2d' : '#fff'};
-      color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#202124'};
-    }
   }
 `;
 
-const RemoveBtn = styled.button`
+const RemoveBtn = styled.button<{ $mode: ThemeMode }>`
   background: none;
   border: none;
-  color: #ea4335;
+  color: ${p => t(p.$mode).danger};
   font-size: 18px;
   cursor: pointer;
-  padding: 4px;
-  &:hover { background: rgba(234, 67, 53, 0.1); border-radius: 4px; }
-`;
-
-const AccessRow = styled.div<{ $mode: string }>`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  &:hover { background: ${p => p.$mode === 'dark' ? '#3c4043' : '#f1f3f4'}; }
+  padding: ${t('dark').space.xs};
+  border-radius: ${t('dark').radius.sm};
+  transition: background ${t('dark').transition.fast};
+  
+  &:hover {
+    background: ${p => t(p.$mode).dangerMuted};
+  }
 `;
 
 const AccessWrapper = styled.div`
   position: relative;
 `;
 
-const AccessMenu = styled.div<{ $mode: string }>`
+const AccessRow = styled.div<{ $mode: ThemeMode }>`
+  display: flex;
+  align-items: center;
+  gap: ${t('dark').space.md};
+  padding: ${t('dark').space.sm};
+  border-radius: ${t('dark').radius.md};
+  cursor: pointer;
+  transition: background ${t('dark').transition.fast};
+  
+  &:hover {
+    background: ${p => t(p.$mode).panel};
+  }
+`;
+
+const AccessMenu = styled.div<{ $mode: ThemeMode }>`
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
-  background: ${p => p.$mode === 'dark' ? '#303134' : '#fff'};
-  border: 1px solid ${p => p.$mode === 'dark' ? '#5f6368' : '#dadce0'};
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  background: ${p => t(p.$mode).board};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  box-shadow: ${t('dark').shadow.lg};
   z-index: 1001;
-  margin-top: 4px;
+  margin-top: ${t('dark').space.xs};
   overflow: hidden;
 `;
 
-const AccessMenuItem = styled.div<{ $mode: string; $active?: boolean }>`
-  padding: 12px 16px;
+const AccessMenuItem = styled.div<{ $mode: ThemeMode; $active?: boolean }>`
+  padding: ${t('dark').space.md};
   cursor: pointer;
-  color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#202124'};
-  background: ${p => p.$active ? (p.$mode === 'dark' ? '#3c4043' : '#f1f3f4') : 'transparent'};
+  color: ${p => t(p.$mode).ink};
+  background: ${p => p.$active ? t(p.$mode).panel : 'transparent'};
   display: flex;
   align-items: center;
-  gap: 8px;
-  &:hover { background: ${p => p.$mode === 'dark' ? '#3c4043' : '#f1f3f4'}; }
+  gap: ${t('dark').space.sm};
+  transition: background ${t('dark').transition.fast};
+  
+  &:hover {
+    background: ${p => t(p.$mode).panel};
+  }
 `;
 
 const CheckMark = styled.span<{ $visible: boolean }>`
@@ -570,6 +590,7 @@ const CheckMark = styled.span<{ $visible: boolean }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  
   &::before {
     content: '';
     display: ${p => p.$visible ? 'block' : 'none'};
@@ -582,7 +603,7 @@ const CheckMark = styled.span<{ $visible: boolean }>`
   }
 `;
 
-const AccessIcon = styled.span`
+const AccessIcon = styled.span<{ $mode: ThemeMode }>`
   font-size: 20px;
 `;
 
@@ -593,90 +614,117 @@ const AccessInfo = styled.div`
 const AccessTitleRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: ${t('dark').space.xs};
 `;
 
-const AccessTitle = styled.div<{ $mode: string }>`
-  font-size: 14px;
-  color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#202124'};
+const AccessTitle = styled.div<{ $mode: ThemeMode }>`
+  font-size: ${t('dark').fontSize.base};
+  color: ${p => t(p.$mode).ink};
 `;
 
-const AccessDesc = styled.div<{ $mode: string }>`
-  font-size: 12px;
-  color: ${p => p.$mode === 'dark' ? '#9aa0a6' : '#5f6368'};
+const AccessDesc = styled.div<{ $mode: ThemeMode }>`
+  font-size: ${t('dark').fontSize.xs};
+  color: ${p => t(p.$mode).inkMuted};
 `;
 
-const Chevron = styled.span<{ $mode: string }>`
+const Chevron = styled.span<{ $mode: ThemeMode }>`
   font-size: 10px;
-  color: ${p => p.$mode === 'dark' ? '#9aa0a6' : '#5f6368'};
+  color: ${p => t(p.$mode).inkMuted};
 `;
 
 const Footer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 20px;
-  padding-top: 16px;
+  margin-top: ${t('dark').space.lg};
+  padding-top: ${t('dark').space.md};
+  border-top: 1px solid ${t('dark').stroke};
 `;
 
 const FooterRight = styled.div`
   display: flex;
-  gap: 12px;
+  gap: ${t('dark').space.md};
   align-items: center;
 `;
 
-const LinkBtn = styled.button<{ $mode: string }>`
+const LinkBtn = styled.button<{ $mode: ThemeMode }>`
   background: none;
   border: none;
   font-size: 20px;
   cursor: pointer;
-  padding: 8px;
-  &:hover { background: ${p => p.$mode === 'dark' ? '#3c4043' : '#f1f3f4'}; border-radius: 4px; }
+  padding: ${t('dark').space.sm};
+  border-radius: ${t('dark').radius.sm};
+  transition: background ${t('dark').transition.fast};
+  
+  &:hover {
+    background: ${p => t(p.$mode).panel};
+  }
 `;
 
-const LinkBtnText = styled.button<{ $mode: string }>`
+const LinkBtnText = styled.button<{ $mode: ThemeMode }>`
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: 1px solid ${p => p.$mode === 'dark' ? '#8ab4f8' : '#1a73e8'};
-  border-radius: 20px;
+  gap: ${t('dark').space.sm};
+  padding: ${t('dark').space.sm} ${t('dark').space.md};
+  border: 1px solid ${p => t(p.$mode).action};
+  border-radius: ${t('dark').radius.full};
   background: transparent;
-  color: ${p => p.$mode === 'dark' ? '#8ab4f8' : '#1a73e8'};
-  font-size: 14px;
+  color: ${p => t(p.$mode).action};
+  font-size: ${t('dark').fontSize.base};
   cursor: pointer;
-  &:hover { background: ${p => p.$mode === 'dark' ? 'rgba(138, 180, 248, 0.1)' : 'rgba(26, 115, 232, 0.1)'}; }
+  transition: background ${t('dark').transition.fast};
+  
+  &:hover {
+    background: ${p => t(p.$mode).actionMuted};
+  }
 `;
 
-const CancelBtn = styled.button<{ $mode: string }>`
+const CancelBtn = styled.button<{ $mode: ThemeMode }>`
   background: none;
   border: none;
-  color: #1a73e8;
-  font-size: 14px;
+  color: ${p => t(p.$mode).action};
+  font-size: ${t('dark').fontSize.base};
   cursor: pointer;
-  padding: 10px 16px;
-  &:hover { background: rgba(26, 115, 232, 0.1); border-radius: 4px; }
+  padding: ${t('dark').space.sm} ${t('dark').space.md};
+  border-radius: ${t('dark').radius.sm};
+  transition: background ${t('dark').transition.fast};
+  
+  &:hover {
+    background: ${p => t(p.$mode).actionMuted};
+  }
 `;
 
-const SendBtn = styled.button`
-  padding: 10px 24px;
-  background: #1a73e8;
+const SendBtn = styled.button<{ $mode: ThemeMode }>`
+  padding: ${t('dark').space.sm} ${t('dark').space.lg};
+  background: ${p => t(p.$mode).action};
   color: white;
   border: none;
-  border-radius: 20px;
-  font-size: 14px;
+  border-radius: ${t('dark').radius.full};
+  font-size: ${t('dark').fontSize.base};
   cursor: pointer;
-  &:hover { background: #1557b0; }
-  &:disabled { background: #8ab4f8; cursor: not-allowed; }
+  transition: background ${t('dark').transition.fast};
+  
+  &:hover {
+    background: ${p => t(p.$mode).actionHover};
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
-const DoneBtn = styled.button`
-  padding: 10px 24px;
-  background: #1a73e8;
+const DoneBtn = styled.button<{ $mode: ThemeMode }>`
+  padding: ${t('dark').space.sm} ${t('dark').space.lg};
+  background: ${p => t(p.$mode).action};
   color: white;
   border: none;
-  border-radius: 20px;
-  font-size: 14px;
+  border-radius: ${t('dark').radius.full};
+  font-size: ${t('dark').fontSize.base};
   cursor: pointer;
-  &:hover { background: #1557b0; }
+  transition: background ${t('dark').transition.fast};
+  
+  &:hover {
+    background: ${p => t(p.$mode).actionHover};
+  }
 `;
