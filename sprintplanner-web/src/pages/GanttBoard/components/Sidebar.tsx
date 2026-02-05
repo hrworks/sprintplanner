@@ -7,6 +7,7 @@ import { Project, STATUS_ICONS } from '../types';
 import { ProjectModal } from './ProjectModal';
 import { PhaseModal } from './PhaseModal';
 import { ConfirmModal } from './ConfirmModal';
+import { ImportBoardModal } from './ImportBoardModal';
 
 const StyledSidebar = styled.div<{ $mode: string }>`
   width: 380px;
@@ -48,6 +49,31 @@ const StyledCreateBtn = styled.button<{ $mode: string }>`
     background: #d63850;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
   }
+`;
+
+const StyledProjectDropdown = styled.div<{ $mode: string }>`
+  position: relative;
+  &:hover > div:last-child { display: block; }
+`;
+
+const StyledProjectDropdownContent = styled.div<{ $mode: string }>`
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: ${p => getColors(p.$mode as 'dark' | 'light').bgSecondary};
+  border: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').border};
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 1000;
+  min-width: 200px;
+`;
+
+const StyledDropdownArrow = styled.span`
+  font-size: 10px;
+  margin-left: 4px;
+  opacity: 0.7;
 `;
 
 const StyledMenuDropdown = styled.div<{ $mode: string }>`
@@ -214,13 +240,14 @@ export const Sidebar = () => {
   const { theme } = useStore();
   const { 
     data, selectedProjectId, expandedProjects, boardRole,
-    selectPhase, toggleProjectExpanded, addProject, updateProject, deleteProject, reorderProjects, setData, addPhase
+    selectPhase, toggleProjectExpanded, addProject, updateProject, deleteProject, reorderProjects, importData, addPhase
   } = useGanttStore();
   const dragItem = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [projectModal, setProjectModal] = useState<{ project?: Project } | null>(null);
   const [phaseModal, setPhaseModal] = useState<{ projectId: string } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ projectId: string; projectName: string } | null>(null);
+  const [importBoardModal, setImportBoardModal] = useState(false);
 
   const handleSaveProject = (project: Project) => {
     if (projectModal?.project) {
@@ -256,7 +283,7 @@ export const Sidebar = () => {
       try {
         const imported = JSON.parse(ev.target?.result as string);
         if (imported.projects) {
-          setData(imported);
+          importData(imported);
           alert(`${imported.projects.length} Projekt(e) importiert.`);
         }
       } catch (err) {
@@ -293,12 +320,19 @@ export const Sidebar = () => {
       <StyledHeader $mode={theme}>
         <StyledBtnGroup>
           {boardRole !== 'viewer' && (
-            <StyledCreateBtn $mode={theme} onClick={() => setProjectModal({})}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-              </svg>
-              Projekt
-            </StyledCreateBtn>
+            <StyledProjectDropdown $mode={theme}>
+              <StyledCreateBtn $mode={theme} onClick={() => setProjectModal({})}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Projekt
+                <StyledDropdownArrow>▼</StyledDropdownArrow>
+              </StyledCreateBtn>
+              <StyledProjectDropdownContent $mode={theme}>
+                <StyledMenuItem $mode={theme} onClick={() => setProjectModal({})}>Neues Projekt</StyledMenuItem>
+                <StyledMenuItem $mode={theme} onClick={() => setImportBoardModal(true)}>Von anderem Board importieren</StyledMenuItem>
+              </StyledProjectDropdownContent>
+            </StyledProjectDropdown>
           )}
           <StyledMenuDropdown $mode={theme}>
             <StyledMenuBtn $mode={theme}>⋮</StyledMenuBtn>
@@ -386,6 +420,13 @@ export const Sidebar = () => {
           message={`Möchtest du das Projekt "${deleteConfirm.projectName}" wirklich löschen?`}
           onConfirm={() => deleteProject(deleteConfirm.projectId)}
           onClose={() => setDeleteConfirm(null)}
+        />
+      )}
+
+      {importBoardModal && (
+        <ImportBoardModal
+          onImport={(projects) => projects.forEach(p => addProject({ ...p, color: p.color || '#6366f1' }))}
+          onClose={() => setImportBoardModal(false)}
         />
       )}
     </StyledSidebar>

@@ -37,6 +37,7 @@ interface GanttState {
   setBoard: (id: string, name: string, role: 'owner' | 'editor' | 'viewer', data: BoardData) => void;
   setData: (data: BoardData) => void;
   updateData: (updater: (data: BoardData) => BoardData) => void;
+  importData: (data: BoardData) => void;
   
   selectProject: (id: string | null) => void;
   selectPhase: (projectId: string, phaseId: string) => void;
@@ -125,6 +126,28 @@ export const useGanttStore = create<GanttState>((set, get) => ({
   },
   setData: (data) => set({ data }),
   updateData: (updater) => set(state => ({ data: updater(state.data) })),
+  
+  // Import data and sync to server
+  importData: (imported: BoardData) => {
+    // Queue actions for each project
+    imported.projects.forEach(project => {
+      actionQueue.push({ type: 'addProject', project });
+    });
+    imported.connections?.forEach(conn => {
+      actionQueue.push({ type: 'addConnection', connection: conn });
+    });
+    if (imported.viewStart && imported.viewEnd) {
+      actionQueue.push({ type: 'setDateRange', viewStart: imported.viewStart, viewEnd: imported.viewEnd });
+    }
+    set(state => ({
+      data: {
+        projects: [...state.data.projects, ...imported.projects],
+        connections: [...state.data.connections, ...(imported.connections || [])],
+        viewStart: imported.viewStart || state.data.viewStart,
+        viewEnd: imported.viewEnd || state.data.viewEnd
+      }
+    }));
+  },
   
   selectProject: (id) => set({ selectedProjectId: id, selectedPhaseId: null }),
   selectPhase: (projectId, phaseId) => set({ selectedProjectId: projectId, selectedPhaseId: phaseId, showDetailPanel: true }),
