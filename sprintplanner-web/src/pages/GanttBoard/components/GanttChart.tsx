@@ -30,7 +30,7 @@ const StyledScrollContainer = styled.div<{ $mode: string }>`
   }
 `;
 
-// Hook for horizontal scroll with mouse wheel and Shift+wheel for zoom
+// Hook for horizontal scroll with mouse wheel, Shift+wheel for zoom, Ctrl+wheel for row height
 const useHorizontalScroll = (ref: RefObject<HTMLDivElement>) => {
   useEffect(() => {
     const el = ref.current;
@@ -44,6 +44,15 @@ const useHorizontalScroll = (ref: RefObject<HTMLDivElement>) => {
         const delta = e.deltaY > 0 ? -2 : 2;
         const newWidth = Math.max(0.5, Math.min(60, dayWidth + delta));
         setDayWidth(newWidth);
+        return;
+      }
+      // Ctrl+wheel = row height
+      if (e.ctrlKey) {
+        e.preventDefault();
+        const { rowHeight, setRowHeight } = useGanttStore.getState();
+        const delta = e.deltaY > 0 ? -5 : 5;
+        const newHeight = Math.max(25, Math.min(100, rowHeight + delta));
+        setRowHeight(newHeight);
         return;
       }
       // Only horizontal scroll if no vertical scrollbar
