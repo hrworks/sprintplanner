@@ -107,6 +107,11 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
     onUpdate?.();
   };
 
+  const handleRoleChange = async (memberId: string, newRole: string) => {
+    await api.updateMemberRole(boardId, memberId, newRole);
+    loadData();
+  };
+
   const handleAccessChange = async (mode: 'restricted' | 'domain' | 'public') => {
     setAccessMode(mode);
     setShowAccessMenu(false);
@@ -121,11 +126,19 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
     onUpdate?.();
   };
 
+  const parseEmails = (text: string): string[] => {
+    const emailRegex = /[\w.-]+@[\w.-]+\.\w+/g;
+    return [...new Set(text.match(emailRegex) || [])];
+  };
+
   const handlePaste = (e: React.ClipboardEvent) => {
     const pastedText = e.clipboardData.getData('text');
-    if (pastedText.includes('@')) {
+    const emails = parseEmails(pastedText);
+    if (emails.length > 0) {
       e.preventDefault();
-      addEmailAsChip(pastedText);
+      const newInvites = emails.filter(em => !pendingInvites.find(p => p.email === em));
+      setPendingInvites([...pendingInvites, ...newInvites.map(email => ({ email }))]);
+      setEmail('');
     }
   };
 
@@ -208,7 +221,18 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
             />
 
             <Section>
-              <SectionTitle $mode={theme}>Personen mit Zugriff</SectionTitle>
+              <SectionHeader>
+                <SectionTitle $mode={theme}>Personen mit Zugriff</SectionTitle>
+                <CopyEmailsBtn $mode={theme} onClick={() => {
+                  const emails = [owner?.email, ...members.map(m => m.email)].filter(Boolean).join(', ');
+                  navigator.clipboard.writeText(emails);
+                }} title="Email-Adressen von Mitarbeitern kopieren">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" />
+                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                  </svg>
+                </CopyEmailsBtn>
+              </SectionHeader>
               <MemberList>
                 {owner && (
                   <MemberItem $mode={theme}>
@@ -238,7 +262,7 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
                       </MemberDetails>
                     </MemberInfo>
                     <MemberRole $mode={theme}>
-                      <select value={m.role} onChange={() => {}}>
+                      <select value={m.role} onChange={e => handleRoleChange(m.id, e.target.value)}>
                         <option value="editor">Mitbearbeiter</option>
                         <option value="viewer">Betrachter</option>
                       </select>
@@ -321,7 +345,7 @@ const Modal = styled.div<{ $mode: ThemeMode }>`
   border-radius: ${t('dark').radius.lg};
   width: 480px;
   max-height: 90vh;
-  overflow-y: auto;
+  overflow: visible;
   padding: ${t('dark').space.lg};
   box-shadow: ${t('dark').shadow.lg};
 `;
@@ -478,11 +502,33 @@ const Section = styled.div`
   margin-bottom: ${t('dark').space.lg};
 `;
 
+const SectionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${t('dark').space.md};
+`;
+
 const SectionTitle = styled.div<{ $mode: ThemeMode }>`
   font-size: ${t('dark').fontSize.sm};
   font-weight: 500;
   color: ${p => t(p.$mode).inkMuted};
-  margin-bottom: ${t('dark').space.md};
+`;
+
+const CopyEmailsBtn = styled.button<{ $mode: ThemeMode }>`
+  background: none;
+  border: none;
+  color: ${p => t(p.$mode).inkMuted};
+  cursor: pointer;
+  padding: ${t('dark').space.xs};
+  border-radius: ${t('dark').radius.sm};
+  display: flex;
+  align-items: center;
+  transition: color ${t('dark').transition.fast};
+  
+  &:hover {
+    color: ${p => t(p.$mode).ink};
+  }
 `;
 
 const MemberList = styled.div``;
