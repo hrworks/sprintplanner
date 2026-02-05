@@ -405,6 +405,19 @@ const StyledCategoryBadge = styled.span<{ $color: string }>`
   min-height: 12px;
 `;
 
+const StyledLockBtn = styled.button<{ $locked?: boolean }>`
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  opacity: ${p => p.$locked ? 0.9 : 0.3};
+  color: ${p => p.$locked ? '#e94560' : 'currentColor'};
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  &:hover { opacity: 1; }
+`;
+
 interface GanttChartProps {
   scrollRef: RefObject<HTMLDivElement>;
 }
@@ -415,7 +428,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
     data, dayWidth, rowHeight, chartStartDate, chartEndDate,
     selectedProjectId, selectedPhaseId, selectedPhaseIds, boardRole, showConnections, remoteSelections,
     selectProject, selectPhase, togglePhaseSelection, clearSelection,
-    updatePhase, updatePhaseLocal, addPhase, addConnection, deleteConnection, deletePhase, movePhase, movePhaseLocal,
+    updateProject, updatePhase, updatePhaseLocal, addPhase, addConnection, deleteConnection, deletePhase, movePhase, movePhaseLocal,
     syncPhases, unsyncPhase
   } = useGanttStore();
 
@@ -639,6 +652,10 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
     
     if (boardRole === 'viewer') return;
     
+    // Don't allow creating phases in locked projects
+    const project = data.projects.find(p => p._id === projectId);
+    if (project?.locked) return;
+    
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const x = e.clientX - rect.left;
     
@@ -694,10 +711,11 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
           const relY = e.clientY - rect.top;
           const targetRowIdx = Math.floor(relY / rowHeight);
           if (targetRowIdx >= 0 && targetRowIdx < data.projects.length) {
-            const targetProjectId = data.projects[targetRowIdx]._id;
-            if (targetProjectId !== dragState.projectId) {
-              movePhaseLocal(dragState.projectId, targetProjectId, dragState.phaseId);
-              setDragState(prev => prev ? { ...prev, projectId: targetProjectId } : null);
+            const targetProject = data.projects[targetRowIdx];
+            // Don't allow moving to locked projects
+            if (targetProject._id !== dragState.projectId && !targetProject.locked) {
+              movePhaseLocal(dragState.projectId, targetProject._id, dragState.phaseId);
+              setDragState(prev => prev ? { ...prev, projectId: targetProject._id } : null);
             }
           }
         }
@@ -857,6 +875,9 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
 
   const handleBarMouseDown = (e: React.MouseEvent, projectId: string, phase: Phase, mode: 'move' | 'resize-left' | 'resize-right') => {
     if (boardRole === 'viewer') return;
+    // Don't allow dragging phases in locked projects
+    const project = data.projects.find(p => p._id === projectId);
+    if (project?.locked) return;
     e.preventDefault();
     e.stopPropagation();
     
@@ -905,6 +926,21 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
               <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {STATUS_ICONS[project.status || '']} {project.name}
               </span>
+              <StyledLockBtn 
+                $locked={project.locked}
+                onClick={(e) => { e.stopPropagation(); updateProject(project._id, { locked: !project.locked }); }}
+                title={project.locked ? 'Entsperren' : 'Sperren'}
+              >
+                {project.locked ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/>
+                  </svg>
+                )}
+              </StyledLockBtn>
               <StyledCategoryBadge $color={project.color}>
                 {(project.category || '').substring(0, 3)}
               </StyledCategoryBadge>

@@ -21,6 +21,7 @@ export interface Project {
   link?: string;
   status?: '' | 'ok' | 'warning' | 'delay' | 'complete';
   color: string;
+  locked?: boolean;
   phases: Phase[];
   _fieldUpdates?: Record<string, number>;
 }
