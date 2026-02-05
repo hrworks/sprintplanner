@@ -82,7 +82,7 @@ const StyledProjectDropdownContent = styled.div<{ $mode: string }>`
   display: none;
   position: absolute;
   top: 100%;
-  right: 0;
+  left: 0;
   padding-top: 4px;
   background: transparent;
   z-index: 1000;
