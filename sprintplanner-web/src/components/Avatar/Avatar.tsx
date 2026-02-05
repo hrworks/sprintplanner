@@ -22,7 +22,7 @@ export const Avatar = ({ name, avatarUrl, size = 32 }: AvatarProps) => {
   const color = getColor(name);
   
   return (
-    <S.StyledAvatar $size={size} $color={color}>
+    <S.StyledAvatar $size={size} $color={color} title={name}>
       {avatarUrl ? <img src={avatarUrl} alt={name} /> : getInitials(name)}
     </S.StyledAvatar>
   );

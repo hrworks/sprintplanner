@@ -13,6 +13,7 @@ export const StyledAvatar = styled.div<{ $size: number; $color: string }>`
   color: white;
   flex-shrink: 0;
   overflow: hidden;
+  cursor: default;
   
   img {
     width: 100%;
