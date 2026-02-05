@@ -36,7 +36,7 @@ const StyledCreateBtn = styled.button<{ $mode: string }>`
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
-  border-radius: 8px;
+  border-radius: 8px 0 0 8px;
   border: none;
   background: #e94560;
   color: white;
@@ -49,6 +49,27 @@ const StyledCreateBtn = styled.button<{ $mode: string }>`
     background: #d63850;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
   }
+`;
+
+const StyledSplitBtn = styled.button<{ $mode: string }>`
+  display: flex;
+  align-items: center;
+  padding: 12px 10px;
+  border-radius: 0 8px 8px 0;
+  border: none;
+  border-left: 1px solid rgba(255,255,255,0.2);
+  background: #e94560;
+  color: white;
+  font-size: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+  &:hover { background: #d63850; }
+`;
+
+const StyledSplitBtnGroup = styled.div`
+  display: flex;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  border-radius: 8px;
 `;
 
 const StyledProjectDropdown = styled.div<{ $mode: string }>`
@@ -72,8 +93,7 @@ const StyledProjectDropdownContent = styled.div<{ $mode: string }>`
 
 const StyledDropdownArrow = styled.span`
   font-size: 10px;
-  margin-left: 4px;
-  opacity: 0.7;
+  opacity: 0.9;
 `;
 
 const StyledMenuDropdown = styled.div<{ $mode: string }>`
@@ -321,15 +341,18 @@ export const Sidebar = () => {
         <StyledBtnGroup>
           {boardRole !== 'viewer' && (
             <StyledProjectDropdown $mode={theme}>
-              <StyledCreateBtn $mode={theme} onClick={() => setProjectModal({})}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                </svg>
-                Projekt
-                <StyledDropdownArrow>▼</StyledDropdownArrow>
-              </StyledCreateBtn>
+              <StyledSplitBtnGroup>
+                <StyledCreateBtn $mode={theme} onClick={() => setProjectModal({})}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
+                  Projekt
+                </StyledCreateBtn>
+                <StyledSplitBtn $mode={theme}>
+                  <StyledDropdownArrow>▼</StyledDropdownArrow>
+                </StyledSplitBtn>
+              </StyledSplitBtnGroup>
               <StyledProjectDropdownContent $mode={theme}>
-                <StyledMenuItem $mode={theme} onClick={() => setProjectModal({})}>Neues Projekt</StyledMenuItem>
                 <StyledMenuItem $mode={theme} onClick={() => setImportBoardModal(true)}>Von anderem Board importieren</StyledMenuItem>
               </StyledProjectDropdownContent>
             </StyledProjectDropdown>
