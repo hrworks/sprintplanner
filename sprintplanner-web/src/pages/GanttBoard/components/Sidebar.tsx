@@ -83,14 +83,16 @@ const StyledProjectDropdownContent = styled.div<{ $mode: string }>`
   position: absolute;
   top: 100%;
   right: 0;
-  margin-top: 4px;
-  background: ${p => getColors(p.$mode as 'dark' | 'light').bgSecondary};
-  border: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').border};
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  padding-top: 4px;
+  background: transparent;
   z-index: 1000;
   min-width: 220px;
-  &:hover { display: block; }
+  & > div {
+    background: ${p => getColors(p.$mode as 'dark' | 'light').bgSecondary};
+    border: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').border};
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
 `;
 
 const StyledDropdownArrow = styled.span`
@@ -355,7 +357,9 @@ export const Sidebar = () => {
                 <StyledSplitBtn $mode={theme}>
                   <StyledDropdownArrow>▼</StyledDropdownArrow>
                   <StyledProjectDropdownContent $mode={theme}>
-                    <StyledMenuItem $mode={theme} onClick={() => setImportBoardModal(true)}>Von anderem Board importieren</StyledMenuItem>
+                    <div>
+                      <StyledMenuItem $mode={theme} onClick={() => setImportBoardModal(true)}>Von anderem Board importieren</StyledMenuItem>
+                    </div>
                   </StyledProjectDropdownContent>
                 </StyledSplitBtn>
               </StyledSplitBtnGroup>

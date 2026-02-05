@@ -965,12 +965,12 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
               const phaseEnd = parseDate(phase.end);
               
               if (phase.showStartLine && phaseStart >= chartStartDate && phaseStart <= chartEndDate) {
-                const leftDays = Math.ceil((phaseStart.getTime() - chartStartDate.getTime()) / (1000 * 60 * 60 * 24));
+                const leftDays = Math.floor((phaseStart.getTime() - chartStartDate.getTime()) / (1000 * 60 * 60 * 24));
                 lines.push(<StyledMilestoneLine key={`${phase._id}-start`} $left={leftDays * dayWidth} $color={phase.color} />);
               }
               if (phase.showEndLine && phaseEnd >= chartStartDate && phaseEnd <= chartEndDate) {
-                const leftDays = Math.ceil((phaseEnd.getTime() - chartStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-                lines.push(<StyledMilestoneLine key={`${phase._id}-end`} $left={leftDays * dayWidth} $color={phase.color} />);
+                const leftDays = Math.floor((phaseEnd.getTime() - chartStartDate.getTime()) / (1000 * 60 * 60 * 24));
+                lines.push(<StyledMilestoneLine key={`${phase._id}-end`} $left={(leftDays + 1) * dayWidth} $color={phase.color} />);
               }
               return lines;
             })}
