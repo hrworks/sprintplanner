@@ -37,23 +37,21 @@ const useHorizontalScroll = (ref: RefObject<HTMLDivElement>) => {
     if (!el) return;
     
     const handleWheel = (e: WheelEvent) => {
-      // Shift+wheel = zoom
+      // Shift+wheel = zoom (min 0.5, max 60, step 1)
       if (e.shiftKey) {
         e.preventDefault();
         const { dayWidth, setDayWidth } = useGanttStore.getState();
-        const delta = e.deltaY > 0 ? -2 : 2;
+        const delta = e.deltaY > 0 ? -1 : 1;
         const newWidth = Math.max(0.5, Math.min(60, dayWidth + delta));
         setDayWidth(newWidth);
         return;
       }
-      // Ctrl+wheel = row height
+      // Ctrl+wheel = row height (min 45, max 135)
       if (e.ctrlKey) {
         e.preventDefault();
-        const { rowHeight, setRowHeight, data } = useGanttStore.getState();
+        const { rowHeight, setRowHeight } = useGanttStore.getState();
         const delta = e.deltaY > 0 ? -5 : 5;
-        const projectCount = data.projects.length || 1;
-        const maxHeight = Math.floor(el.clientHeight / projectCount);
-        const newHeight = Math.max(25, Math.min(maxHeight, rowHeight + delta));
+        const newHeight = Math.max(45, Math.min(135, rowHeight + delta));
         setRowHeight(newHeight);
         return;
       }
