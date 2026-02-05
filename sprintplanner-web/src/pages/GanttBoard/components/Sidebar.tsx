@@ -51,7 +51,7 @@ const StyledCreateBtn = styled.button<{ $mode: string }>`
   }
 `;
 
-const StyledSplitBtn = styled.button<{ $mode: string }>`
+const StyledSplitBtn = styled.div<{ $mode: string }>`
   display: flex;
   align-items: center;
   padding: 12px 10px;
@@ -62,8 +62,10 @@ const StyledSplitBtn = styled.button<{ $mode: string }>`
   color: white;
   font-size: 10px;
   cursor: pointer;
+  position: relative;
   transition: background 0.2s;
   &:hover { background: #d63850; }
+  &:hover > div { display: block; }
 `;
 
 const StyledSplitBtnGroup = styled.div`
@@ -74,7 +76,6 @@ const StyledSplitBtnGroup = styled.div`
 
 const StyledProjectDropdown = styled.div<{ $mode: string }>`
   position: relative;
-  &:hover > div:last-child { display: block; }
 `;
 
 const StyledProjectDropdownContent = styled.div<{ $mode: string }>`
@@ -350,11 +351,11 @@ export const Sidebar = () => {
                 </StyledCreateBtn>
                 <StyledSplitBtn $mode={theme}>
                   <StyledDropdownArrow>▼</StyledDropdownArrow>
+                  <StyledProjectDropdownContent $mode={theme}>
+                    <StyledMenuItem $mode={theme} onClick={() => setImportBoardModal(true)}>Von anderem Board importieren</StyledMenuItem>
+                  </StyledProjectDropdownContent>
                 </StyledSplitBtn>
               </StyledSplitBtnGroup>
-              <StyledProjectDropdownContent $mode={theme}>
-                <StyledMenuItem $mode={theme} onClick={() => setImportBoardModal(true)}>Von anderem Board importieren</StyledMenuItem>
-              </StyledProjectDropdownContent>
             </StyledProjectDropdown>
           )}
           <StyledMenuDropdown $mode={theme}>
