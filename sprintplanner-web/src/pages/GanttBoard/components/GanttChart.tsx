@@ -3,7 +3,7 @@ import { RefObject, useState, useCallback, useEffect, useMemo } from 'react';
 import { useStore } from '@/store';
 import { useGanttStore, generateId } from '../store';
 import { getColors } from '@/styles';
-import { Phase, DEFAULT_COLORS, STATUS_ICONS } from '../types';
+import { Phase, DEFAULT_COLORS, STATUS_ICONS, STATUS_COLORS } from '../types';
 import { ConfirmModal } from './ConfirmModal';
 
 const StyledScrollContainer = styled.div<{ $mode: string }>`
@@ -923,8 +923,9 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
               $height={rowHeight}
               onClick={() => selectProject(project._id)}
             >
-              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {STATUS_ICONS[project.status || '']} {project.name}
+              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}>
+                {project.status && <span style={{ color: STATUS_COLORS[project.status] }}>{STATUS_ICONS[project.status]}</span>}
+                {project.name}
               </span>
               <StyledLockBtn 
                 $locked={project.locked}

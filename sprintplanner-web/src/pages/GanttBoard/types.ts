@@ -66,9 +66,17 @@ export const DEFAULT_COLORS = [
 ];
 
 export const STATUS_ICONS: Record<string, string> = {
-  'ok': '✅',
-  'warning': '⚠️',
-  'delay': '🔴',
-  'complete': '🏁',
+  'ok': '✓',
+  'warning': '⚠',
+  'delay': '●',
+  'complete': '⚑',
   '': ''
+};
+
+export const STATUS_COLORS: Record<string, string> = {
+  'ok': '#10b981',
+  'warning': '#f59e0b',
+  'delay': '#ef4444',
+  'complete': '#6366f1',
+  '': 'transparent'
 };

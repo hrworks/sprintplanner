@@ -262,15 +262,15 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
                 {showAccessMenu && (
                   <AccessMenu $mode={theme}>
                     <AccessMenuItem $mode={theme} $active={accessMode === 'restricted'} onClick={() => handleAccessChange('restricted')}>
-                      {accessMode === 'restricted' && '✓ '}Eingeschränkt
+                      <CheckMark $visible={accessMode === 'restricted'} />Eingeschränkt
                     </AccessMenuItem>
                     {ownerDomain && (
                       <AccessMenuItem $mode={theme} $active={accessMode === 'domain'} onClick={() => handleAccessChange('domain')}>
-                        {accessMode === 'domain' && '✓ '}{ownerDomain.split('.')[0].toUpperCase()}
+                        <CheckMark $visible={accessMode === 'domain'} />{ownerDomain.split('.')[0].toUpperCase()}
                       </AccessMenuItem>
                     )}
                     <AccessMenuItem $mode={theme} $active={accessMode === 'public'} onClick={() => handleAccessChange('public')}>
-                      {accessMode === 'public' && '✓ '}Jeder, der über den Link verfügt
+                      <CheckMark $visible={accessMode === 'public'} />Jeder, der über den Link verfügt
                     </AccessMenuItem>
                   </AccessMenu>
                 )}
@@ -540,7 +540,28 @@ const AccessMenuItem = styled.div<{ $mode: string; $active?: boolean }>`
   cursor: pointer;
   color: ${p => p.$mode === 'dark' ? '#e8eaed' : '#202124'};
   background: ${p => p.$active ? (p.$mode === 'dark' ? '#3c4043' : '#f1f3f4') : 'transparent'};
+  display: flex;
+  align-items: center;
+  gap: 8px;
   &:hover { background: ${p => p.$mode === 'dark' ? '#3c4043' : '#f1f3f4'}; }
+`;
+
+const CheckMark = styled.span<{ $visible: boolean }>`
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  &::before {
+    content: '';
+    display: ${p => p.$visible ? 'block' : 'none'};
+    width: 10px;
+    height: 6px;
+    border-left: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg);
+    margin-bottom: 2px;
+  }
 `;
 
 const AccessIcon = styled.span`

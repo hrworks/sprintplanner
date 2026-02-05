@@ -119,7 +119,28 @@ export const StyledCursorDropdownItem = styled.div<{ $mode: ThemeMode }>`
   font-size: 13px;
   color: ${p => getColors(p.$mode).textPrimary};
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   &:hover { background: ${p => getColors(p.$mode).bgTertiary}; }
+`;
+
+export const StyledCheckIcon = styled.span<{ $visible: boolean }>`
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  &::before {
+    content: '';
+    display: ${p => p.$visible ? 'block' : 'none'};
+    width: 10px;
+    height: 6px;
+    border-left: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg);
+    margin-bottom: 2px;
+  }
 `;
 
 export const StyledMainContainer = styled.div`
@@ -332,7 +353,7 @@ export const StyledKwBadge = styled.span<{ $mode: ThemeMode }>`
 export const S = {
   StyledContainer, StyledToolbar, StyledTitleGroup, StyledToolbarRight, StyledBackBtn, StyledBoardName, StyledIconBtn,
   StyledCursorSettings, StyledActiveUsers, StyledCursorDropdown, StyledCursorDropdownBtn,
-  StyledCursorDropdownMenu, StyledCursorDropdownItem, StyledMainContainer, StyledSidebar,
+  StyledCursorDropdownMenu, StyledCursorDropdownItem, StyledCheckIcon, StyledMainContainer, StyledSidebar,
   StyledSidebarHeader, StyledBtnGroup, StyledProjectList, StyledMainContent,
   StyledChartToolbar, StyledToolbarLeft, StyledToolbarGroup, StyledDateInput,
   StyledSlider, StyledNavButtons, StyledNavBtn, StyledToggleBtn, StyledGanttOuter,
