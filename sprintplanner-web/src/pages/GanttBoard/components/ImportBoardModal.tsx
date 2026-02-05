@@ -9,6 +9,7 @@ interface Board {
   id: string;
   name: string;
   data?: string;
+  owner?: { name: string; email: string };
 }
 
 interface Project {
@@ -25,7 +26,8 @@ interface Props {
 
 export const ImportBoardModal = ({ onImport, onClose }: Props) => {
   const { theme } = useStore();
-  const [boards, setBoards] = useState<Board[]>([]);
+  const [ownedBoards, setOwnedBoards] = useState<Board[]>([]);
+  const [sharedBoards, setSharedBoards] = useState<Board[]>([]);
   const [expandedBoard, setExpandedBoard] = useState<string | null>(null);
   const [selectedProjects, setSelectedProjects] = useState<Map<string, Project>>(new Map());
   const [boardProjects, setBoardProjects] = useState<Map<string, Project[]>>(new Map());
@@ -36,8 +38,8 @@ export const ImportBoardModal = ({ onImport, onClose }: Props) => {
 
   const loadBoards = async () => {
     const data = await api.getBoards();
-    const allBoards = [...(data.owned || []), ...(data.shared || [])];
-    setBoards(allBoards);
+    setOwnedBoards(data.owned || []);
+    setSharedBoards(data.shared || []);
   };
 
   const toggleBoard = async (board: Board) => {
@@ -78,6 +80,35 @@ export const ImportBoardModal = ({ onImport, onClose }: Props) => {
     onClose();
   };
 
+  const renderBoard = (board: Board) => (
+    <BoardItem key={board.id}>
+      <BoardHeader $mode={theme} onClick={() => toggleBoard(board)}>
+        <Arrow $expanded={expandedBoard === board.id}>▶</Arrow>
+        <span>{board.name}</span>
+        {board.owner && <OwnerName $mode={theme}>{board.owner.name}</OwnerName>}
+      </BoardHeader>
+      {expandedBoard === board.id && (
+        <ProjectList>
+          {(boardProjects.get(board.id) || []).map(project => (
+            <ProjectItem 
+              key={project._id} 
+              $mode={theme}
+              $selected={selectedProjects.has(project._id)}
+              onClick={() => toggleProject(project)}
+            >
+              <Checkbox type="checkbox" checked={selectedProjects.has(project._id)} readOnly />
+              <span>{project.name}</span>
+              <PhaseCount $mode={theme}>{project.phases.length} Phasen</PhaseCount>
+            </ProjectItem>
+          ))}
+          {(boardProjects.get(board.id) || []).length === 0 && (
+            <Empty $mode={theme}>Keine Projekte</Empty>
+          )}
+        </ProjectList>
+      )}
+    </BoardItem>
+  );
+
   return (
     <Overlay onClick={onClose}>
       <Modal $mode={theme} onClick={e => e.stopPropagation()}>
@@ -86,36 +117,23 @@ export const ImportBoardModal = ({ onImport, onClose }: Props) => {
           <CloseBtn onClick={onClose}>×</CloseBtn>
         </Header>
         <Content>
-          {boards.length === 0 ? (
+          {ownedBoards.length === 0 && sharedBoards.length === 0 ? (
             <Empty $mode={theme}>Keine Boards verfügbar</Empty>
           ) : (
-            boards.map(board => (
-              <BoardItem key={board.id}>
-                <BoardHeader $mode={theme} onClick={() => toggleBoard(board)}>
-                  <Arrow $expanded={expandedBoard === board.id}>▶</Arrow>
-                  {board.name}
-                </BoardHeader>
-                {expandedBoard === board.id && (
-                  <ProjectList>
-                    {(boardProjects.get(board.id) || []).map(project => (
-                      <ProjectItem 
-                        key={project._id} 
-                        $mode={theme}
-                        $selected={selectedProjects.has(project._id)}
-                        onClick={() => toggleProject(project)}
-                      >
-                        <Checkbox type="checkbox" checked={selectedProjects.has(project._id)} readOnly />
-                        <span>{project.name}</span>
-                        <PhaseCount $mode={theme}>{project.phases.length} Phasen</PhaseCount>
-                      </ProjectItem>
-                    ))}
-                    {(boardProjects.get(board.id) || []).length === 0 && (
-                      <Empty $mode={theme}>Keine Projekte</Empty>
-                    )}
-                  </ProjectList>
-                )}
-              </BoardItem>
-            ))
+            <>
+              {ownedBoards.length > 0 && (
+                <Section>
+                  <SectionTitle $mode={theme}>Meine Boards</SectionTitle>
+                  {ownedBoards.map(renderBoard)}
+                </Section>
+              )}
+              {sharedBoards.length > 0 && (
+                <Section>
+                  <SectionTitle $mode={theme}>Geteilte Boards</SectionTitle>
+                  {sharedBoards.map(renderBoard)}
+                </Section>
+              )}
+            </>
           )}
         </Content>
         <Footer>
@@ -174,6 +192,19 @@ const Content = styled.div`
   padding: 12px;
 `;
 
+const Section = styled.div`
+  margin-bottom: 16px;
+`;
+
+const SectionTitle = styled.div<{ $mode: string }>`
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: ${p => getColors(p.$mode as 'dark' | 'light').textSecondary};
+  margin-bottom: 8px;
+  padding-left: 4px;
+`;
+
 const BoardItem = styled.div`
   margin-bottom: 8px;
 `;
@@ -188,6 +219,12 @@ const BoardHeader = styled.div<{ $mode: string }>`
   gap: 8px;
   color: ${p => getColors(p.$mode as 'dark' | 'light').textPrimary};
   &:hover { opacity: 0.9; }
+  & > span:first-of-type { flex: 1; }
+`;
+
+const OwnerName = styled.span<{ $mode: string }>`
+  font-size: 12px;
+  color: ${p => getColors(p.$mode as 'dark' | 'light').textSecondary};
 `;
 
 const Arrow = styled.span<{ $expanded: boolean }>`
