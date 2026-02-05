@@ -152,7 +152,20 @@ const StyledProjectItem = styled.div<{ $mode: string; $selected: boolean; $dragg
   margin-bottom: 10px;
   overflow: hidden;
   opacity: ${p => p.$dragging ? 0.5 : 1};
+  position: relative;
   &:hover { border-color: ${p => getColors(p.$mode as 'dark' | 'light').accent}; }
+`;
+
+const StyledDropIndicator = styled.div<{ $mode: string }>`
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -6px;
+  height: 3px;
+  background: ${p => getColors(p.$mode as 'dark' | 'light').accent};
+  border-radius: 2px;
+  z-index: 10;
+  box-shadow: 0 0 8px ${p => getColors(p.$mode as 'dark' | 'light').accent};
 `;
 
 const StyledProjectHeader = styled.div<{ $mode: string }>`
@@ -273,6 +286,8 @@ export const Sidebar = () => {
   const [projectModal, setProjectModal] = useState<{ project?: Project } | null>(null);
   const [phaseModal, setPhaseModal] = useState<{ projectId: string } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ projectId: string; projectName: string } | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [importBoardModal, setImportBoardModal] = useState(false);
 
   const handleSaveProject = (project: Project) => {
@@ -320,20 +335,35 @@ export const Sidebar = () => {
     e.target.value = '';
   };
 
-  const handleDragStart = (index: number) => {
+  const handleDragStart = (e: React.DragEvent, index: number) => {
     dragItem.current = index;
+    setDraggedIndex(index);
+    
+    // Set custom drag image to only show the dragged item
+    const target = e.currentTarget as HTMLElement;
+    const clone = target.cloneNode(true) as HTMLElement;
+    clone.style.position = 'absolute';
+    clone.style.top = '-9999px';
+    clone.style.width = target.offsetWidth + 'px';
+    document.body.appendChild(clone);
+    e.dataTransfer.setDragImage(clone, 0, 0);
+    setTimeout(() => document.body.removeChild(clone), 0);
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
+    setDropTargetIndex(index);
     if (dragItem.current !== null && dragItem.current !== index) {
       reorderProjects(dragItem.current, index);
       dragItem.current = index;
+      setDraggedIndex(index);
     }
   };
 
   const handleDragEnd = () => {
     dragItem.current = null;
+    setDraggedIndex(null);
+    setDropTargetIndex(null);
   };
 
   const sortedProjects = data.projects.map(p => ({
@@ -379,17 +409,21 @@ export const Sidebar = () => {
         {sortedProjects.map((project, index) => {
           const isExpanded = expandedProjects.has(project._id);
           const isSelected = selectedProjectId === project._id;
+          const isDragging = draggedIndex === index;
+          const showDropIndicator = dropTargetIndex === index && draggedIndex !== null && draggedIndex !== index;
           
           return (
             <StyledProjectItem
               key={project._id}
               $mode={theme}
               $selected={isSelected}
+              $dragging={isDragging}
               draggable
-              onDragStart={() => handleDragStart(index)}
+              onDragStart={(e) => handleDragStart(e, index)}
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
             >
+              {showDropIndicator && <StyledDropIndicator $mode={theme} />}
               <StyledProjectHeader $mode={theme} onClick={() => toggleProjectExpanded(project._id)}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   <StyledDragHandle $mode={theme} onMouseDown={e => e.stopPropagation()}>⋮⋮</StyledDragHandle>
