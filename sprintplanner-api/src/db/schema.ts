@@ -6,7 +6,7 @@ export const users = sqliteTable('users', {
   name: text('name'),
   avatarUrl: text('avatar_url'),
   googleId: text('google_id').unique(),
-  role: text('role', { enum: ['admin', 'user'] }).notNull().default('user'),
+  role: text('role', { enum: ['admin', 'user', 'viewer'] }).notNull().default('user'),
   status: text('status', { enum: ['pending', 'active'] }).notNull().default('pending'),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });

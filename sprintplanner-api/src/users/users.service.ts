@@ -72,7 +72,7 @@ export class UsersService {
     return { message: 'User deleted' };
   }
 
-  async updateRole(id: string, role: 'admin' | 'user') {
+  async updateRole(id: string, role: 'admin' | 'user' | 'viewer') {
     await this.db.update(schema.users).set({ role }).where(eq(schema.users.id, id));
     return this.findById(id);
   }

@@ -18,6 +18,7 @@ export class BoardsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   create(@Req() req: any, @Body('name') name: string) {
+    if (req.user.role === 'viewer') throw new ForbiddenException('Viewers cannot create boards');
     return this.boardsService.create(req.user.id, name || 'Neues Board');
   }
 

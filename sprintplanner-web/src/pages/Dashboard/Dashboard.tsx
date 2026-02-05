@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { S } from './Dashboard.styles';
-import { Button, Modal, Avatar, UserMenu } from '@/components';
+import { Button, Modal, Avatar, UserMenu, DropdownMenu } from '@/components';
 import { useStore } from '@/store';
 import { api } from '@/api';
 import { Board } from '@/api/types';
 import { ShareModal } from '../GanttBoard/components/ShareModal';
+import { SearchModal } from './SearchModal';
 import type { BoardData, Phase } from '../GanttBoard/types';
 
 interface BoardGroups {
@@ -92,6 +93,7 @@ export const Dashboard = () => {
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [modal, setModal] = useState<{ type: 'create' | 'edit' | 'delete' | 'duplicate'; board?: Board } | null>(null);
   const [shareModal, setShareModal] = useState<{ boardId: string; boardName: string } | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
   const [form, setForm] = useState({ name: '', description: '' });
 
   useEffect(() => {
@@ -118,7 +120,7 @@ export const Dashboard = () => {
   };
 
   const openBoard = (id: string) => {
-    window.location.href = `/gantt/${id}`;
+    navigate(`/gantt/${id}`);
   };
 
   const handleCreate = async () => {
@@ -176,7 +178,7 @@ export const Dashboard = () => {
     setShareModal({ boardId: board.id, boardName: board.name });
   };
 
-  const formatDate = (date: string) => new Date(date).toLocaleDateString('de-DE');
+  const formatDate = (date: string) => new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   const renderSection = (title: string, list: Board[], canEdit: boolean) => {
     const isEmpty = list.length === 0 && !loading;
@@ -199,7 +201,7 @@ export const Dashboard = () => {
             <S.EmptyText $mode={theme}>
               {isOwned ? 'Noch keine Boards erstellt' : 'Keine Boards in dieser Kategorie'}
             </S.EmptyText>
-            {isOwned && (
+            {isOwned && user?.role !== 'viewer' && (
               <Button onClick={openCreateModal}>Erstes Board erstellen</Button>
             )}
           </S.Empty>
@@ -212,7 +214,6 @@ export const Dashboard = () => {
                 theme={theme}
                 menuOpen={menuOpen === board.id}
                 canEdit={canEdit}
-                onOpen={() => openBoard(board.id)}
                 onMenuToggle={() => setMenuOpen(menuOpen === board.id ? null : board.id)}
                 onEdit={() => openEditModal(board)}
                 onDuplicate={() => openDuplicateModal(board)}
@@ -233,7 +234,7 @@ export const Dashboard = () => {
       <S.Header $mode={theme}>
         <S.HeaderLeft>
           <S.Title $mode={theme}>
-            <img src="/favicon.png" alt="" style={{ width: 24, height: 24 }} />
+            <img src={theme === 'dark' ? '/logo_white.png' : '/logo_black.png'} alt="" style={{ width: 24, height: 24 }} />
             Sprint Planner
           </S.Title>
           <S.Nav>
@@ -243,6 +244,13 @@ export const Dashboard = () => {
             )}
           </S.Nav>
         </S.HeaderLeft>
+        <S.SearchBtn $mode={theme} onClick={() => setShowSearch(true)}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
+          </svg>
+          Suchen
+        </S.SearchBtn>
         <UserMenu />
       </S.Header>
 
@@ -252,13 +260,15 @@ export const Dashboard = () => {
         {renderSection('Öffentliche Boards', boards.public, false)}
       </S.Content>
 
-      <S.Fab $mode={theme} onClick={openCreateModal}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        Neues Board
-      </S.Fab>
+      {user?.role !== 'viewer' && (
+        <S.Fab $mode={theme} onClick={openCreateModal}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Neues Board
+        </S.Fab>
+      )}
 
       {modal?.type === 'create' && (
         <Modal title="Neues Board" onClose={() => setModal(null)} footer={
@@ -314,6 +324,13 @@ export const Dashboard = () => {
           onUpdate={loadBoards}
         />
       )}
+
+      {showSearch && (
+        <SearchModal
+          onClose={() => setShowSearch(false)}
+          onNavigate={(boardId) => openBoard(boardId)}
+        />
+      )}
     </S.Container>
   );
 };
@@ -323,7 +340,6 @@ interface BoardCardProps {
   theme: 'dark' | 'light';
   menuOpen: boolean;
   canEdit: boolean;
-  onOpen: () => void;
   onMenuToggle: () => void;
   onEdit: () => void;
   onDuplicate: () => void;
@@ -333,30 +349,35 @@ interface BoardCardProps {
   minimap: MinimapData | null;
 }
 
-const BoardCard = ({ board, theme, menuOpen, canEdit, onOpen, onMenuToggle, onEdit, onDuplicate, onShare, onDelete, formatDate, minimap }: BoardCardProps) => {
-  const menuRef = useRef<HTMLDivElement>(null);
+const BoardCard = ({ board, theme, menuOpen, canEdit, onMenuToggle, onEdit, onDuplicate, onShare, onDelete, formatDate, minimap }: BoardCardProps) => {
   const hasMembers = board.members && board.members.length > 0;
   const hasBadges = board.isPublic || board.allowedDomain;
 
   return (
-    <S.Card $mode={theme} onClick={onOpen}>
-      <S.CardHeader>
-        <div>
-          <S.CardTitle $mode={theme}>{board.name}</S.CardTitle>
-          <S.CardDesc $mode={theme}>{board.description || '\u00A0'}</S.CardDesc>
-        </div>
-        {canEdit && (
-          <S.Menu ref={menuRef} onClick={e => e.stopPropagation()}>
-            <S.MenuBtn $mode={theme} onClick={onMenuToggle}>⋮</S.MenuBtn>
-            <S.MenuDropdown $mode={theme} $visible={menuOpen}>
-              <S.MenuItem $mode={theme} onClick={onEdit}>Bearbeiten</S.MenuItem>
-              <S.MenuItem $mode={theme} onClick={onDuplicate}>Duplizieren</S.MenuItem>
-              <S.MenuItem $mode={theme} onClick={onShare}>Teilen</S.MenuItem>
-              <S.MenuItem $mode={theme} $danger onClick={onDelete}>Löschen</S.MenuItem>
-            </S.MenuDropdown>
-          </S.Menu>
-        )}
-      </S.CardHeader>
+    <S.CardLink to={`/gantt/${board.id}`}>
+      <S.Card $mode={theme}>
+        <S.CardHeader>
+          <div>
+            <S.CardTitle $mode={theme}>{board.name}</S.CardTitle>
+            <S.CardDesc $mode={theme}>{board.description || '\u00A0'}</S.CardDesc>
+          </div>
+          {canEdit && (
+            <S.Menu onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
+              <S.MenuBtn $mode={theme} onClick={onMenuToggle}>⋮</S.MenuBtn>
+              {menuOpen && (
+                <DropdownMenu
+                  items={[
+                    { label: 'Bearbeiten', onClick: onEdit },
+                    { label: 'Duplizieren', onClick: onDuplicate },
+                    { label: 'Teilen', onClick: onShare },
+                    { label: 'Löschen', onClick: onDelete, danger: true },
+                  ]}
+                  onClose={onMenuToggle}
+                />
+              )}
+            </S.Menu>
+          )}
+        </S.CardHeader>
       
       <S.CardBody>
         {minimap ? (
@@ -404,10 +425,11 @@ const BoardCard = ({ board, theme, menuOpen, canEdit, onOpen, onMenuToggle, onEd
         {hasBadges && (
           <S.BadgeGroup>
             {board.isPublic && <S.Badge $mode={theme}>Öffentlich</S.Badge>}
-            {board.allowedDomain && <S.Badge $mode={theme}>@{board.allowedDomain}</S.Badge>}
+            {board.allowedDomain && <S.Badge $mode={theme} title={`Lesezugriff für alle mit @${board.allowedDomain} E-Mail-Adresse`}>@{board.allowedDomain}</S.Badge>}
           </S.BadgeGroup>
         )}
       </S.CardFooter>
-    </S.Card>
+      </S.Card>
+    </S.CardLink>
   );
 };

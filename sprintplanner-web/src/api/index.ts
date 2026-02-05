@@ -41,6 +41,8 @@ export const api = {
   getMembers: (boardId: string) => fetchApi<{ id: string; email: string; role: string; user?: { name: string } }[]>(`/api/boards/${boardId}/members`),
   inviteMember: (boardId: string, email: string, role: string, message?: string) =>
     fetchApi<void>(`/api/boards/${boardId}/members`, { method: 'POST', body: JSON.stringify({ email, role, message }) }),
+  updateMemberRole: (boardId: string, memberId: string, role: string) =>
+    fetchApi<void>(`/api/boards/${boardId}/members/${memberId}`, { method: 'PATCH', body: JSON.stringify({ role }) }),
   removeMember: (boardId: string, memberId: string) =>
     fetchApi<void>(`/api/boards/${boardId}/members/${memberId}`, { method: 'DELETE' }),
   
@@ -50,7 +52,7 @@ export const api = {
     fetchApi<User>('/api/users/invite', { method: 'POST', body: JSON.stringify({ email }) }),
   deleteUser: (id: string) => 
     fetchApi<void>(`/api/users/${id}`, { method: 'DELETE' }),
-  updateUserRole: (id: string, role: 'admin' | 'user') => 
+  updateUserRole: (id: string, role: 'admin' | 'user' | 'viewer') => 
     fetchApi<User>(`/api/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
 };
 

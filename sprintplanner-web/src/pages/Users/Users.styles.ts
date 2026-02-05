@@ -11,6 +11,7 @@ export const Header = styled.header<{ $mode: ThemeMode }>`
   background: ${p => t(p.$mode).board};
   padding: ${t('dark').space.md} ${t('dark').space.xl};
   display: flex;
+  justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid ${p => t(p.$mode).strokeSubtle};
 `;
@@ -156,6 +157,54 @@ export const Empty = styled.div<{ $mode: ThemeMode }>`
   border-radius: ${t('dark').radius.lg};
 `;
 
+export const ChipContainer = styled.div<{ $mode: ThemeMode }>`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${t('dark').space.sm};
+  padding: ${t('dark').space.sm};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  min-height: 44px;
+  align-items: center;
+  
+  &:focus-within {
+    border-color: ${p => t(p.$mode).action};
+  }
+`;
+
+export const Chip = styled.span<{ $mode: ThemeMode }>`
+  display: flex;
+  align-items: center;
+  gap: ${t('dark').space.xs};
+  padding: ${t('dark').space.xs} ${t('dark').space.sm};
+  background: ${p => t(p.$mode).actionMuted};
+  color: ${p => t(p.$mode).action};
+  border-radius: ${t('dark').radius.full};
+  font-size: ${t('dark').fontSize.sm};
+`;
+
+export const ChipRemove = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: inherit;
+  padding: 0;
+  line-height: 1;
+`;
+
+export const ChipInput = styled.input<{ $mode: ThemeMode }>`
+  flex: 1;
+  min-width: 150px;
+  border: none;
+  background: transparent;
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.base};
+  
+  &:focus { outline: none; }
+  &::placeholder { color: ${p => t(p.$mode).inkFaint}; }
+`;
+
 // Export mit alten Namen für Kompatibilität
 export const S = {
   StyledContainer: Container,
@@ -177,4 +226,8 @@ export const S = {
   StyledRoleLabel: RoleLabel,
   StyledInput: Input,
   StyledEmpty: Empty,
+  StyledChipContainer: ChipContainer,
+  StyledChip: Chip,
+  StyledChipRemove: ChipRemove,
+  StyledChipInput: ChipInput,
 };

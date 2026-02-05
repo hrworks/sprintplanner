@@ -1,17 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { S } from './Users.styles';
-import { Button, Modal, Avatar } from '@/components';
+import { Button, Modal, Avatar, UserMenu } from '@/components';
 import { useStore } from '@/store';
 import { api } from '@/api';
 import { User } from '@/api/types';
+
+const parseEmails = (text: string): string[] => {
+  const emailRegex = /[\w.-]+@[\w.-]+\.\w+/g;
+  return [...new Set(text.match(emailRegex) || [])];
+};
 
 export const Users = () => {
   const navigate = useNavigate();
   const { theme, user: currentUser } = useStore();
   const [users, setUsers] = useState<User[]>([]);
   const [modal, setModal] = useState<{ type: 'invite' | 'delete'; user?: User } | null>(null);
-  const [email, setEmail] = useState('');
+  const [emails, setEmails] = useState<string[]>([]);
+  const [emailInput, setEmailInput] = useState('');
 
   useEffect(() => {
     if (currentUser?.role !== 'admin') {
@@ -27,11 +33,41 @@ export const Users = () => {
   };
 
   const handleInvite = async () => {
-    if (!email.trim()) return;
-    await api.inviteUser(email.trim());
+    if (emails.length === 0) return;
+    for (const email of emails) {
+      await api.inviteUser(email);
+    }
     setModal(null);
-    setEmail('');
+    setEmails([]);
+    setEmailInput('');
     loadUsers();
+  };
+
+  const addEmail = (value: string) => {
+    const parsed = parseEmails(value);
+    if (parsed.length > 0) {
+      setEmails([...emails, ...parsed.filter(e => !emails.includes(e))]);
+      setEmailInput('');
+    }
+  };
+
+  const handleEmailKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && emailInput.trim()) {
+      e.preventDefault();
+      addEmail(emailInput);
+    }
+  };
+
+  const handleEmailPaste = (e: React.ClipboardEvent) => {
+    const text = e.clipboardData.getData('text');
+    if (text.includes('@')) {
+      e.preventDefault();
+      addEmail(text);
+    }
+  };
+
+  const removeEmail = (email: string) => {
+    setEmails(emails.filter(e => e !== email));
   };
 
   const handleDelete = async () => {
@@ -41,7 +77,7 @@ export const Users = () => {
     loadUsers();
   };
 
-  const handleRoleChange = async (id: string, role: 'admin' | 'user') => {
+  const handleRoleChange = async (id: string, role: 'admin' | 'user' | 'viewer') => {
     await api.updateUserRole(id, role);
     loadUsers();
   };
@@ -53,13 +89,14 @@ export const Users = () => {
           <Button $variant="secondary" $size="small" onClick={() => navigate('/dashboard')}>← Dashboard</Button>
           <S.StyledTitle $mode={theme}>Benutzerverwaltung</S.StyledTitle>
         </S.StyledHeaderLeft>
+        <UserMenu />
       </S.StyledHeader>
 
       <S.StyledContent>
         <S.StyledSection>
           <S.StyledSectionHeader>
             <S.StyledSectionTitle $mode={theme}>Benutzer</S.StyledSectionTitle>
-            <Button onClick={() => { setEmail(''); setModal({ type: 'invite' }); }}>+ Benutzer einladen</Button>
+            <Button onClick={() => { setEmails([]); setEmailInput(''); setModal({ type: 'invite' }); }}>+ Benutzer einladen</Button>
           </S.StyledSectionHeader>
 
           {users.length === 0 ? (
@@ -81,7 +118,8 @@ export const Users = () => {
                   </S.StyledStatus>
                   {u.id !== currentUser?.id ? (
                     <>
-                      <S.StyledSelect $mode={theme} value={u.role} onChange={e => handleRoleChange(u.id, e.target.value as 'admin' | 'user')}>
+                      <S.StyledSelect $mode={theme} value={u.role} onChange={e => handleRoleChange(u.id, e.target.value as 'admin' | 'user' | 'viewer')}>
+                        <option value="viewer">Betrachter</option>
                         <option value="user">Benutzer</option>
                         <option value="admin">Admin</option>
                       </S.StyledSelect>
@@ -104,10 +142,27 @@ export const Users = () => {
         <Modal title="Benutzer einladen" onClose={() => setModal(null)} footer={
           <>
             <Button $variant="secondary" onClick={() => setModal(null)}>Abbrechen</Button>
-            <Button onClick={handleInvite}>Einladen</Button>
+            <Button onClick={handleInvite} disabled={emails.length === 0}>Einladen</Button>
           </>
         }>
-          <S.StyledInput $mode={theme} type="email" placeholder="user@example.com" value={email} onChange={e => setEmail(e.target.value)} autoFocus />
+          <S.StyledChipContainer $mode={theme}>
+            {emails.map(e => (
+              <S.StyledChip key={e} $mode={theme}>
+                {e}
+                <S.StyledChipRemove onClick={() => removeEmail(e)}>×</S.StyledChipRemove>
+              </S.StyledChip>
+            ))}
+            <S.StyledChipInput
+              $mode={theme}
+              type="email"
+              placeholder={emails.length ? '' : 'E-Mail-Adressen eingeben oder einfügen...'}
+              value={emailInput}
+              onChange={e => setEmailInput(e.target.value)}
+              onKeyDown={handleEmailKeyDown}
+              onPaste={handleEmailPaste}
+              autoFocus
+            />
+          </S.StyledChipContainer>
         </Modal>
       )}
 
