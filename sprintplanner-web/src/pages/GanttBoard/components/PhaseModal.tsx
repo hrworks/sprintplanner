@@ -2,6 +2,7 @@ import { useState } from 'react';
 import styled from '@emotion/styled';
 import { Modal, Button } from '@/components';
 import { useStore } from '@/store';
+import { t, ThemeMode } from '@/styles';
 import { DEFAULT_COLORS, Phase } from '../types';
 import { generateId } from '../store';
 
@@ -83,7 +84,7 @@ export const PhaseModal = ({ projectId, phase, onSave, onClose }: Props) => {
         <Label $mode={theme}>Farbe</Label>
         <ColorPicker>
           {DEFAULT_COLORS.map(c => (
-            <ColorOption key={c} $color={c} $selected={form.color === c} onClick={() => setForm({ ...form, color: c })} />
+            <ColorOption key={c} $mode={theme} $color={c} $selected={form.color === c} onClick={() => setForm({ ...form, color: c })} />
           ))}
         </ColorPicker>
       </FormGroup>
@@ -91,22 +92,78 @@ export const PhaseModal = ({ projectId, phase, onSave, onClose }: Props) => {
   );
 };
 
-const FormGroup = styled.div`margin-bottom: 12px;`;
-const Row = styled.div`display: flex; gap: 12px;`;
-const Label = styled.label<{ $mode: string }>`display: block; margin-bottom: 4px; font-size: 12px; color: ${p => p.$mode === 'dark' ? '#aaa' : '#555'};`;
-const Input = styled.input<{ $mode: string }>`
-  width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid ${p => p.$mode === 'dark' ? '#444' : '#ddd'};
-  background: ${p => p.$mode === 'dark' ? '#2a2a2a' : '#fff'}; color: ${p => p.$mode === 'dark' ? '#fff' : '#000'}; font-size: 13px;
+const FormGroup = styled.div`
+  margin-bottom: ${t('dark').space.md};
+`;
+
+const Row = styled.div`
+  display: flex;
+  gap: ${t('dark').space.md};
+`;
+
+const Label = styled.label<{ $mode: ThemeMode }>`
+  display: block;
+  margin-bottom: ${t('dark').space.xs};
+  font-size: ${t('dark').fontSize.xs};
+  color: ${p => t(p.$mode).inkMuted};
+`;
+
+const Input = styled.input<{ $mode: ThemeMode }>`
+  width: 100%;
+  padding: ${t('dark').space.sm} ${t('dark').space.md};
+  border-radius: ${t('dark').radius.md};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  background: ${p => t(p.$mode).canvas};
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.sm};
   color-scheme: ${p => p.$mode === 'dark' ? 'dark' : 'light'};
+  transition: border-color ${t('dark').transition.fast};
+  
+  &:focus {
+    outline: none;
+    border-color: ${p => t(p.$mode).action};
+  }
+  
+  &::placeholder {
+    color: ${p => t(p.$mode).inkFaint};
+  }
 `;
-const Textarea = styled.textarea<{ $mode: string }>`
-  width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid ${p => p.$mode === 'dark' ? '#444' : '#ddd'};
-  background: ${p => p.$mode === 'dark' ? '#2a2a2a' : '#fff'}; color: ${p => p.$mode === 'dark' ? '#fff' : '#000'}; font-size: 13px; resize: vertical;
+
+const Textarea = styled.textarea<{ $mode: ThemeMode }>`
+  width: 100%;
+  padding: ${t('dark').space.sm} ${t('dark').space.md};
+  border-radius: ${t('dark').radius.md};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  background: ${p => t(p.$mode).canvas};
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.sm};
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color ${t('dark').transition.fast};
+  
+  &:focus {
+    outline: none;
+    border-color: ${p => t(p.$mode).action};
+  }
 `;
-const ColorPicker = styled.div`display: flex; gap: 6px; flex-wrap: wrap;`;
-const ColorOption = styled.div<{ $color: string; $selected: boolean }>`
-  width: 24px; height: 24px; border-radius: 4px; cursor: pointer;
-  background: ${p => p.$color}; border: 2px solid ${p => p.$selected ? '#fff' : 'transparent'};
-  box-shadow: ${p => p.$selected ? '0 0 0 2px #e94560' : 'none'};
-  &:hover { transform: scale(1.1); }
+
+const ColorPicker = styled.div`
+  display: flex;
+  gap: ${t('dark').space.sm};
+  flex-wrap: wrap;
+`;
+
+const ColorOption = styled.div<{ $mode: ThemeMode; $color: string; $selected: boolean }>`
+  width: 24px;
+  height: 24px;
+  border-radius: ${t('dark').radius.sm};
+  cursor: pointer;
+  background: ${p => p.$color};
+  border: 2px solid ${p => p.$selected ? 'white' : 'transparent'};
+  box-shadow: ${p => p.$selected ? `0 0 0 2px ${t(p.$mode).action}` : 'none'};
+  transition: transform ${t('dark').transition.fast};
+  
+  &:hover {
+    transform: scale(1.1);
+  }
 `;

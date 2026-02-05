@@ -2,121 +2,8 @@ import styled from '@emotion/styled';
 import { Button } from '@/components';
 import { useStore } from '@/store';
 import { useGanttStore } from '../store';
-import { getColors } from '@/styles';
+import { t, ThemeMode } from '@/styles';
 import { DEFAULT_COLORS } from '../types';
-
-const StyledPanel = styled.div<{ $mode: string; $visible: boolean }>`
-  width: 320px;
-  background: ${p => getColors(p.$mode as 'dark' | 'light').bgSecondary};
-  border-left: 2px solid ${p => p.$mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)'};
-  display: ${p => p.$visible ? 'flex' : 'none'};
-  flex-direction: column;
-  overflow: hidden;
-  flex-shrink: 0;
-  box-shadow: ${p => p.$mode === 'dark' ? '-4px 0 12px rgba(0,0,0,0.3)' : '-4px 0 12px rgba(0,0,0,0.1)'};
-`;
-
-const StyledHeader = styled.div<{ $mode: string }>`
-  padding: 15px;
-  background: ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary};
-  border-bottom: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').bgPrimary};
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  h3 { color: ${p => getColors(p.$mode as 'dark' | 'light').accent}; font-size: 13px; margin: 0; }
-`;
-
-const StyledContent = styled.div`
-  flex: 1;
-  overflow-y: auto;
-  padding: 15px;
-`;
-
-const StyledFormGroup = styled.div`
-  margin-bottom: 12px;
-`;
-
-const StyledLabel = styled.label<{ $mode: string }>`
-  display: block;
-  margin-bottom: 4px;
-  font-size: 11px;
-  color: ${p => getColors(p.$mode as 'dark' | 'light').textSecondary};
-`;
-
-const StyledInput = styled.input<{ $mode: string }>`
-  width: 100%;
-  padding: 8px;
-  background: ${p => getColors(p.$mode as 'dark' | 'light').bgPrimary};
-  border: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').border};
-  border-radius: 4px;
-  color: ${p => getColors(p.$mode as 'dark' | 'light').textPrimary};
-  font-size: 12px;
-  color-scheme: ${p => p.$mode === 'dark' ? 'dark' : 'light'};
-  &:focus { outline: none; border-color: ${p => getColors(p.$mode as 'dark' | 'light').accent}; }
-`;
-
-const StyledTextarea = styled.textarea<{ $mode: string }>`
-  width: 100%;
-  padding: 8px;
-  background: ${p => getColors(p.$mode as 'dark' | 'light').bgPrimary};
-  border: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').border};
-  border-radius: 4px;
-  color: ${p => getColors(p.$mode as 'dark' | 'light').textPrimary};
-  font-size: 12px;
-  resize: vertical;
-  min-height: 60px;
-  &:focus { outline: none; border-color: ${p => getColors(p.$mode as 'dark' | 'light').accent}; }
-`;
-
-const StyledColorPicker = styled.div`
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-`;
-
-const StyledColorOption = styled.div<{ $color: string; $selected: boolean }>`
-  width: 26px;
-  height: 26px;
-  border-radius: 4px;
-  cursor: pointer;
-  background: ${p => p.$color};
-  border: 2px solid ${p => p.$selected ? '#fff' : 'transparent'};
-  transform: ${p => p.$selected ? 'scale(1.15)' : 'none'};
-  transition: all 0.2s;
-  &:hover { transform: scale(1.15); }
-`;
-
-const StyledCheckboxGroup = styled.div`
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-`;
-
-const StyledCheckboxLabel = styled.label<{ $mode: string }>`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  font-size: 12px;
-  color: ${p => getColors(p.$mode as 'dark' | 'light').textPrimary};
-  input { accent-color: #e94560; width: 16px; height: 16px; }
-`;
-
-const StyledIconBtn = styled.button<{ $mode: string }>`
-  background: transparent;
-  border: none;
-  color: ${p => getColors(p.$mode as 'dark' | 'light').textSecondary};
-  cursor: pointer;
-  padding: 5px;
-  font-size: 14px;
-  &:hover { color: ${p => getColors(p.$mode as 'dark' | 'light').accent}; }
-`;
-
-const StyledEmpty = styled.p<{ $mode: string }>`
-  color: ${p => getColors(p.$mode as 'dark' | 'light').textSecondary};
-  text-align: center;
-  margin-top: 50px;
-`;
 
 export const DetailPanel = () => {
   const { theme } = useStore();
@@ -139,69 +26,220 @@ export const DetailPanel = () => {
   };
 
   return (
-    <StyledPanel $mode={theme} $visible={showDetailPanel && !!phase}>
-      <StyledHeader $mode={theme}>
+    <Panel $mode={theme} $visible={showDetailPanel && !!phase}>
+      <Header $mode={theme}>
         <h3>Phase bearbeiten</h3>
-        <StyledIconBtn $mode={theme} onClick={toggleDetailPanel}>✕</StyledIconBtn>
-      </StyledHeader>
-      <StyledContent>
+        <CloseBtn $mode={theme} onClick={toggleDetailPanel}>✕</CloseBtn>
+      </Header>
+      <Content>
         {!phase ? (
-          <StyledEmpty $mode={theme}>Wählen Sie eine Phase aus</StyledEmpty>
+          <Empty $mode={theme}>Wählen Sie eine Phase aus</Empty>
         ) : (
           <>
-            <StyledFormGroup>
-              <StyledLabel $mode={theme}>Name</StyledLabel>
-              <StyledInput $mode={theme} value={phase.name} onChange={e => handleChange('name', e.target.value)} disabled={boardRole === 'viewer'} />
-            </StyledFormGroup>
-            <StyledFormGroup>
-              <StyledLabel $mode={theme}>Untertitel</StyledLabel>
-              <StyledInput $mode={theme} value={phase.subtitle || ''} placeholder="z.B. Max, Anna" onChange={e => handleChange('subtitle', e.target.value)} disabled={boardRole === 'viewer'} />
-            </StyledFormGroup>
-            <StyledFormGroup>
-              <StyledLabel $mode={theme}>Startdatum</StyledLabel>
-              <StyledInput $mode={theme} type="date" value={phase.start} onChange={e => handleChange('start', e.target.value)} disabled={boardRole === 'viewer'} />
-            </StyledFormGroup>
-            <StyledFormGroup>
-              <StyledLabel $mode={theme}>Enddatum</StyledLabel>
-              <StyledInput $mode={theme} type="date" value={phase.end} onChange={e => handleChange('end', e.target.value)} disabled={boardRole === 'viewer'} />
-            </StyledFormGroup>
-            <StyledFormGroup>
-              <StyledLabel $mode={theme}>Link</StyledLabel>
-              <StyledInput $mode={theme} type="url" value={phase.link || ''} placeholder="https://..." onChange={e => handleChange('link', e.target.value)} disabled={boardRole === 'viewer'} />
-            </StyledFormGroup>
-            <StyledFormGroup>
-              <StyledLabel $mode={theme}>Beschreibung</StyledLabel>
-              <StyledTextarea $mode={theme} value={phase.description || ''} placeholder="Details zur Phase..." onChange={e => handleChange('description', e.target.value)} disabled={boardRole === 'viewer'} />
-            </StyledFormGroup>
-            <StyledFormGroup>
-              <StyledLabel $mode={theme}>Milestone-Linien</StyledLabel>
-              <StyledCheckboxGroup>
-                <StyledCheckboxLabel $mode={theme}>
+            <FormGroup>
+              <Label $mode={theme}>Name</Label>
+              <Input $mode={theme} value={phase.name} onChange={e => handleChange('name', e.target.value)} disabled={boardRole === 'viewer'} />
+            </FormGroup>
+            <FormGroup>
+              <Label $mode={theme}>Untertitel</Label>
+              <Input $mode={theme} value={phase.subtitle || ''} placeholder="z.B. Max, Anna" onChange={e => handleChange('subtitle', e.target.value)} disabled={boardRole === 'viewer'} />
+            </FormGroup>
+            <FormGroup>
+              <Label $mode={theme}>Startdatum</Label>
+              <Input $mode={theme} type="date" value={phase.start} onChange={e => handleChange('start', e.target.value)} disabled={boardRole === 'viewer'} />
+            </FormGroup>
+            <FormGroup>
+              <Label $mode={theme}>Enddatum</Label>
+              <Input $mode={theme} type="date" value={phase.end} onChange={e => handleChange('end', e.target.value)} disabled={boardRole === 'viewer'} />
+            </FormGroup>
+            <FormGroup>
+              <Label $mode={theme}>Link</Label>
+              <Input $mode={theme} type="url" value={phase.link || ''} placeholder="https://..." onChange={e => handleChange('link', e.target.value)} disabled={boardRole === 'viewer'} />
+            </FormGroup>
+            <FormGroup>
+              <Label $mode={theme}>Beschreibung</Label>
+              <Textarea $mode={theme} value={phase.description || ''} placeholder="Details zur Phase..." onChange={e => handleChange('description', e.target.value)} disabled={boardRole === 'viewer'} />
+            </FormGroup>
+            <FormGroup>
+              <Label $mode={theme}>Milestone-Linien</Label>
+              <CheckboxGroup>
+                <CheckboxLabel $mode={theme}>
                   <input type="checkbox" checked={phase.showStartLine || false} onChange={e => handleChange('showStartLine', e.target.checked)} disabled={boardRole === 'viewer'} />
                   <span style={{ color: '#4ade80' }}>▏</span> Startlinie
-                </StyledCheckboxLabel>
-                <StyledCheckboxLabel $mode={theme}>
+                </CheckboxLabel>
+                <CheckboxLabel $mode={theme}>
                   <input type="checkbox" checked={phase.showEndLine || false} onChange={e => handleChange('showEndLine', e.target.checked)} disabled={boardRole === 'viewer'} />
                   <span style={{ color: '#f97316' }}>▏</span> Endlinie
-                </StyledCheckboxLabel>
-              </StyledCheckboxGroup>
-            </StyledFormGroup>
-            <StyledFormGroup>
-              <StyledLabel $mode={theme}>Farbe</StyledLabel>
-              <StyledColorPicker>
+                </CheckboxLabel>
+              </CheckboxGroup>
+            </FormGroup>
+            <FormGroup>
+              <Label $mode={theme}>Farbe</Label>
+              <ColorPicker>
                 {DEFAULT_COLORS.map(color => (
-                  <StyledColorOption key={color} $color={color} $selected={phase.color === color} onClick={() => boardRole !== 'viewer' && handleChange('color', color)} />
+                  <ColorOption key={color} $mode={theme} $color={color} $selected={phase.color === color} onClick={() => boardRole !== 'viewer' && handleChange('color', color)} />
                 ))}
-              </StyledColorPicker>
-            </StyledFormGroup>
+              </ColorPicker>
+            </FormGroup>
             {boardRole !== 'viewer' && (
-              <StyledFormGroup style={{ marginTop: 20 }}>
+              <FormGroup style={{ marginTop: 20 }}>
                 <Button $variant="danger" style={{ width: '100%' }} onClick={handleDelete}>🗑 Phase löschen</Button>
-              </StyledFormGroup>
+              </FormGroup>
             )}
           </>
         )}
-      </StyledContent>
-    </StyledPanel>
+      </Content>
+    </Panel>
   );
 };
+
+const Panel = styled.div<{ $mode: ThemeMode; $visible: boolean }>`
+  width: 320px;
+  background: ${p => t(p.$mode).board};
+  border-left: 1px solid ${p => t(p.$mode).stroke};
+  display: ${p => p.$visible ? 'flex' : 'none'};
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+`;
+
+const Header = styled.div<{ $mode: ThemeMode }>`
+  padding: ${t('dark').space.md};
+  background: ${p => t(p.$mode).panel};
+  border-bottom: 1px solid ${p => t(p.$mode).strokeSubtle};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  h3 {
+    color: ${p => t(p.$mode).ink};
+    font-size: ${t('dark').fontSize.sm};
+    font-weight: 600;
+    margin: 0;
+  }
+`;
+
+const CloseBtn = styled.button<{ $mode: ThemeMode }>`
+  background: transparent;
+  border: none;
+  color: ${p => t(p.$mode).inkMuted};
+  cursor: pointer;
+  padding: ${t('dark').space.xs};
+  font-size: ${t('dark').fontSize.base};
+  transition: color ${t('dark').transition.fast};
+  
+  &:hover {
+    color: ${p => t(p.$mode).ink};
+  }
+`;
+
+const Content = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: ${t('dark').space.md};
+`;
+
+const Empty = styled.p<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).inkMuted};
+  text-align: center;
+  margin-top: 50px;
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: ${t('dark').space.md};
+`;
+
+const Label = styled.label<{ $mode: ThemeMode }>`
+  display: block;
+  margin-bottom: ${t('dark').space.xs};
+  font-size: ${t('dark').fontSize.xs};
+  color: ${p => t(p.$mode).inkMuted};
+`;
+
+const Input = styled.input<{ $mode: ThemeMode }>`
+  width: 100%;
+  padding: ${t('dark').space.sm};
+  border-radius: ${t('dark').radius.md};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  background: ${p => t(p.$mode).canvas};
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.sm};
+  color-scheme: ${p => p.$mode === 'dark' ? 'dark' : 'light'};
+  transition: border-color ${t('dark').transition.fast};
+  
+  &:focus {
+    outline: none;
+    border-color: ${p => t(p.$mode).action};
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const Textarea = styled.textarea<{ $mode: ThemeMode }>`
+  width: 100%;
+  padding: ${t('dark').space.sm};
+  border-radius: ${t('dark').radius.md};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  background: ${p => t(p.$mode).canvas};
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.sm};
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+  transition: border-color ${t('dark').transition.fast};
+  
+  &:focus {
+    outline: none;
+    border-color: ${p => t(p.$mode).action};
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const CheckboxGroup = styled.div`
+  display: flex;
+  gap: ${t('dark').space.md};
+  flex-wrap: wrap;
+`;
+
+const CheckboxLabel = styled.label<{ $mode: ThemeMode }>`
+  display: flex;
+  align-items: center;
+  gap: ${t('dark').space.sm};
+  cursor: pointer;
+  font-size: ${t('dark').fontSize.xs};
+  color: ${p => t(p.$mode).ink};
+  
+  input {
+    accent-color: #6366f1;
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+const ColorPicker = styled.div`
+  display: flex;
+  gap: ${t('dark').space.sm};
+  flex-wrap: wrap;
+`;
+
+const ColorOption = styled.div<{ $mode: ThemeMode; $color: string; $selected: boolean }>`
+  width: 26px;
+  height: 26px;
+  border-radius: ${t('dark').radius.sm};
+  cursor: pointer;
+  background: ${p => p.$color};
+  border: 2px solid ${p => p.$selected ? 'white' : 'transparent'};
+  box-shadow: ${p => p.$selected ? `0 0 0 2px ${t(p.$mode).action}` : 'none'};
+  transition: transform ${t('dark').transition.fast};
+  
+  &:hover {
+    transform: scale(1.1);
+  }
+`;

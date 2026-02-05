@@ -2,11 +2,11 @@ import styled from '@emotion/styled';
 import { RefObject, useState, useCallback, useEffect, useMemo } from 'react';
 import { useStore } from '@/store';
 import { useGanttStore, generateId } from '../store';
-import { getColors } from '@/styles';
+import { t, ThemeMode } from '@/styles';
 import { Phase, DEFAULT_COLORS, STATUS_ICONS, STATUS_COLORS } from '../types';
 import { ConfirmModal } from './ConfirmModal';
 
-const StyledScrollContainer = styled.div<{ $mode: string }>`
+const StyledScrollContainer = styled.div<{ $mode: ThemeMode }>`
   flex: 1;
   overflow: auto;
   position: relative;
@@ -16,17 +16,17 @@ const StyledScrollContainer = styled.div<{ $mode: string }>`
     height: 10px;
   }
   &::-webkit-scrollbar-track {
-    background: ${p => getColors(p.$mode as 'dark' | 'light').bgPrimary};
+    background: ${p => t(p.$mode).canvas};
   }
   &::-webkit-scrollbar-thumb {
-    background: ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary};
+    background: ${p => t(p.$mode).panel};
     border-radius: 5px;
   }
   &::-webkit-scrollbar-thumb:hover {
-    background: ${p => getColors(p.$mode as 'dark' | 'light').accent};
+    background: ${p => t(p.$mode).action};
   }
   &::-webkit-scrollbar-corner {
-    background: ${p => getColors(p.$mode as 'dark' | 'light').bgPrimary};
+    background: ${p => t(p.$mode).canvas};
   }
 `;
 
@@ -110,20 +110,20 @@ const StyledWrapper = styled.div`
   min-width: max-content;
 `;
 
-const StyledLabels = styled.div<{ $mode: string }>`
+const StyledLabels = styled.div<{ $mode: ThemeMode }>`
   width: 220px;
   flex-shrink: 0;
-  background: ${p => getColors(p.$mode as 'dark' | 'light').bgSecondary};
-  border-right: 2px solid ${p => getColors(p.$mode as 'dark' | 'light').accent};
+  background: ${p => t(p.$mode).board};
+  border-right: 2px solid ${p => t(p.$mode).action};
   position: sticky;
   left: 0;
   z-index: 20;
 `;
 
-const StyledLabelHeader = styled.div<{ $mode: string }>`
+const StyledLabelHeader = styled.div<{ $mode: ThemeMode }>`
   height: 50px;
-  background: ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary};
-  border-bottom: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').bgPrimary};
+  background: ${p => t(p.$mode).panel};
+  border-bottom: 1px solid ${p => t(p.$mode).canvas};
   display: flex;
   align-items: center;
   padding: 0 15px;
@@ -134,18 +134,18 @@ const StyledLabelHeader = styled.div<{ $mode: string }>`
   z-index: 25;
 `;
 
-const StyledLabelRow = styled.div<{ $mode: string; $selected: boolean; $height: number }>`
+const StyledLabelRow = styled.div<{ $mode: ThemeMode; $selected: boolean; $height: number }>`
   height: ${p => p.$height}px;
-  border-bottom: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').border};
+  border-bottom: 1px solid ${p => t(p.$mode).stroke};
   display: flex;
   align-items: center;
   padding: 0 10px;
   font-size: 11px;
   cursor: pointer;
   gap: 6px;
-  background: ${p => p.$selected ? getColors(p.$mode as 'dark' | 'light').bgTertiary : 'transparent'};
-  border-left: ${p => p.$selected ? '3px solid #00d9ff' : 'none'};
-  &:hover { background: ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary}; }
+  background: ${p => p.$selected ? t(p.$mode).panel : 'transparent'};
+  border-left: ${p => p.$selected ? '3px solid #6366f1' : 'none'};
+  &:hover { background: ${p => t(p.$mode).panel}; }
 `;
 
 const StyledChart = styled.div`
@@ -153,30 +153,30 @@ const StyledChart = styled.div`
   position: relative;
 `;
 
-const StyledHeader = styled.div<{ $mode: string }>`
+const StyledHeader = styled.div<{ $mode: ThemeMode }>`
   height: 50px;
-  background: ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary};
-  border-bottom: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').bgPrimary};
+  background: ${p => t(p.$mode).panel};
+  border-bottom: 1px solid ${p => t(p.$mode).canvas};
   display: flex;
   position: sticky;
   top: 0;
   z-index: 15;
 `;
 
-const StyledMonth = styled.div<{ $mode: string; $width: number }>`
+const StyledMonth = styled.div<{ $mode: ThemeMode; $width: number }>`
   width: ${p => p.$width}px;
-  border-right: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').bgPrimary};
+  border-right: 1px solid ${p => t(p.$mode).canvas};
   text-align: center;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
 `;
 
-const StyledMonthName = styled.div<{ $mode: string }>`
+const StyledMonthName = styled.div<{ $mode: ThemeMode }>`
   padding: 5px 8px;
   font-weight: 600;
   font-size: 11px;
-  border-bottom: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').bgPrimary};
+  border-bottom: 1px solid ${p => t(p.$mode).canvas};
   white-space: nowrap;
 `;
 
@@ -185,15 +185,15 @@ const StyledDayRow = styled.div`
   flex: 1;
 `;
 
-const StyledDayCell = styled.div<{ $mode: string; $width: number; $weekend: boolean; $today: boolean }>`
+const StyledDayCell = styled.div<{ $mode: ThemeMode; $width: number; $weekend: boolean; $today: boolean }>`
   width: ${p => p.$width}px;
   min-width: ${p => p.$width}px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 9px;
-  color: ${p => getColors(p.$mode as 'dark' | 'light').textSecondary};
-  border-right: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').border};
+  color: ${p => t(p.$mode).inkMuted};
+  border-right: 1px solid ${p => t(p.$mode).stroke};
   background: ${p => p.$today ? 'rgba(233, 69, 96, 0.3)' : p.$weekend ? 'rgba(233, 69, 96, 0.1)' : 'transparent'};
   font-weight: ${p => p.$today ? 'bold' : 'normal'};
 `;
@@ -205,12 +205,12 @@ const StyledBody = styled.div<{ $width: number; $height: number }>`
   user-select: none;
 `;
 
-const StyledRow = styled.div<{ $mode: string; $top: number; $width: number; $height: number; $color?: string }>`
+const StyledRow = styled.div<{ $mode: ThemeMode; $top: number; $width: number; $height: number; $color?: string }>`
   position: absolute;
   top: ${p => p.$top}px;
   width: ${p => p.$width}px;
   height: ${p => p.$height}px;
-  border-bottom: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').border};
+  border-bottom: 1px solid ${p => t(p.$mode).stroke};
   background: ${p => p.$color ? `${p.$color}15` : 'transparent'};
   &:hover { background: rgba(233, 69, 96, 0.05); }
 `;
@@ -305,7 +305,7 @@ const StyledCreatePreview = styled.div<{ $left: number; $width: number; $top: nu
   height: ${p => p.$height}px;
   border-radius: 4px;
   background: rgba(0, 217, 255, 0.4);
-  border: 2px dashed #00d9ff;
+  border: 2px dashed #6366f1;
   pointer-events: none;
   z-index: 50;
 `;
@@ -345,12 +345,12 @@ const StyledPhaseBarWrapper = styled.div`
   &:hover .connector { opacity: 1; }
 `;
 
-const StyledContextMenu = styled.div<{ $x: number; $y: number; $mode: string }>`
+const StyledContextMenu = styled.div<{ $x: number; $y: number; $mode: ThemeMode }>`
   position: fixed;
   left: ${p => p.$x}px;
   top: ${p => p.$y}px;
-  background: ${p => getColors(p.$mode as 'dark' | 'light').bgSecondary};
-  border: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary};
+  background: ${p => t(p.$mode).board};
+  border: 1px solid ${p => t(p.$mode).panel};
   border-radius: 6px;
   padding: 4px 0;
   min-width: 160px;
@@ -358,11 +358,11 @@ const StyledContextMenu = styled.div<{ $x: number; $y: number; $mode: string }>`
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 `;
 
-const StyledContextMenuItem = styled.div<{ $mode: string; $danger?: boolean }>`
+const StyledContextMenuItem = styled.div<{ $mode: ThemeMode; $danger?: boolean }>`
   padding: 8px 12px;
   cursor: pointer;
-  color: ${p => p.$danger ? '#e94560' : getColors(p.$mode as 'dark' | 'light').textPrimary};
-  &:hover { background: ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary}; }
+  color: ${p => p.$danger ? '#e94560' : t(p.$mode).ink};
+  &:hover { background: ${p => t(p.$mode).panel}; }
 `;
 
 const StyledConnectionSvg = styled.svg`
@@ -378,7 +378,7 @@ const StyledConnectionSvg = styled.svg`
 
 const StyledConnectionLine = styled.path`
   fill: none;
-  stroke: #00d9ff;
+  stroke: #6366f1;
   stroke-width: 2;
   opacity: 0.7;
   pointer-events: stroke;

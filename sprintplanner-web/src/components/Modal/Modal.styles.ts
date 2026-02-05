@@ -1,6 +1,5 @@
 import styled from '@emotion/styled';
-import { getColors } from '@/styles';
-import { ThemeMode } from '@/styles';
+import { t, ThemeMode } from '@/styles';
 
 export const StyledOverlay = styled.div<{ $mode: ThemeMode }>`
   position: fixed;
@@ -8,7 +7,8 @@ export const StyledOverlay = styled.div<{ $mode: ThemeMode }>`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,22 +16,26 @@ export const StyledOverlay = styled.div<{ $mode: ThemeMode }>`
 `;
 
 export const StyledModal = styled.div<{ $mode: ThemeMode }>`
-  background: ${p => getColors(p.$mode).bgSecondary};
-  border-radius: 12px;
-  padding: 24px;
+  background: ${p => t(p.$mode).board};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.lg};
+  padding: ${t('dark').space.lg};
   min-width: 350px;
   max-width: 500px;
+  box-shadow: ${t('dark').shadow.lg};
 `;
 
 export const StyledTitle = styled.h3<{ $mode: ThemeMode }>`
-  margin-bottom: 16px;
-  color: ${p => getColors(p.$mode).accent};
+  margin-bottom: ${t('dark').space.md};
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.md};
+  font-weight: 600;
 `;
 
 export const StyledFooter = styled.div`
-  margin-top: 20px;
+  margin-top: ${t('dark').space.lg};
   display: flex;
-  gap: 10px;
+  gap: ${t('dark').space.sm};
   justify-content: flex-end;
 `;
 

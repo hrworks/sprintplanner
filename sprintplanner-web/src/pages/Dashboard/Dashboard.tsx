@@ -6,6 +6,7 @@ import { useStore } from '@/store';
 import { api } from '@/api';
 import { Board } from '@/api/types';
 import { ShareModal } from '../GanttBoard/components/ShareModal';
+import type { BoardData, Phase } from '../GanttBoard/types';
 
 interface BoardGroups {
   owned: Board[];
@@ -13,10 +14,81 @@ interface BoardGroups {
   public: Board[];
 }
 
+type PhaseStatus = 'complete' | 'active' | 'planned' | 'overdue';
+
+// Minimap-Daten für ein Board
+interface MinimapData {
+  projects: {
+    name: string;
+    color: string;
+    phases: { left: number; width: number; color: string; status: PhaseStatus }[];
+  }[];
+  totalPhases: number;
+  completePhases: number;
+  todayPosition: number | null; // Position der "Heute"-Linie in %
+}
+
+// Berechne Phase-Status basierend auf Datum
+const getPhaseStatus = (phase: Phase): PhaseStatus => {
+  const now = new Date();
+  const start = new Date(phase.start);
+  const end = new Date(phase.end);
+  
+  if (end < now) return 'complete';
+  if (start <= now && end >= now) return 'active';
+  return 'planned';
+};
+
+// Extrahiere Minimap-Daten aus Board
+const getBoardMinimap = (board: Board): MinimapData | null => {
+  if (!board.data) return null;
+  
+  try {
+    const data: BoardData = JSON.parse(board.data);
+    if (!data.projects?.length) return null;
+    
+    // Finde Gesamtzeitspanne
+    const allPhases = data.projects.flatMap(p => p.phases);
+    if (!allPhases.length) return null;
+    
+    const minDate = Math.min(...allPhases.map(p => new Date(p.start).getTime()));
+    const maxDate = Math.max(...allPhases.map(p => new Date(p.end).getTime()));
+    const totalRange = maxDate - minDate || 1;
+    
+    // Heute-Position berechnen
+    const now = Date.now();
+    const todayPosition = now >= minDate && now <= maxDate 
+      ? ((now - minDate) / totalRange) * 100 
+      : null;
+    
+    const projects = data.projects.slice(0, 5).map(project => ({
+      name: project.name,
+      color: project.color,
+      phases: project.phases.map(phase => {
+        const start = new Date(phase.start).getTime();
+        const end = new Date(phase.end).getTime();
+        return {
+          left: ((start - minDate) / totalRange) * 100,
+          width: Math.max(((end - start) / totalRange) * 100, 2),
+          color: phase.color,
+          status: getPhaseStatus(phase),
+        };
+      }),
+    }));
+    
+    const completePhases = allPhases.filter(p => getPhaseStatus(p) === 'complete').length;
+    
+    return { projects, totalPhases: allPhases.length, completePhases, todayPosition };
+  } catch {
+    return null;
+  }
+};
+
 export const Dashboard = () => {
   const navigate = useNavigate();
   const { theme, user } = useStore();
   const [boards, setBoards] = useState<BoardGroups>({ owned: [], shared: [], public: [] });
+  const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [modal, setModal] = useState<{ type: 'create' | 'edit' | 'delete' | 'duplicate'; board?: Board } | null>(null);
   const [shareModal, setShareModal] = useState<{ boardId: string; boardName: string } | null>(null);
@@ -24,8 +96,6 @@ export const Dashboard = () => {
 
   useEffect(() => {
     loadBoards();
-    
-    // Reload boards when returning to dashboard
     const handleFocus = () => loadBoards();
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
@@ -33,6 +103,7 @@ export const Dashboard = () => {
 
   const loadBoards = async () => {
     try {
+      setLoading(true);
       const data = await api.getBoards();
       setBoards({
         owned: (data.owned || []).map((b: Board) => ({ ...b, role: 'owner' as const })),
@@ -41,6 +112,8 @@ export const Dashboard = () => {
       });
     } catch (e) {
       console.error('Failed to load boards:', e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -105,59 +178,87 @@ export const Dashboard = () => {
 
   const formatDate = (date: string) => new Date(date).toLocaleDateString('de-DE');
 
-  const renderSection = (title: string, list: Board[], canEdit: boolean) => (
-    <S.StyledSection>
-      <S.StyledSectionTitle $mode={theme}>{title}</S.StyledSectionTitle>
-      {list.length === 0 ? (
-        <S.StyledEmpty $mode={theme}>Keine Boards</S.StyledEmpty>
-      ) : (
-        <S.StyledGrid>
-          {list.map(board => (
-            <BoardCard
-              key={board.id}
-              board={board}
-              theme={theme}
-              menuOpen={menuOpen === board.id}
-              canEdit={canEdit}
-              onOpen={() => openBoard(board.id)}
-              onMenuToggle={() => setMenuOpen(menuOpen === board.id ? null : board.id)}
-              onEdit={() => openEditModal(board)}
-              onDuplicate={() => openDuplicateModal(board)}
-              onShare={() => shareBoard(board)}
-              onDelete={() => openDeleteModal(board)}
-              formatDate={formatDate}
-            />
-          ))}
-        </S.StyledGrid>
-      )}
-    </S.StyledSection>
-  );
+  const renderSection = (title: string, list: Board[], canEdit: boolean) => {
+    const isEmpty = list.length === 0 && !loading;
+    const isOwned = title === 'Meine Boards';
+
+    return (
+      <S.Section>
+        <S.SectionHeader>
+          <S.SectionTitle $mode={theme}>{title}</S.SectionTitle>
+          {!loading && <S.SectionCount $mode={theme}>{list.length}</S.SectionCount>}
+        </S.SectionHeader>
+        
+        {loading ? (
+          <S.Grid>
+            {[1, 2, 3].map(i => <S.SkeletonCard key={i} $mode={theme} />)}
+          </S.Grid>
+        ) : isEmpty ? (
+          <S.Empty $mode={theme}>
+            <S.EmptyIcon $mode={theme}>{isOwned ? '📋' : '🔗'}</S.EmptyIcon>
+            <S.EmptyText $mode={theme}>
+              {isOwned ? 'Noch keine Boards erstellt' : 'Keine Boards in dieser Kategorie'}
+            </S.EmptyText>
+            {isOwned && (
+              <Button onClick={openCreateModal}>Erstes Board erstellen</Button>
+            )}
+          </S.Empty>
+        ) : (
+          <S.Grid>
+            {list.map(board => (
+              <BoardCard
+                key={board.id}
+                board={board}
+                theme={theme}
+                menuOpen={menuOpen === board.id}
+                canEdit={canEdit}
+                onOpen={() => openBoard(board.id)}
+                onMenuToggle={() => setMenuOpen(menuOpen === board.id ? null : board.id)}
+                onEdit={() => openEditModal(board)}
+                onDuplicate={() => openDuplicateModal(board)}
+                onShare={() => shareBoard(board)}
+                onDelete={() => openDeleteModal(board)}
+                formatDate={formatDate}
+                minimap={getBoardMinimap(board)}
+              />
+            ))}
+          </S.Grid>
+        )}
+      </S.Section>
+    );
+  };
 
   return (
-    <S.StyledContainer $mode={theme}>
-      <S.StyledHeader $mode={theme}>
-        <S.StyledHeaderLeft>
-          <S.StyledTitle $mode={theme}>
-            <img src="/favicon.png" alt="" style={{ width: 24, height: 24, marginRight: 8, verticalAlign: 'middle' }} />
+    <S.Container $mode={theme}>
+      <S.Header $mode={theme}>
+        <S.HeaderLeft>
+          <S.Title $mode={theme}>
+            <img src="/favicon.png" alt="" style={{ width: 24, height: 24 }} />
             Sprint Planner
-          </S.StyledTitle>
-          <S.StyledNav>
-            <S.StyledNavItem $mode={theme} $active>Boards</S.StyledNavItem>
+          </S.Title>
+          <S.Nav>
+            <S.NavItem $mode={theme} $active>Boards</S.NavItem>
             {user?.role === 'admin' && (
-              <S.StyledNavItem $mode={theme} onClick={() => navigate('/users')}>Benutzer</S.StyledNavItem>
+              <S.NavItem $mode={theme} onClick={() => navigate('/users')}>Benutzer</S.NavItem>
             )}
-          </S.StyledNav>
-        </S.StyledHeaderLeft>
+          </S.Nav>
+        </S.HeaderLeft>
         <UserMenu />
-      </S.StyledHeader>
+      </S.Header>
 
-      <S.StyledContent>
+      <S.Content>
         {renderSection('Meine Boards', boards.owned, true)}
         {renderSection('Geteilt mit mir', boards.shared, false)}
         {renderSection('Öffentliche Boards', boards.public, false)}
-      </S.StyledContent>
+      </S.Content>
 
-      <S.StyledFab $mode={theme} onClick={openCreateModal}>+ Neues Board</S.StyledFab>
+      <S.Fab $mode={theme} onClick={openCreateModal}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Neues Board
+      </S.Fab>
 
       {modal?.type === 'create' && (
         <Modal title="Neues Board" onClose={() => setModal(null)} footer={
@@ -166,8 +267,8 @@ export const Dashboard = () => {
             <Button onClick={handleCreate}>Erstellen</Button>
           </>
         }>
-          <S.StyledInput $mode={theme} placeholder="Board-Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} autoFocus />
-          <S.StyledTextarea $mode={theme} placeholder="Beschreibung (optional)" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+          <S.Input $mode={theme} placeholder="Board-Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} autoFocus />
+          <S.Textarea $mode={theme} placeholder="Beschreibung (optional)" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
         </Modal>
       )}
 
@@ -178,8 +279,8 @@ export const Dashboard = () => {
             <Button onClick={handleEdit}>Speichern</Button>
           </>
         }>
-          <S.StyledInput $mode={theme} placeholder="Board-Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} autoFocus />
-          <S.StyledTextarea $mode={theme} placeholder="Beschreibung (optional)" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+          <S.Input $mode={theme} placeholder="Board-Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} autoFocus />
+          <S.Textarea $mode={theme} placeholder="Beschreibung (optional)" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
         </Modal>
       )}
 
@@ -201,7 +302,7 @@ export const Dashboard = () => {
             <Button onClick={handleDuplicate}>Duplizieren</Button>
           </>
         }>
-          <S.StyledInput $mode={theme} placeholder="Name für die Kopie" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} autoFocus />
+          <S.Input $mode={theme} placeholder="Name für die Kopie" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} autoFocus />
         </Modal>
       )}
 
@@ -213,7 +314,7 @@ export const Dashboard = () => {
           onUpdate={loadBoards}
         />
       )}
-    </S.StyledContainer>
+    </S.Container>
   );
 };
 
@@ -229,55 +330,84 @@ interface BoardCardProps {
   onShare: () => void;
   onDelete: () => void;
   formatDate: (d: string) => string;
+  minimap: MinimapData | null;
 }
 
-const BoardCard = ({ board, theme, menuOpen, canEdit, onOpen, onMenuToggle, onEdit, onDuplicate, onShare, onDelete, formatDate }: BoardCardProps) => {
+const BoardCard = ({ board, theme, menuOpen, canEdit, onOpen, onMenuToggle, onEdit, onDuplicate, onShare, onDelete, formatDate, minimap }: BoardCardProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
+  const hasMembers = board.members && board.members.length > 0;
+  const hasBadges = board.isPublic || board.allowedDomain;
 
   return (
-    <S.StyledCard $mode={theme} onClick={onOpen}>
-      <S.StyledCardHeader>
-        <S.StyledCardTitle $mode={theme}>{board.name}</S.StyledCardTitle>
+    <S.Card $mode={theme} onClick={onOpen}>
+      <S.CardHeader>
+        <div>
+          <S.CardTitle $mode={theme}>{board.name}</S.CardTitle>
+          <S.CardDesc $mode={theme}>{board.description || '\u00A0'}</S.CardDesc>
+        </div>
         {canEdit && (
-          <S.StyledMenu ref={menuRef} onClick={e => e.stopPropagation()}>
-            <S.StyledMenuBtn $mode={theme} onClick={onMenuToggle}>⋮</S.StyledMenuBtn>
-            <S.StyledMenuDropdown $mode={theme} $visible={menuOpen}>
-              <S.StyledMenuItem $mode={theme} onClick={onEdit}>Bearbeiten</S.StyledMenuItem>
-              <S.StyledMenuItem $mode={theme} onClick={onDuplicate}>Duplizieren</S.StyledMenuItem>
-              <S.StyledMenuItem $mode={theme} onClick={onShare}>Teilen</S.StyledMenuItem>
-              <S.StyledMenuItem $mode={theme} onClick={onDelete}>Löschen</S.StyledMenuItem>
-            </S.StyledMenuDropdown>
-          </S.StyledMenu>
+          <S.Menu ref={menuRef} onClick={e => e.stopPropagation()}>
+            <S.MenuBtn $mode={theme} onClick={onMenuToggle}>⋮</S.MenuBtn>
+            <S.MenuDropdown $mode={theme} $visible={menuOpen}>
+              <S.MenuItem $mode={theme} onClick={onEdit}>Bearbeiten</S.MenuItem>
+              <S.MenuItem $mode={theme} onClick={onDuplicate}>Duplizieren</S.MenuItem>
+              <S.MenuItem $mode={theme} onClick={onShare}>Teilen</S.MenuItem>
+              <S.MenuItem $mode={theme} $danger onClick={onDelete}>Löschen</S.MenuItem>
+            </S.MenuDropdown>
+          </S.Menu>
         )}
-      </S.StyledCardHeader>
-      {board.description && <S.StyledCardDesc $mode={theme}>{board.description}</S.StyledCardDesc>}
-      <S.StyledCardMeta $mode={theme}>Zuletzt geändert: {formatDate(board.updatedAt)}</S.StyledCardMeta>
-      {board.members && board.members.length > 0 && (
-        <S.StyledCardMembers>
-          {board.members.slice(0, 4).map((m, i) => <Avatar key={i} name={m.name} avatarUrl={m.avatarUrl} size={24} />)}
-          {board.members.length > 4 && <span style={{ fontSize: 11, color: '#888' }}>+{board.members.length - 4}</span>}
-        </S.StyledCardMembers>
-      )}
-      {(board.isPublic || board.allowedDomain) && (
-        <S.StyledCardFooter>
-          {board.isPublic && (
-            <S.StyledBadge $mode={theme}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-              </svg>
-              Öffentlich (Lesezugriff)
-            </S.StyledBadge>
-          )}
-          {board.allowedDomain && (
-            <S.StyledBadge $mode={theme}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/>
-              </svg>
-              @{board.allowedDomain} (Lesezugriff)
-            </S.StyledBadge>
-          )}
-        </S.StyledCardFooter>
-      )}
-    </S.StyledCard>
+      </S.CardHeader>
+      
+      <S.CardBody>
+        {minimap ? (
+          <>
+            <S.Minimap $mode={theme}>
+              {minimap.todayPosition !== null && (
+                <S.MinimapToday $mode={theme} style={{ left: `${minimap.todayPosition}%` }} />
+              )}
+              {minimap.projects.map((project, i) => (
+                <S.MinimapRow key={i}>
+                  {project.phases.map((phase, j) => (
+                    <S.MinimapPhase
+                      key={j}
+                      $mode={theme}
+                      $status={phase.status}
+                      style={{ left: `${phase.left}%`, width: `${phase.width}%`, background: phase.color }}
+                    />
+                  ))}
+                </S.MinimapRow>
+              ))}
+            </S.Minimap>
+            <S.CardProgress $mode={theme}>
+              <S.ProgressDot $mode={theme} $status={minimap.completePhases === minimap.totalPhases ? 'complete' : minimap.completePhases > 0 ? 'active' : 'planned'} />
+              {minimap.completePhases} von {minimap.totalPhases} Phasen · {minimap.projects.length} Projekte
+            </S.CardProgress>
+          </>
+        ) : (
+          <S.CardProgress $mode={theme}>
+            <S.ProgressDot $mode={theme} $status="planned" />
+            Noch keine Phasen
+          </S.CardProgress>
+        )}
+      </S.CardBody>
+      
+      <S.CardMeta $mode={theme}>Aktualisiert: {formatDate(board.updatedAt)}</S.CardMeta>
+      
+      <S.CardFooter>
+        {hasMembers ? (
+          <S.CardMembers>
+            {board.members!.slice(0, 3).map((m, i) => <Avatar key={i} name={m.name} avatarUrl={m.avatarUrl} size={22} />)}
+            {board.members!.length > 3 && <S.MemberOverflow $mode={theme}>+{board.members!.length - 3}</S.MemberOverflow>}
+          </S.CardMembers>
+        ) : <div />}
+        
+        {hasBadges && (
+          <S.BadgeGroup>
+            {board.isPublic && <S.Badge $mode={theme}>Öffentlich</S.Badge>}
+            {board.allowedDomain && <S.Badge $mode={theme}>@{board.allowedDomain}</S.Badge>}
+          </S.BadgeGroup>
+        )}
+      </S.CardFooter>
+    </S.Card>
   );
 };

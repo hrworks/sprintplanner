@@ -2,277 +2,292 @@ import styled from '@emotion/styled';
 import { useRef, useState } from 'react';
 import { useStore } from '@/store';
 import { useGanttStore } from '../store';
-import { getColors } from '@/styles';
+import { t, ThemeMode } from '@/styles';
 import { Project, STATUS_ICONS } from '../types';
 import { ProjectModal } from './ProjectModal';
 import { PhaseModal } from './PhaseModal';
 import { ConfirmModal } from './ConfirmModal';
 import { ImportBoardModal } from './ImportBoardModal';
 
-const StyledSidebar = styled.div<{ $mode: string }>`
+// === SIDEBAR LAYOUT ===
+const Container = styled.div<{ $mode: ThemeMode }>`
   width: 380px;
-  background: ${p => getColors(p.$mode as 'dark' | 'light').bgSecondary};
-  border-right: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').border};
+  background: ${p => t(p.$mode).board};
+  border-right: 1px solid ${p => t(p.$mode).stroke};
   display: flex;
   flex-direction: column;
   overflow: hidden;
   flex-shrink: 0;
 `;
 
-const StyledHeader = styled.div<{ $mode: string }>`
-  padding: 20px;
-  background: ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary};
-  border-bottom: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').bgPrimary};
+const Header = styled.div<{ $mode: ThemeMode }>`
+  padding: ${t('dark').space.lg};
+  background: ${p => t(p.$mode).panel};
+  border-bottom: 1px solid ${p => t(p.$mode).strokeSubtle};
 `;
 
-const StyledBtnGroup = styled.div`
+const BtnGroup = styled.div`
   display: flex;
-  gap: 8px;
+  gap: ${t('dark').space.sm};
   align-items: center;
 `;
 
-const StyledCreateBtn = styled.button<{ $mode: string }>`
+// === CREATE BUTTON ===
+const SplitBtnGroup = styled.div`
+  display: flex;
+  border-radius: ${t('dark').radius.md};
+  overflow: hidden;
+  box-shadow: ${t('dark').shadow.sm};
+`;
+
+const CreateBtn = styled.button<{ $mode: ThemeMode }>`
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border-radius: 8px 0 0 8px;
+  gap: ${t('dark').space.sm};
+  padding: ${t('dark').space.sm} ${t('dark').space.lg};
   border: none;
-  background: #e94560;
+  background: ${p => t(p.$mode).action};
   color: white;
-  font-size: 14px;
+  font-size: ${t('dark').fontSize.base};
   font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  transition: box-shadow 0.2s, background 0.2s;
-  &:hover { 
-    background: #d63850;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-  }
+  transition: background ${t('dark').transition.fast};
+  
+  &:hover { background: ${p => t(p.$mode).actionHover}; }
 `;
 
-const StyledSplitBtn = styled.div<{ $mode: string }>`
+const SplitBtn = styled.div<{ $mode: ThemeMode }>`
   display: flex;
   align-items: center;
-  padding: 12px 10px;
-  border-radius: 0 8px 8px 0;
+  padding: ${t('dark').space.sm} ${t('dark').space.sm};
   border: none;
   border-left: 1px solid rgba(255,255,255,0.2);
-  background: #e94560;
+  background: ${p => t(p.$mode).action};
   color: white;
   font-size: 10px;
   cursor: pointer;
   position: relative;
-  transition: background 0.2s;
-  &:hover { background: #d63850; }
+  transition: background ${t('dark').transition.fast};
+  
+  &:hover { background: ${p => t(p.$mode).actionHover}; }
   &:hover > div { display: block; }
 `;
 
-const StyledSplitBtnGroup = styled.div`
-  display: flex;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  border-radius: 8px;
-`;
-
-const StyledProjectDropdown = styled.div<{ $mode: string }>`
-  position: relative;
-`;
-
-const StyledProjectDropdownContent = styled.div<{ $mode: string }>`
+const DropdownContent = styled.div<{ $mode: ThemeMode }>`
   display: none;
   position: absolute;
   top: 100%;
   left: 0;
-  padding-top: 4px;
-  background: transparent;
+  padding-top: ${t('dark').space.xs};
   z-index: 1000;
   min-width: 220px;
+  
   & > div {
-    background: ${p => getColors(p.$mode as 'dark' | 'light').bgSecondary};
-    border: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').border};
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    background: ${p => t(p.$mode).board};
+    border: 1px solid ${p => t(p.$mode).stroke};
+    border-radius: ${t('dark').radius.md};
+    box-shadow: ${t('dark').shadow.lg};
   }
 `;
 
-const StyledDropdownArrow = styled.span`
-  font-size: 10px;
-  opacity: 0.9;
-`;
-
-const StyledMenuDropdown = styled.div<{ $mode: string }>`
+// === MENU DROPDOWN ===
+const MenuDropdown = styled.div`
   position: relative;
   &:hover > div:last-child { display: block; }
 `;
 
-const StyledMenuBtn = styled.button<{ $mode: string }>`
-  background: ${p => getColors(p.$mode as 'dark' | 'light').bgSecondary};
-  border: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').border};
-  border-radius: 6px;
-  color: ${p => getColors(p.$mode as 'dark' | 'light').textPrimary};
+const MenuBtn = styled.button<{ $mode: ThemeMode }>`
+  background: ${p => t(p.$mode).board};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  color: ${p => t(p.$mode).ink};
   cursor: pointer;
-  padding: 12px 14px;
-  font-size: 16px;
+  padding: ${t('dark').space.sm} ${t('dark').space.md};
+  font-size: ${t('dark').fontSize.md};
   display: flex;
   align-items: center;
-  &:hover { background: ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary}; }
+  transition: all ${t('dark').transition.fast};
+  
+  &:hover { 
+    background: ${p => t(p.$mode).panel};
+    border-color: ${p => t(p.$mode).action};
+  }
 `;
 
-const StyledMenuDropdownContent = styled.div<{ $mode: string }>`
+const MenuDropdownContent = styled.div<{ $mode: ThemeMode }>`
   display: none;
   position: absolute;
   top: 100%;
   right: 0;
-  background: ${p => getColors(p.$mode as 'dark' | 'light').bgSecondary};
-  border: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').border};
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  background: ${p => t(p.$mode).board};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  box-shadow: ${t('dark').shadow.lg};
   z-index: 1000;
   min-width: 140px;
+  overflow: hidden;
 `;
 
-const StyledMenuItem = styled.div<{ $mode: string }>`
-  padding: 10px 16px;
+const MenuItem = styled.div<{ $mode: ThemeMode }>`
+  padding: ${t('dark').space.sm} ${t('dark').space.md};
   cursor: pointer;
-  font-size: 13px;
-  color: ${p => getColors(p.$mode as 'dark' | 'light').textPrimary};
-  &:hover { background: ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary}; }
+  font-size: ${t('dark').fontSize.sm};
+  color: ${p => t(p.$mode).ink};
+  transition: background ${t('dark').transition.fast};
+  
+  &:hover { background: ${p => t(p.$mode).actionMuted}; }
 `;
 
-const StyledProjectList = styled.div`
+// === PROJECT LIST ===
+const ProjectList = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 10px;
+  padding: ${t('dark').space.sm};
 `;
 
-const StyledProjectItem = styled.div<{ $mode: string; $selected: boolean; $dragging?: boolean }>`
-  background: ${p => getColors(p.$mode as 'dark' | 'light').bgPrimary};
-  border: 1px solid ${p => p.$selected ? getColors(p.$mode as 'dark' | 'light').accent : getColors(p.$mode as 'dark' | 'light').border};
-  border-radius: 8px;
-  margin-bottom: 10px;
+const ProjectItem = styled.div<{ $mode: ThemeMode; $selected: boolean; $dragging?: boolean }>`
+  background: ${p => t(p.$mode).canvas};
+  border: 1px solid ${p => p.$selected ? t(p.$mode).action : t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  margin-bottom: ${t('dark').space.sm};
   overflow: hidden;
   opacity: ${p => p.$dragging ? 0.5 : 1};
   position: relative;
-  &:hover { border-color: ${p => getColors(p.$mode as 'dark' | 'light').accent}; }
+  transition: border-color ${t('dark').transition.fast};
+  
+  &:hover { border-color: ${p => t(p.$mode).action}; }
 `;
 
-const StyledDropIndicator = styled.div<{ $mode: string }>`
+const DropIndicator = styled.div<{ $mode: ThemeMode }>`
   position: absolute;
   left: 0;
   right: 0;
   top: -6px;
   height: 3px;
-  background: ${p => getColors(p.$mode as 'dark' | 'light').accent};
+  background: ${p => t(p.$mode).action};
   border-radius: 2px;
   z-index: 10;
-  box-shadow: 0 0 8px ${p => getColors(p.$mode as 'dark' | 'light').accent};
+  box-shadow: 0 0 8px ${p => t(p.$mode).action};
 `;
 
-const StyledProjectHeader = styled.div<{ $mode: string }>`
-  padding: 12px 15px;
+const ProjectHeader = styled.div<{ $mode: ThemeMode }>`
+  padding: ${t('dark').space.md};
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  background: ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary};
+  background: ${p => t(p.$mode).panel};
 `;
 
-const StyledDragHandle = styled.span<{ $mode: string }>`
+const DragHandle = styled.span<{ $mode: ThemeMode }>`
   cursor: grab;
-  padding: 5px;
-  color: ${p => getColors(p.$mode as 'dark' | 'light').textSecondary};
-  font-size: 14px;
-  margin-right: 8px;
+  padding: ${t('dark').space.xs};
+  color: ${p => t(p.$mode).inkFaint};
+  font-size: ${t('dark').fontSize.base};
+  margin-right: ${t('dark').space.sm};
+  
   &:active { cursor: grabbing; }
 `;
 
-const StyledProjectName = styled.div`
+const ProjectName = styled.div<{ $mode: ThemeMode }>`
   font-weight: 600;
-  font-size: 13px;
+  font-size: ${t('dark').fontSize.sm};
+  color: ${p => t(p.$mode).ink};
 `;
 
-const StyledProjectCategory = styled.div<{ $mode: string }>`
-  font-size: 10px;
-  margin-top: 3px;
+const ProjectCategory = styled.div<{ $mode: ThemeMode }>`
+  font-size: ${t('dark').fontSize.xs};
+  margin-top: ${t('dark').space.xs};
   display: flex;
   align-items: center;
-  gap: 5px;
-  color: ${p => getColors(p.$mode as 'dark' | 'light').textSecondary};
+  gap: ${t('dark').space.xs};
+  color: ${p => t(p.$mode).inkMuted};
 `;
 
-const StyledColorDot = styled.span<{ $color: string }>`
+const ColorDot = styled.span<{ $color: string }>`
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: ${p => p.$color};
 `;
 
-const StyledActions = styled.div`
+const Actions = styled.div`
   display: flex;
-  gap: 5px;
+  gap: ${t('dark').space.xs};
 `;
 
-const StyledIconBtn = styled.button<{ $mode: string }>`
+const IconBtn = styled.button<{ $mode: ThemeMode }>`
   background: transparent;
   border: none;
-  color: ${p => getColors(p.$mode as 'dark' | 'light').textSecondary};
+  color: ${p => t(p.$mode).inkFaint};
   cursor: pointer;
-  padding: 5px;
-  font-size: 14px;
-  &:hover { color: ${p => getColors(p.$mode as 'dark' | 'light').accent}; }
+  padding: ${t('dark').space.xs};
+  font-size: ${t('dark').fontSize.base};
+  transition: color ${t('dark').transition.fast};
+  
+  &:hover { color: ${p => t(p.$mode).action}; }
 `;
 
-const StyledPhaseList = styled.div<{ $expanded: boolean }>`
-  padding: ${p => p.$expanded ? '10px 15px' : '0'};
+// === PHASE LIST ===
+const PhaseList = styled.div<{ $expanded: boolean }>`
+  padding: ${p => p.$expanded ? t('dark').space.sm : '0'} ${p => p.$expanded ? t('dark').space.md : '0'};
   max-height: ${p => p.$expanded ? '1000px' : '0'};
   overflow: hidden;
-  transition: max-height 0.3s ease-out;
+  transition: max-height 0.3s ease-out, padding 0.3s ease-out;
 `;
 
-const StyledPhaseItem = styled.div<{ $mode: string }>`
+const PhaseItem = styled.div<{ $mode: ThemeMode }>`
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  background: ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary};
-  border-radius: 5px;
-  margin-bottom: 5px;
+  gap: ${t('dark').space.sm};
+  padding: ${t('dark').space.sm};
+  background: ${p => t(p.$mode).panel};
+  border-radius: ${t('dark').radius.sm};
+  margin-bottom: ${t('dark').space.xs};
   cursor: pointer;
-  font-size: 12px;
+  font-size: ${t('dark').fontSize.xs};
+  transition: opacity ${t('dark').transition.fast};
+  
   &:hover { opacity: 0.8; }
 `;
 
-const StyledPhaseColor = styled.div<{ $color: string }>`
+const PhaseColor = styled.div<{ $color: string }>`
   width: 14px;
   height: 14px;
-  border-radius: 3px;
+  border-radius: ${t('dark').radius.sm};
   background: ${p => p.$color};
   flex-shrink: 0;
 `;
 
-const StyledPhaseInfo = styled.div`
+const PhaseInfo = styled.div`
   flex: 1;
   min-width: 0;
 `;
 
-const StyledPhaseName = styled.div`
+const PhaseName = styled.div<{ $mode: ThemeMode }>`
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: ${p => t(p.$mode).ink};
 `;
 
-const StyledPhaseDates = styled.div<{ $mode: string }>`
-  font-size: 10px;
-  color: ${p => getColors(p.$mode as 'dark' | 'light').textSecondary};
+const PhaseDates = styled.div<{ $mode: ThemeMode }>`
+  font-size: ${t('dark').fontSize.xs};
+  color: ${p => t(p.$mode).inkFaint};
 `;
 
-const StyledAccordionToggle = styled.span<{ $expanded: boolean }>`
-  font-size: 12px;
+const AccordionToggle = styled.span<{ $expanded: boolean }>`
+  font-size: ${t('dark').fontSize.xs};
   display: inline-block;
   transform: ${p => p.$expanded ? 'rotate(90deg)' : 'none'};
   transition: transform 0.3s;
-  margin-right: 4px;
+  margin-right: ${t('dark').space.xs};
+`;
+
+const PhaseCount = styled.span<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).inkFaint};
+  font-weight: normal;
 `;
 
 export const Sidebar = () => {
@@ -338,8 +353,6 @@ export const Sidebar = () => {
   const handleDragStart = (e: React.DragEvent, index: number) => {
     dragItem.current = index;
     setDraggedIndex(index);
-    
-    // Set custom drag image to only show the dragged item
     const target = e.currentTarget as HTMLElement;
     const clone = target.cloneNode(true) as HTMLElement;
     clone.style.position = 'absolute';
@@ -372,40 +385,40 @@ export const Sidebar = () => {
   }));
 
   return (
-    <StyledSidebar $mode={theme}>
-      <StyledHeader $mode={theme}>
-        <StyledBtnGroup>
+    <Container $mode={theme}>
+      <Header $mode={theme}>
+        <BtnGroup>
           {boardRole !== 'viewer' && (
-            <StyledProjectDropdown $mode={theme}>
-              <StyledSplitBtnGroup>
-                <StyledCreateBtn $mode={theme} onClick={() => setProjectModal({})}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <div style={{ position: 'relative' }}>
+              <SplitBtnGroup>
+                <CreateBtn $mode={theme} onClick={() => setProjectModal({})}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
                   </svg>
                   Projekt
-                </StyledCreateBtn>
-                <StyledSplitBtn $mode={theme}>
-                  <StyledDropdownArrow>▼</StyledDropdownArrow>
-                  <StyledProjectDropdownContent $mode={theme}>
+                </CreateBtn>
+                <SplitBtn $mode={theme}>
+                  ▼
+                  <DropdownContent $mode={theme}>
                     <div>
-                      <StyledMenuItem $mode={theme} onClick={() => setImportBoardModal(true)}>Von anderem Board importieren</StyledMenuItem>
+                      <MenuItem $mode={theme} onClick={() => setImportBoardModal(true)}>Von anderem Board importieren</MenuItem>
                     </div>
-                  </StyledProjectDropdownContent>
-                </StyledSplitBtn>
-              </StyledSplitBtnGroup>
-            </StyledProjectDropdown>
+                  </DropdownContent>
+                </SplitBtn>
+              </SplitBtnGroup>
+            </div>
           )}
-          <StyledMenuDropdown $mode={theme}>
-            <StyledMenuBtn $mode={theme}>⋮</StyledMenuBtn>
-            <StyledMenuDropdownContent $mode={theme}>
-              <StyledMenuItem $mode={theme} onClick={handleExport}>Export JSON</StyledMenuItem>
-              <StyledMenuItem $mode={theme} onClick={() => fileInputRef.current?.click()}>Import JSON</StyledMenuItem>
-            </StyledMenuDropdownContent>
-          </StyledMenuDropdown>
+          <MenuDropdown>
+            <MenuBtn $mode={theme}>⋮</MenuBtn>
+            <MenuDropdownContent $mode={theme}>
+              <MenuItem $mode={theme} onClick={handleExport}>Export JSON</MenuItem>
+              <MenuItem $mode={theme} onClick={() => fileInputRef.current?.click()}>Import JSON</MenuItem>
+            </MenuDropdownContent>
+          </MenuDropdown>
           <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
-        </StyledBtnGroup>
-      </StyledHeader>
-      <StyledProjectList>
+        </BtnGroup>
+      </Header>
+      <ProjectList>
         {sortedProjects.map((project, index) => {
           const isExpanded = expandedProjects.has(project._id);
           const isSelected = selectedProjectId === project._id;
@@ -413,7 +426,7 @@ export const Sidebar = () => {
           const showDropIndicator = dropTargetIndex === index && draggedIndex !== null && draggedIndex !== index;
           
           return (
-            <StyledProjectItem
+            <ProjectItem
               key={project._id}
               $mode={theme}
               $selected={isSelected}
@@ -423,45 +436,45 @@ export const Sidebar = () => {
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
             >
-              {showDropIndicator && <StyledDropIndicator $mode={theme} />}
-              <StyledProjectHeader $mode={theme} onClick={() => toggleProjectExpanded(project._id)}>
+              {showDropIndicator && <DropIndicator $mode={theme} />}
+              <ProjectHeader $mode={theme} onClick={() => toggleProjectExpanded(project._id)}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <StyledDragHandle $mode={theme} onMouseDown={e => e.stopPropagation()}>⋮⋮</StyledDragHandle>
+                  <DragHandle $mode={theme} onMouseDown={e => e.stopPropagation()}>⋮⋮</DragHandle>
                   <div>
-                    <StyledProjectName>
-                      <StyledAccordionToggle $expanded={isExpanded}>▶</StyledAccordionToggle>
+                    <ProjectName $mode={theme}>
+                      <AccordionToggle $expanded={isExpanded}>▶</AccordionToggle>
                       {STATUS_ICONS[project.status || '']} {project.name}
-                      <span style={{ color: '#888', fontWeight: 'normal' }}> ({project.phases.length})</span>
-                    </StyledProjectName>
-                    <StyledProjectCategory $mode={theme}>
-                      <StyledColorDot $color={project.color} />
+                      <PhaseCount $mode={theme}> ({project.phases.length})</PhaseCount>
+                    </ProjectName>
+                    <ProjectCategory $mode={theme}>
+                      <ColorDot $color={project.color} />
                       {project.category || 'Keine Kategorie'}
-                    </StyledProjectCategory>
+                    </ProjectCategory>
                   </div>
                 </div>
                 {boardRole !== 'viewer' && (
-                  <StyledActions>
-                    <StyledIconBtn $mode={theme} onClick={e => { e.stopPropagation(); setPhaseModal({ projectId: project._id }); }}>+</StyledIconBtn>
-                    <StyledIconBtn $mode={theme} onClick={e => { e.stopPropagation(); setProjectModal({ project }); }}>✎</StyledIconBtn>
-                    <StyledIconBtn $mode={theme} onClick={e => { e.stopPropagation(); setDeleteConfirm({ projectId: project._id, projectName: project.name }); }}>🗑</StyledIconBtn>
-                  </StyledActions>
+                  <Actions>
+                    <IconBtn $mode={theme} onClick={e => { e.stopPropagation(); setPhaseModal({ projectId: project._id }); }}>+</IconBtn>
+                    <IconBtn $mode={theme} onClick={e => { e.stopPropagation(); setProjectModal({ project }); }}>✎</IconBtn>
+                    <IconBtn $mode={theme} onClick={e => { e.stopPropagation(); setDeleteConfirm({ projectId: project._id, projectName: project.name }); }}>🗑</IconBtn>
+                  </Actions>
                 )}
-              </StyledProjectHeader>
-              <StyledPhaseList $expanded={isExpanded}>
+              </ProjectHeader>
+              <PhaseList $expanded={isExpanded}>
                 {project.phases.map(phase => (
-                  <StyledPhaseItem key={phase._id} $mode={theme} onClick={() => selectPhase(project._id, phase._id)}>
-                    <StyledPhaseColor $color={phase.color} />
-                    <StyledPhaseInfo>
-                      <StyledPhaseName>{phase.name}</StyledPhaseName>
-                      <StyledPhaseDates $mode={theme}>{phase.start} → {phase.end}</StyledPhaseDates>
-                    </StyledPhaseInfo>
-                  </StyledPhaseItem>
+                  <PhaseItem key={phase._id} $mode={theme} onClick={() => selectPhase(project._id, phase._id)}>
+                    <PhaseColor $color={phase.color} />
+                    <PhaseInfo>
+                      <PhaseName $mode={theme}>{phase.name}</PhaseName>
+                      <PhaseDates $mode={theme}>{phase.start} → {phase.end}</PhaseDates>
+                    </PhaseInfo>
+                  </PhaseItem>
                 ))}
-              </StyledPhaseList>
-            </StyledProjectItem>
+              </PhaseList>
+            </ProjectItem>
           );
         })}
-      </StyledProjectList>
+      </ProjectList>
       
       {projectModal && (
         <ProjectModal
@@ -505,6 +518,6 @@ export const Sidebar = () => {
           onClose={() => setImportBoardModal(false)}
         />
       )}
-    </StyledSidebar>
+    </Container>
   );
 };

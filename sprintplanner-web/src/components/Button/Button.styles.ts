@@ -1,34 +1,43 @@
 import styled from '@emotion/styled';
-import { getColors } from '@/styles';
-import { ThemeMode } from '@/styles';
+import { t, ThemeMode } from '@/styles';
 
 export const StyledButton = styled.button<{ 
   $variant?: 'primary' | 'secondary' | 'danger';
   $size?: 'small' | 'medium';
   $mode: ThemeMode;
 }>`
-  padding: ${p => p.$size === 'small' ? '6px 12px' : '10px 20px'};
+  padding: ${p => p.$size === 'small' ? `${t('dark').space.xs} ${t('dark').space.sm}` : `${t('dark').space.sm} ${t('dark').space.lg}`};
   border: none;
-  border-radius: 6px;
+  border-radius: ${t('dark').radius.md};
   cursor: pointer;
-  font-size: ${p => p.$size === 'small' ? '12px' : '14px'};
-  transition: opacity 0.2s;
+  font-size: ${p => p.$size === 'small' ? t('dark').fontSize.xs : t('dark').fontSize.base};
+  font-weight: 500;
+  transition: all ${t('dark').transition.fast};
   
   ${p => {
-    const colors = getColors(p.$mode);
+    const colors = t(p.$mode);
     switch (p.$variant) {
       case 'danger':
-        return `background: ${colors.danger}; color: white;`;
+        return `
+          background: ${colors.danger};
+          color: white;
+          &:hover:not(:disabled) { background: ${colors.danger}; opacity: 0.9; }
+        `;
       case 'secondary':
-        return `background: ${colors.bgTertiary}; color: ${colors.textPrimary};`;
+        return `
+          background: ${colors.panel};
+          color: ${colors.ink};
+          border: 1px solid ${colors.stroke};
+          &:hover:not(:disabled) { background: ${colors.actionMuted}; border-color: ${colors.action}; }
+        `;
       default:
-        return `background: ${colors.accent}; color: white;`;
+        return `
+          background: ${colors.action};
+          color: white;
+          &:hover:not(:disabled) { background: ${colors.actionHover}; }
+        `;
     }
   }}
-  
-  &:hover {
-    opacity: 0.9;
-  }
   
   &:disabled {
     opacity: 0.5;

@@ -121,6 +121,14 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
     onUpdate?.();
   };
 
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const pastedText = e.clipboardData.getData('text');
+    if (pastedText.includes('@')) {
+      e.preventDefault();
+      addEmailAsChip(pastedText);
+    }
+  };
+
   const copyLink = () => {
     navigator.clipboard.writeText(`${window.location.origin}/gantt/${boardId}`);
   };
@@ -155,6 +163,7 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
                   value={email}
                   onChange={handleEmailChange}
                   onKeyDown={handleEmailKeyDown}
+                  onPaste={handlePaste}
                   placeholder={pendingInvites.length ? '' : 'Weitere hinzufügen...'}
                   autoFocus
                 />

@@ -1,137 +1,180 @@
 import styled from '@emotion/styled';
-import { getColors } from '@/styles';
-import { ThemeMode } from '@/styles';
+import { t, ThemeMode } from '@/styles';
 
-export const StyledContainer = styled.div<{ $mode: ThemeMode }>`
+// === LAYOUT ===
+export const Container = styled.div<{ $mode: ThemeMode }>`
   min-height: 100vh;
-  background: ${p => getColors(p.$mode).bgPrimary};
+  background: ${p => t(p.$mode).canvas};
 `;
 
-export const StyledHeader = styled.header<{ $mode: ThemeMode }>`
-  background: ${p => getColors(p.$mode).bgSecondary};
-  padding: 20px 40px;
+export const Header = styled.header<{ $mode: ThemeMode }>`
+  background: ${p => t(p.$mode).board};
+  padding: ${t('dark').space.md} ${t('dark').space.xl};
   display: flex;
   align-items: center;
-  border-bottom: 1px solid ${p => getColors(p.$mode).border};
+  border-bottom: 1px solid ${p => t(p.$mode).strokeSubtle};
 `;
 
-export const StyledHeaderLeft = styled.div`
+export const HeaderLeft = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: ${t('dark').space.md};
 `;
 
-export const StyledTitle = styled.h1<{ $mode: ThemeMode }>`
-  color: ${p => getColors(p.$mode).accent};
-  font-size: 1.5em;
+export const Title = styled.h1<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.lg};
+  font-weight: 600;
 `;
 
-export const StyledContent = styled.main`
+export const Content = styled.main`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: ${t('dark').space.xxl} ${t('dark').space.lg};
 `;
 
-export const StyledSection = styled.section`
-  margin-bottom: 40px;
+// === SECTION ===
+export const Section = styled.section`
+  margin-bottom: ${t('dark').space.xxl};
 `;
 
-export const StyledSectionHeader = styled.div`
+export const SectionHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: ${t('dark').space.md};
 `;
 
-export const StyledSectionTitle = styled.h2<{ $mode: ThemeMode }>`
-  color: ${p => getColors(p.$mode).textSecondary};
-  font-size: 14px;
+export const SectionTitle = styled.h2<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).inkMuted};
+  font-size: ${t('dark').fontSize.xs};
+  font-weight: 500;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 `;
 
-export const StyledTable = styled.div<{ $mode: ThemeMode }>`
-  background: ${p => getColors(p.$mode).bgSecondary};
-  border: 1px solid ${p => getColors(p.$mode).border};
-  border-radius: 8px;
+// === TABLE ===
+export const Table = styled.div<{ $mode: ThemeMode }>`
+  background: ${p => t(p.$mode).board};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.lg};
   overflow: hidden;
 `;
 
-export const StyledRow = styled.div<{ $mode: ThemeMode }>`
+export const Row = styled.div<{ $mode: ThemeMode }>`
   display: grid;
   grid-template-columns: auto 1fr auto auto auto auto;
-  gap: 16px;
-  padding: 16px;
-  border-bottom: 1px solid ${p => getColors(p.$mode).border};
+  gap: ${t('dark').space.md};
+  padding: ${t('dark').space.md};
+  border-bottom: 1px solid ${p => t(p.$mode).strokeSubtle};
   align-items: center;
+  transition: background ${t('dark').transition.fast};
   
   &:last-child {
     border-bottom: none;
   }
   
   &:hover {
-    background: ${p => getColors(p.$mode).bgTertiary};
+    background: ${p => t(p.$mode).panel};
   }
 `;
 
-export const StyledBoardStats = styled.span<{ $mode: ThemeMode }>`
-  font-size: 12px;
-  color: ${p => getColors(p.$mode).textSecondary};
-`;
+export const UserInfo = styled.div``;
 
-export const StyledUserInfo = styled.div``;
-
-export const StyledUserName = styled.div<{ $mode: ThemeMode }>`
+export const UserName = styled.div<{ $mode: ThemeMode }>`
   font-weight: 500;
-  color: ${p => getColors(p.$mode).textPrimary};
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.base};
 `;
 
-export const StyledUserEmail = styled.div<{ $mode: ThemeMode }>`
-  font-size: 12px;
-  color: ${p => getColors(p.$mode).textSecondary};
+export const UserEmail = styled.div<{ $mode: ThemeMode }>`
+  font-size: ${t('dark').fontSize.xs};
+  color: ${p => t(p.$mode).inkMuted};
 `;
 
-export const StyledStatus = styled.span<{ $mode: ThemeMode; $status: 'active' | 'pending' }>`
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+export const BoardStats = styled.span<{ $mode: ThemeMode }>`
+  font-size: ${t('dark').fontSize.xs};
+  color: ${p => t(p.$mode).inkFaint};
+`;
+
+export const Status = styled.span<{ $mode: ThemeMode; $status: 'active' | 'pending' }>`
+  padding: ${t('dark').space.xs} ${t('dark').space.sm};
+  border-radius: ${t('dark').radius.sm};
+  font-size: ${t('dark').fontSize.xs};
   font-weight: 500;
-  background: ${p => p.$status === 'active' ? 'rgba(74, 222, 128, 0.2)' : 'rgba(251, 191, 36, 0.2)'};
-  color: ${p => p.$status === 'active' ? '#4ade80' : '#fbbf24'};
+  background: ${p => p.$status === 'active' ? t(p.$mode).successMuted : 'rgba(251, 191, 36, 0.15)'};
+  color: ${p => p.$status === 'active' ? t(p.$mode).success : '#fbbf24'};
 `;
 
-export const StyledSelect = styled.select<{ $mode: ThemeMode }>`
-  padding: 4px 8px;
-  border-radius: 4px;
-  background: ${p => getColors(p.$mode).bgTertiary};
-  color: ${p => getColors(p.$mode).textPrimary};
-  border: 1px solid ${p => getColors(p.$mode).border};
-  font-size: 12px;
+export const Select = styled.select<{ $mode: ThemeMode }>`
+  padding: ${t('dark').space.xs} ${t('dark').space.sm};
+  border-radius: ${t('dark').radius.sm};
+  background: ${p => t(p.$mode).panel};
+  color: ${p => t(p.$mode).ink};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  font-size: ${t('dark').fontSize.xs};
+  cursor: pointer;
+  transition: border-color ${t('dark').transition.fast};
+  
+  &:hover {
+    border-color: ${p => t(p.$mode).action};
+  }
 `;
 
-export const StyledRoleLabel = styled.span<{ $mode: ThemeMode }>`
-  font-size: 12px;
-  color: ${p => getColors(p.$mode).textSecondary};
+export const RoleLabel = styled.span<{ $mode: ThemeMode }>`
+  font-size: ${t('dark').fontSize.xs};
+  color: ${p => t(p.$mode).inkMuted};
+  padding: ${t('dark').space.xs} ${t('dark').space.sm};
 `;
 
-export const StyledInput = styled.input<{ $mode: ThemeMode }>`
+export const Input = styled.input<{ $mode: ThemeMode }>`
   width: 100%;
-  padding: 10px;
-  background: ${p => getColors(p.$mode).bgPrimary};
-  border: 1px solid ${p => getColors(p.$mode).border};
-  border-radius: 6px;
-  color: ${p => getColors(p.$mode).textPrimary};
-  font-size: 14px;
+  padding: ${t('dark').space.sm} ${t('dark').space.md};
+  background: ${p => t(p.$mode).canvas};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.base};
+  transition: border-color ${t('dark').transition.fast};
+  
+  &:focus {
+    outline: none;
+    border-color: ${p => t(p.$mode).action};
+  }
+  
+  &::placeholder {
+    color: ${p => t(p.$mode).inkFaint};
+  }
 `;
 
-export const StyledEmpty = styled.div<{ $mode: ThemeMode }>`
-  color: ${p => getColors(p.$mode).textSecondary};
-  padding: 20px;
+export const Empty = styled.div<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).inkMuted};
+  padding: ${t('dark').space.xxl};
   text-align: center;
+  background: ${p => t(p.$mode).board};
+  border: 1px dashed ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.lg};
 `;
 
+// Export mit alten Namen für Kompatibilität
 export const S = {
-  StyledContainer, StyledHeader, StyledHeaderLeft, StyledTitle, StyledContent,
-  StyledSection, StyledSectionHeader, StyledSectionTitle,
-  StyledTable, StyledRow, StyledUserInfo, StyledUserName, StyledUserEmail,
-  StyledStatus, StyledSelect, StyledRoleLabel, StyledInput, StyledEmpty, StyledBoardStats
+  StyledContainer: Container,
+  StyledHeader: Header,
+  StyledHeaderLeft: HeaderLeft,
+  StyledTitle: Title,
+  StyledContent: Content,
+  StyledSection: Section,
+  StyledSectionHeader: SectionHeader,
+  StyledSectionTitle: SectionTitle,
+  StyledTable: Table,
+  StyledRow: Row,
+  StyledUserInfo: UserInfo,
+  StyledUserName: UserName,
+  StyledUserEmail: UserEmail,
+  StyledBoardStats: BoardStats,
+  StyledStatus: Status,
+  StyledSelect: Select,
+  StyledRoleLabel: RoleLabel,
+  StyledInput: Input,
+  StyledEmpty: Empty,
 };

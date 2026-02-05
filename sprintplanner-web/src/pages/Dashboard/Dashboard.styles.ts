@@ -1,232 +1,447 @@
 import styled from '@emotion/styled';
-import { getColors } from '@/styles';
-import { ThemeMode } from '@/styles';
+import { t, ThemeMode } from '@/styles';
 
-export const StyledContainer = styled.div<{ $mode: ThemeMode }>`
+// === LAYOUT ===
+export const Container = styled.div<{ $mode: ThemeMode }>`
   min-height: 100vh;
-  background: ${p => getColors(p.$mode).bgPrimary};
+  background: ${p => t(p.$mode).canvas};
 `;
 
-export const StyledHeader = styled.header<{ $mode: ThemeMode }>`
-  background: ${p => getColors(p.$mode).bgSecondary};
-  padding: 20px 40px;
+export const Header = styled.header<{ $mode: ThemeMode }>`
+  background: ${p => t(p.$mode).board};
+  padding: ${t('dark').space.md} ${t('dark').space.xl};
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid ${p => getColors(p.$mode).border};
+  border-bottom: 1px solid ${p => t(p.$mode).strokeSubtle};
 `;
 
-export const StyledHeaderLeft = styled.div`
+export const HeaderLeft = styled.div`
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: ${t('dark').space.xl};
 `;
 
-export const StyledNav = styled.nav`
+export const Nav = styled.nav`
   display: flex;
-  gap: 24px;
+  gap: ${t('dark').space.lg};
 `;
 
-export const StyledNavItem = styled.span<{ $mode: ThemeMode; $active?: boolean }>`
-  color: ${p => p.$active ? getColors(p.$mode).textPrimary : getColors(p.$mode).textSecondary};
-  font-size: 14px;
+export const NavItem = styled.span<{ $mode: ThemeMode; $active?: boolean }>`
+  color: ${p => p.$active ? t(p.$mode).ink : t(p.$mode).inkMuted};
+  font-size: ${t('dark').fontSize.base};
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color ${t('dark').transition.fast};
   
   &:hover {
-    color: ${p => getColors(p.$mode).textPrimary};
+    color: ${p => t(p.$mode).ink};
   }
 `;
 
-export const StyledTitle = styled.h1<{ $mode: ThemeMode }>`
-  color: ${p => getColors(p.$mode).accent};
-  font-size: 1.5em;
+export const Title = styled.h1<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.lg};
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: ${t('dark').space.sm};
 `;
 
-export const StyledContent = styled.main`
+export const Content = styled.main`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: ${t('dark').space.xxl} ${t('dark').space.lg};
 `;
 
-export const StyledSection = styled.section`
-  margin-bottom: 40px;
+// === SECTIONS ===
+export const Section = styled.section`
+  margin-bottom: ${t('dark').space.xxl};
 `;
 
-export const StyledSectionTitle = styled.h2<{ $mode: ThemeMode }>`
-  color: ${p => getColors(p.$mode).textSecondary};
-  font-size: 14px;
+export const SectionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: ${t('dark').space.md};
+`;
+
+export const SectionTitle = styled.h2<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).inkMuted};
+  font-size: ${t('dark').fontSize.xs};
+  font-weight: 500;
   text-transform: uppercase;
-  margin-bottom: 16px;
+  letter-spacing: 0.5px;
 `;
 
-export const StyledEmpty = styled.div<{ $mode: ThemeMode }>`
-  color: ${p => getColors(p.$mode).textSecondary};
-  padding: 20px;
+export const SectionCount = styled.span<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).inkFaint};
+  font-size: ${t('dark').fontSize.xs};
+`;
+
+export const Empty = styled.div<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).inkMuted};
+  padding: ${t('dark').space.xxl};
   text-align: center;
+  background: ${p => t(p.$mode).board};
+  border: 1px dashed ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.lg};
 `;
 
-export const StyledGrid = styled.div`
+export const EmptyIcon = styled.div<{ $mode: ThemeMode }>`
+  font-size: 48px;
+  margin-bottom: ${t('dark').space.md};
+  opacity: 0.3;
+`;
+
+export const EmptyText = styled.p<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).inkMuted};
+  margin-bottom: ${t('dark').space.md};
+`;
+
+export const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: ${t('dark').space.md};
 `;
 
-export const StyledCard = styled.div<{ $mode: ThemeMode }>`
-  background: ${p => getColors(p.$mode).bgSecondary};
-  border: 1px solid ${p => getColors(p.$mode).border};
-  border-radius: 12px;
-  padding: 20px;
+// === CARD ===
+export const Card = styled.div<{ $mode: ThemeMode }>`
+  background: ${p => t(p.$mode).board};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.lg};
+  padding: ${t('dark').space.lg};
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: border-color ${t('dark').transition.fast}, box-shadow ${t('dark').transition.fast};
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
   
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-color: ${p => t(p.$mode).action};
+    box-shadow: 0 0 0 1px ${p => t(p.$mode).action};
   }
 `;
 
-export const StyledCardHeader = styled.div`
+export const CardHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 8px;
 `;
 
-export const StyledCardTitle = styled.h3<{ $mode: ThemeMode }>`
-  color: ${p => getColors(p.$mode).textPrimary};
-  font-size: 1.1em;
+export const CardTitle = styled.h3<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.md};
+  font-weight: 500;
+  margin-bottom: ${t('dark').space.xs};
 `;
 
-export const StyledCardDesc = styled.p<{ $mode: ThemeMode }>`
-  color: ${p => getColors(p.$mode).textSecondary};
-  font-size: 13px;
-  margin-bottom: 12px;
+export const CardDesc = styled.p<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).inkMuted};
+  font-size: ${t('dark').fontSize.sm};
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 20px;
+`;
+
+export const CardBody = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+`;
+
+export const CardMeta = styled.div<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).inkFaint};
+  font-size: ${t('dark').fontSize.xs};
+  margin-top: auto;
+  padding-top: ${t('dark').space.sm};
+`;
+
+export const CardFooter = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${t('dark').space.sm};
+  margin-top: ${t('dark').space.sm};
+  min-height: 28px;
+`;
+
+// === TIMELINE PREVIEW (Signature Element) ===
+export const TimelinePreview = styled.div`
+  display: flex;
+  gap: 2px;
+  height: 6px;
+  margin: ${t('dark').space.md} 0;
+  border-radius: ${t('dark').radius.sm};
   overflow: hidden;
 `;
 
-export const StyledCardMeta = styled.div<{ $mode: ThemeMode }>`
-  color: ${p => getColors(p.$mode).textSecondary};
-  font-size: 12px;
+export const TimelineSegment = styled.div<{ $mode: ThemeMode; $status: 'complete' | 'active' | 'planned' | 'overdue' }>`
+  flex: 1;
+  background: ${p => {
+    const colors = t(p.$mode);
+    switch (p.$status) {
+      case 'complete': return colors.sprintComplete;
+      case 'active': return colors.sprintActive;
+      case 'overdue': return colors.sprintOverdue;
+      case 'planned': return colors.sprintPlanned;
+    }
+  }};
+  opacity: ${p => p.$status === 'planned' ? 0.4 : 1};
 `;
 
-export const StyledCardMembers = styled.div`
+// === MINIMAP ===
+export const Minimap = styled.div<{ $mode: ThemeMode }>`
+  position: relative;
+  background: ${p => t(p.$mode).canvas};
+  border: 1px solid ${p => t(p.$mode).strokeSubtle};
+  border-radius: ${t('dark').radius.md};
+  padding: ${t('dark').space.sm};
+  margin: ${t('dark').space.md} 0;
   display: flex;
-  gap: 4px;
-  margin-top: 12px;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+export const MinimapRow = styled.div`
+  position: relative;
+  height: 5px;
+  border-radius: 2px;
+`;
+
+export const MinimapPhase = styled.div<{ $mode: ThemeMode; $status: 'complete' | 'active' | 'planned' | 'overdue' }>`
+  position: absolute;
+  height: 100%;
+  border-radius: 2px;
+  opacity: ${p => p.$status === 'complete' ? 0.45 : p.$status === 'planned' ? 0.35 : 1};
+`;
+
+export const MinimapToday = styled.div<{ $mode: ThemeMode }>`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #ef4444;
+  z-index: 2;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    width: 6px;
+    height: 6px;
+    background: #ef4444;
+    border-radius: 50%;
+  }
+`;
+
+export const CardProgress = styled.div<{ $mode: ThemeMode }>`
+  display: flex;
+  align-items: center;
+  gap: ${t('dark').space.sm};
+  font-size: ${t('dark').fontSize.xs};
+  color: ${p => t(p.$mode).inkMuted};
+  margin-top: ${t('dark').space.sm};
+`;
+
+export const ProgressDot = styled.span<{ $mode: ThemeMode; $status: 'complete' | 'active' | 'planned' }>`
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: ${p => {
+    const colors = t(p.$mode);
+    switch (p.$status) {
+      case 'complete': return colors.sprintComplete;
+      case 'active': return colors.sprintActive;
+      case 'planned': return colors.sprintPlanned;
+    }
+  }};
+`;
+
+// === MEMBERS ===
+export const CardMembers = styled.div`
+  display: flex;
+  gap: ${t('dark').space.xs};
   align-items: center;
 `;
 
-export const StyledCardFooter = styled.div`
-  display: flex;
-  gap: 6px;
-  margin-top: 8px;
-  flex-wrap: wrap;
+export const MemberOverflow = styled.span<{ $mode: ThemeMode }>`
+  font-size: ${t('dark').fontSize.xs};
+  color: ${p => t(p.$mode).inkFaint};
+  margin-left: ${t('dark').space.xs};
 `;
 
-export const StyledBadge = styled.span<{ $mode: ThemeMode }>`
+// === BADGES ===
+export const BadgeGroup = styled.div`
+  display: flex;
+  gap: ${t('dark').space.xs};
+  margin-left: auto;
+`;
+
+export const Badge = styled.span<{ $mode: ThemeMode }>`
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  background: ${p => getColors(p.$mode).bgTertiary};
-  color: ${p => getColors(p.$mode).accent};
-  border: 1px solid ${p => getColors(p.$mode).border};
+  gap: ${t('dark').space.xs};
+  padding: ${t('dark').space.xs} ${t('dark').space.sm};
+  border-radius: ${t('dark').radius.sm};
+  font-size: ${t('dark').fontSize.xs};
+  background: ${p => t(p.$mode).actionMuted};
+  color: ${p => t(p.$mode).action};
 `;
 
-export const StyledMenu = styled.div`
+// === MENU ===
+export const Menu = styled.div`
   position: relative;
 `;
 
-export const StyledMenuBtn = styled.button<{ $mode: ThemeMode }>`
+export const MenuBtn = styled.button<{ $mode: ThemeMode }>`
   background: none;
   border: none;
-  color: ${p => getColors(p.$mode).textSecondary};
+  color: ${p => t(p.$mode).inkFaint};
   cursor: pointer;
-  padding: 4px 8px;
+  padding: ${t('dark').space.xs};
   font-size: 18px;
+  border-radius: ${t('dark').radius.sm};
+  transition: all ${t('dark').transition.fast};
   
   &:hover {
-    color: ${p => getColors(p.$mode).textPrimary};
+    color: ${p => t(p.$mode).ink};
+    background: ${p => t(p.$mode).panel};
   }
 `;
 
-export const StyledMenuDropdown = styled.div<{ $mode: ThemeMode; $visible: boolean }>`
+export const MenuDropdown = styled.div<{ $mode: ThemeMode; $visible: boolean }>`
   position: absolute;
   top: 100%;
   right: 0;
-  background: ${p => getColors(p.$mode).bgTertiary};
-  border: 1px solid ${p => getColors(p.$mode).border};
-  border-radius: 6px;
-  min-width: 120px;
+  background: ${p => t(p.$mode).panel};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  min-width: 140px;
   display: ${p => p.$visible ? 'block' : 'none'};
   z-index: 10;
+  box-shadow: ${t('dark').shadow.lg};
+  overflow: hidden;
 `;
 
-export const StyledMenuItem = styled.button<{ $mode: ThemeMode }>`
+export const MenuItem = styled.button<{ $mode: ThemeMode; $danger?: boolean }>`
   width: 100%;
-  padding: 8px 12px;
+  padding: ${t('dark').space.sm} ${t('dark').space.md};
   background: none;
   border: none;
-  color: ${p => getColors(p.$mode).textPrimary};
+  color: ${p => p.$danger ? t(p.$mode).danger : t(p.$mode).ink};
   cursor: pointer;
   text-align: left;
-  font-size: 13px;
+  font-size: ${t('dark').fontSize.sm};
+  transition: background ${t('dark').transition.fast};
   
   &:hover {
-    background: ${p => getColors(p.$mode).bgSecondary};
+    background: ${p => p.$danger ? t(p.$mode).dangerMuted : t(p.$mode).actionMuted};
   }
 `;
 
-export const StyledFab = styled.button<{ $mode: ThemeMode }>`
+// === FAB ===
+export const Fab = styled.button<{ $mode: ThemeMode }>`
   position: fixed;
-  bottom: 30px;
-  right: 30px;
-  background: ${p => getColors(p.$mode).accent};
+  bottom: ${t('dark').space.xl};
+  right: ${t('dark').space.xl};
+  background: ${p => t(p.$mode).action};
   color: white;
   border: none;
-  border-radius: 30px;
-  padding: 15px 25px;
-  font-size: 16px;
+  border-radius: ${t('dark').radius.full};
+  padding: ${t('dark').space.md} ${t('dark').space.lg};
+  font-size: ${t('dark').fontSize.base};
+  font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(233, 69, 96, 0.4);
+  box-shadow: ${t('dark').shadow.lg};
+  transition: all ${t('dark').transition.fast};
+  display: flex;
+  align-items: center;
+  gap: ${t('dark').space.sm};
   
   &:hover {
-    opacity: 0.9;
+    background: ${p => t(p.$mode).actionHover};
+    transform: translateY(-2px);
   }
 `;
 
-export const StyledInput = styled.input<{ $mode: ThemeMode }>`
+// === FORM ===
+export const Input = styled.input<{ $mode: ThemeMode }>`
   width: 100%;
-  padding: 10px;
-  background: ${p => getColors(p.$mode).bgPrimary};
-  border: 1px solid ${p => getColors(p.$mode).border};
-  border-radius: 6px;
-  color: ${p => getColors(p.$mode).textPrimary};
-  font-size: 14px;
-  margin-bottom: 10px;
+  padding: ${t('dark').space.sm} ${t('dark').space.md};
+  background: ${p => t(p.$mode).canvas};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.base};
+  margin-bottom: ${t('dark').space.sm};
+  transition: border-color ${t('dark').transition.fast};
+  
+  &:focus {
+    outline: none;
+    border-color: ${p => t(p.$mode).action};
+  }
+  
+  &::placeholder {
+    color: ${p => t(p.$mode).inkFaint};
+  }
 `;
 
-export const StyledTextarea = styled.textarea<{ $mode: ThemeMode }>`
+export const Textarea = styled.textarea<{ $mode: ThemeMode }>`
   width: 100%;
-  padding: 10px;
-  background: ${p => getColors(p.$mode).bgPrimary};
-  border: 1px solid ${p => getColors(p.$mode).border};
-  border-radius: 6px;
-  color: ${p => getColors(p.$mode).textPrimary};
-  font-size: 14px;
+  padding: ${t('dark').space.sm} ${t('dark').space.md};
+  background: ${p => t(p.$mode).canvas};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.base};
   resize: vertical;
+  font-family: inherit;
+  transition: border-color ${t('dark').transition.fast};
+  
+  &:focus {
+    outline: none;
+    border-color: ${p => t(p.$mode).action};
+  }
+  
+  &::placeholder {
+    color: ${p => t(p.$mode).inkFaint};
+  }
 `;
 
+// === SKELETON LOADING ===
+export const Skeleton = styled.div<{ $mode: ThemeMode }>`
+  background: linear-gradient(
+    90deg,
+    ${p => t(p.$mode).stroke} 25%,
+    ${p => t(p.$mode).panel} 50%,
+    ${p => t(p.$mode).stroke} 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: ${t('dark').radius.md};
+  
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+`;
+
+export const SkeletonCard = styled(Skeleton)`
+  height: 180px;
+`;
+
+// Export als S für Kompatibilität
 export const S = {
-  StyledContainer, StyledHeader, StyledHeaderLeft, StyledNav, StyledNavItem, StyledTitle, StyledContent,
-  StyledSection, StyledSectionTitle, StyledEmpty, StyledGrid,
-  StyledCard, StyledCardHeader, StyledCardTitle, StyledCardDesc, StyledCardMeta, StyledCardMembers, StyledCardFooter, StyledBadge,
-  StyledMenu, StyledMenuBtn, StyledMenuDropdown, StyledMenuItem,
-  StyledFab, StyledInput, StyledTextarea
+  Container, Header, HeaderLeft, Nav, NavItem, Title, Content,
+  Section, SectionHeader, SectionTitle, SectionCount, Empty, EmptyIcon, EmptyText, Grid,
+  Card, CardHeader, CardTitle, CardDesc, CardBody, CardMeta, CardFooter,
+  TimelinePreview, TimelineSegment, Minimap, MinimapRow, MinimapPhase, MinimapToday, CardProgress, ProgressDot,
+  CardMembers, MemberOverflow, BadgeGroup, Badge,
+  Menu, MenuBtn, MenuDropdown, MenuItem,
+  Fab, Input, Textarea,
+  Skeleton, SkeletonCard,
 };
