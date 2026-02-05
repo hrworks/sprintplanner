@@ -82,14 +82,15 @@ const StyledProjectDropdownContent = styled.div<{ $mode: string }>`
   display: none;
   position: absolute;
   top: 100%;
-  left: 0;
+  right: 0;
   margin-top: 4px;
   background: ${p => getColors(p.$mode as 'dark' | 'light').bgSecondary};
   border: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').border};
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   z-index: 1000;
-  min-width: 200px;
+  min-width: 220px;
+  &:hover { display: block; }
 `;
 
 const StyledDropdownArrow = styled.span`
@@ -108,8 +109,10 @@ const StyledMenuBtn = styled.button<{ $mode: string }>`
   border-radius: 6px;
   color: ${p => getColors(p.$mode as 'dark' | 'light').textPrimary};
   cursor: pointer;
-  padding: 8px 12px;
+  padding: 12px 14px;
   font-size: 16px;
+  display: flex;
+  align-items: center;
   &:hover { background: ${p => getColors(p.$mode as 'dark' | 'light').bgTertiary}; }
 `;
 
