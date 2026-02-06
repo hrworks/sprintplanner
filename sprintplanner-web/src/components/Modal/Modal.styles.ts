@@ -25,6 +25,7 @@ export const StyledModal = styled.div<{ $mode: ThemeMode }>`
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: ${t('dark').shadow.lg};
+  transition: width 0.25s ease-out, max-width 0.25s ease-out;
   
   &::-webkit-scrollbar {
     width: 10px;

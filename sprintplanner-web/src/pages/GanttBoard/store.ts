@@ -23,6 +23,9 @@ interface GanttState {
   showConnections: boolean;
   sidebarCollapsed: boolean;
   topbarCollapsed: boolean;
+  hideCompleted: boolean;
+  hideLocked: boolean;
+  statusFilter: 'all' | 'active' | 'problems';
   statusNoteProject: Project | null;
   
   // Chart settings
@@ -51,6 +54,9 @@ interface GanttState {
   toggleConnections: () => void;
   toggleSidebar: () => void;
   toggleTopbar: () => void;
+  toggleHideCompleted: () => void;
+  toggleHideLocked: () => void;
+  setStatusFilter: (filter: 'all' | 'active' | 'problems') => void;
   setStatusNoteProject: (project: Project | null) => void;
   
   setDayWidth: (width: number) => void;
@@ -111,6 +117,9 @@ export const useGanttStore = create<GanttState>((set, get) => ({
   showConnections: true,
   sidebarCollapsed: false,
   topbarCollapsed: false,
+  hideCompleted: false,
+  hideLocked: false,
+  statusFilter: 'all',
   statusNoteProject: null,
   
   dayWidth: 20,
@@ -175,6 +184,9 @@ export const useGanttStore = create<GanttState>((set, get) => ({
   toggleConnections: () => set(state => ({ showConnections: !state.showConnections })),
   toggleSidebar: () => set(state => ({ sidebarCollapsed: !state.sidebarCollapsed })),
   toggleTopbar: () => set(state => ({ topbarCollapsed: !state.topbarCollapsed })),
+  toggleHideCompleted: () => set(state => ({ hideCompleted: !state.hideCompleted })),
+  toggleHideLocked: () => set(state => ({ hideLocked: !state.hideLocked })),
+  setStatusFilter: (statusFilter) => set({ statusFilter }),
   setStatusNoteProject: (project) => set({ statusNoteProject: project }),
   
   setDayWidth: (dayWidth) => set(state => {

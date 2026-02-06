@@ -172,6 +172,23 @@ const MenuBtn = styled.button<{ $mode: ThemeMode }>`
   }
 `;
 
+const FilterBtn = styled.button<{ $mode: ThemeMode; $active?: boolean }>`
+  background: ${p => p.$active ? t(p.$mode).action : t(p.$mode).board};
+  border: 1px solid ${p => p.$active ? t(p.$mode).action : t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  color: ${p => p.$active ? 'white' : t(p.$mode).ink};
+  cursor: pointer;
+  padding: ${t('dark').space.sm};
+  display: flex;
+  align-items: center;
+  transition: all ${t('dark').transition.fast};
+  
+  &:hover { 
+    background: ${p => p.$active ? t(p.$mode).actionHover : t(p.$mode).panel};
+    border-color: ${p => t(p.$mode).action};
+  }
+`;
+
 // === PROJECT LIST ===
 const ProjectList = styled.div<{ $mode: ThemeMode }>`
   flex: 1;
@@ -417,7 +434,8 @@ export const Sidebar = () => {
   const { 
     data, selectedProjectId, expandedProjects, boardRole, sidebarCollapsed, toggleSidebar,
     selectPhase, toggleProjectExpanded, addProject, updateProject, deleteProject, reorderProjects, importData, addPhase,
-    statusNoteProject, setStatusNoteProject
+    statusNoteProject, setStatusNoteProject, hideCompleted, toggleHideCompleted,
+    hideLocked, toggleHideLocked, statusFilter, setStatusFilter
   } = useGanttStore();
   const dragItem = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -428,6 +446,7 @@ export const Sidebar = () => {
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [importBoardModal, setImportBoardModal] = useState(false);
   const [splitMenuOpen, setSplitMenuOpen] = useState(false);
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [mainMenuOpen, setMainMenuOpen] = useState(false);
 
   const handleSaveProject = (project: Project) => {
@@ -504,10 +523,18 @@ export const Sidebar = () => {
     setDropTargetIndex(null);
   };
 
-  const sortedProjects = data.projects.map(p => ({
-    ...p,
-    phases: [...p.phases].sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
-  }));
+  const sortedProjects = data.projects
+    .filter(p => {
+      if (hideCompleted && p.status === 'complete') return false;
+      if (hideLocked && p.locked) return false;
+      if (statusFilter === 'active' && (!p.status || p.status === 'complete')) return false;
+      if (statusFilter === 'problems' && p.status !== 'warning' && p.status !== 'delay') return false;
+      return true;
+    })
+    .map(p => ({
+      ...p,
+      phases: [...p.phases].sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+    }));
 
   return (
     <Container $mode={theme} $collapsed={sidebarCollapsed}>
@@ -565,6 +592,39 @@ export const Sidebar = () => {
               )}
             </MenuWrapper>
           )}
+          <MenuWrapper>
+            <FilterBtn $mode={theme} $active={hideCompleted || hideLocked || statusFilter !== 'all'} onClick={() => setFilterMenuOpen(!filterMenuOpen)} title="Filter">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </FilterBtn>
+            {filterMenuOpen && (
+              <DropdownMenu
+                minWidth={220}
+                items={[
+                  { type: 'divider', label: 'Ausblenden' },
+                  { label: 'Abgeschlossene', icon: hideCompleted 
+                    ? <svg width="14" height="14" viewBox="0 0 24 24" fill="#6366f1" stroke="#6366f1" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4" fill="none" stroke="white"/></svg>
+                    : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>, onClick: toggleHideCompleted },
+                  { label: 'Gesperrte', icon: hideLocked
+                    ? <svg width="14" height="14" viewBox="0 0 24 24" fill="#6366f1" stroke="#6366f1" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4" fill="none" stroke="white"/></svg>
+                    : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>, onClick: toggleHideLocked },
+                  { type: 'divider', label: 'Status-Filter' },
+                  { label: 'Alle anzeigen', icon: statusFilter === 'all'
+                    ? <svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#6366f1"/><circle cx="12" cy="12" r="4" fill="white"/></svg>
+                    : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/></svg>, onClick: () => setStatusFilter('all') },
+                  { label: 'Nur aktive', icon: statusFilter === 'active'
+                    ? <svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#6366f1"/><circle cx="12" cy="12" r="4" fill="white"/></svg>
+                    : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/></svg>, onClick: () => setStatusFilter('active') },
+                  { label: 'Nur Probleme', icon: statusFilter === 'problems'
+                    ? <svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#6366f1"/><circle cx="12" cy="12" r="4" fill="white"/></svg>
+                    : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/></svg>, onClick: () => setStatusFilter('problems') },
+                ]}
+                onClose={() => setFilterMenuOpen(false)}
+              />
+            )}
+          </MenuWrapper>
           <CollapseBtn $mode={theme} onClick={toggleSidebar} title="Sidebar ausblenden">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="15 18 9 12 15 6" />

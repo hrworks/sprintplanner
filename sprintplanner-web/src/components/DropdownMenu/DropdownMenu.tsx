@@ -10,13 +10,21 @@ interface MenuItem {
   danger?: boolean;
 }
 
-interface Props {
-  items: MenuItem[];
-  onClose: () => void;
-  align?: 'left' | 'right';
+interface DividerItem {
+  type: 'divider';
+  label?: string;
 }
 
-export const DropdownMenu = ({ items, onClose, align = 'right' }: Props) => {
+type Item = MenuItem | DividerItem;
+
+interface Props {
+  items: Item[];
+  onClose: () => void;
+  align?: 'left' | 'right';
+  minWidth?: number;
+}
+
+export const DropdownMenu = ({ items, onClose, align = 'right', minWidth }: Props) => {
   const { theme } = useStore();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -29,18 +37,24 @@ export const DropdownMenu = ({ items, onClose, align = 'right' }: Props) => {
   }, [onClose]);
 
   return (
-    <Menu ref={ref} $mode={theme} $align={align}>
-      {items.map((item, i) => (
-        <Item key={i} $mode={theme} $danger={item.danger} onClick={() => { item.onClick(); onClose(); }}>
-          {item.icon && <Icon>{item.icon}</Icon>}
-          {item.label}
-        </Item>
-      ))}
+    <Menu ref={ref} $mode={theme} $align={align} $minWidth={minWidth}>
+      {items.map((item, i) => 
+        'type' in item && item.type === 'divider' ? (
+          <Divider key={i} $mode={theme}>
+            {item.label && <DividerLabel>{item.label}</DividerLabel>}
+          </Divider>
+        ) : (
+          <ItemBtn key={i} $mode={theme} $danger={(item as MenuItem).danger} onClick={() => { (item as MenuItem).onClick(); onClose(); }}>
+            {(item as MenuItem).icon && <Icon>{(item as MenuItem).icon}</Icon>}
+            {(item as MenuItem).label}
+          </ItemBtn>
+        )
+      )}
     </Menu>
   );
 };
 
-const Menu = styled.div<{ $mode: ThemeMode; $align: 'left' | 'right' }>`
+const Menu = styled.div<{ $mode: ThemeMode; $align: 'left' | 'right'; $minWidth?: number }>`
   position: absolute;
   top: 100%;
   ${p => p.$align}: 0;
@@ -48,13 +62,37 @@ const Menu = styled.div<{ $mode: ThemeMode; $align: 'left' | 'right' }>`
   background: ${p => t(p.$mode).board};
   border: 1px solid ${p => t(p.$mode).stroke};
   border-radius: ${t('dark').radius.md};
-  min-width: 160px;
+  min-width: ${p => p.$minWidth ? `${p.$minWidth}px` : '160px'};
   box-shadow: ${t('dark').shadow.lg};
   z-index: 100;
   overflow: hidden;
 `;
 
-const Item = styled.button<{ $mode: ThemeMode; $danger?: boolean }>`
+const Divider = styled.div<{ $mode: ThemeMode }>`
+  display: flex;
+  align-items: center;
+  padding: ${t('dark').space.sm} ${t('dark').space.md};
+  gap: ${t('dark').space.sm};
+`;
+
+const DividerLabel = styled.span`
+  font-size: 10px;
+  text-transform: uppercase;
+  color: ${t('dark').inkFaint};
+  white-space: nowrap;
+  
+  &::after {
+    content: '';
+    display: inline-block;
+    width: 100%;
+    height: 1px;
+    background: ${t('dark').stroke};
+    margin-left: ${t('dark').space.sm};
+    vertical-align: middle;
+  }
+`;
+
+const ItemBtn = styled.button<{ $mode: ThemeMode; $danger?: boolean }>`
   width: 100%;
   padding: ${t('dark').space.sm} ${t('dark').space.md};
   background: none;

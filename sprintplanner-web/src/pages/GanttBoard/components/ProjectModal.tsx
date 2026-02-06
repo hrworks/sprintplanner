@@ -59,58 +59,79 @@ export const ProjectModal = ({ project, onSave, onClose }: Props) => {
   };
 
   return (
-    <Modal title={isEdit ? 'Projekt bearbeiten' : 'Neues Projekt'} onClose={onClose} footer={
+    <Modal title={isEdit ? 'Projekt bearbeiten' : 'Neues Projekt'} onClose={onClose} width={form.status ? 850 : undefined} footer={
       <>
         <Button $variant="secondary" onClick={onClose}>Abbrechen</Button>
         <Button onClick={handleSave}>{isEdit ? 'Speichern' : 'Erstellen'}</Button>
       </>
     }>
-      <FormGroup>
-        <Label $mode={theme}>Projektname</Label>
-        <InputWrapper>
-          <Input $mode={theme} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="z.B. Workflow Automation" autoFocus />
-          {form.name && <ClearBtn $mode={theme} onClick={() => setForm({ ...form, name: '' })}>×</ClearBtn>}
-        </InputWrapper>
-      </FormGroup>
-      <FormGroup>
-        <Label $mode={theme}>Kategorie</Label>
-        <Input $mode={theme} value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="z.B. Development, Marketing" />
-      </FormGroup>
-      <FormGroup>
-        <Label $mode={theme}>Beschreibung</Label>
-        <Textarea $mode={theme} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Projektbeschreibung" rows={2} />
-      </FormGroup>
-      <FormGroup>
-        <Label $mode={theme}>Link</Label>
-        <Input $mode={theme} type="url" value={form.link} onChange={e => setForm({ ...form, link: e.target.value })} placeholder="https://..." />
-      </FormGroup>
-      <FormGroup>
-        <Label $mode={theme}>Status</Label>
-        <StatusSelect>
-          {(['', 'ok', 'warning', 'delay', 'complete'] as const).map(s => (
-            <StatusOption key={s} $mode={theme} $selected={form.status === s} onClick={() => setForm({ ...form, status: s })} title={s || 'Kein Status'}>
-              <StatusIcon status={s} />
-            </StatusOption>
-          ))}
-        </StatusSelect>
-      </FormGroup>
-      {form.status && (
-        <FormGroup>
-          <Label $mode={theme}>Statusnotiz</Label>
-          <Textarea $mode={theme} value={form.statusNote} onChange={e => setForm({ ...form, statusNote: e.target.value })} placeholder="Warum dieser Status? Aktueller Stand..." rows={3} />
-        </FormGroup>
-      )}
-      <FormGroup>
-        <Label $mode={theme}>Farbe</Label>
-        <ColorPicker>
-          {DEFAULT_COLORS.map(c => (
-            <ColorOption key={c} $mode={theme} $color={c} $selected={form.color === c} onClick={() => setForm({ ...form, color: c })} />
-          ))}
-        </ColorPicker>
-      </FormGroup>
+      <ModalColumns $hasStatus={!!form.status}>
+        <div>
+          <FormGroup>
+            <Label $mode={theme}>Projektname</Label>
+            <InputWrapper>
+              <Input $mode={theme} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="z.B. Workflow Automation" autoFocus />
+              {form.name && <ClearBtn $mode={theme} onClick={() => setForm({ ...form, name: '' })}>×</ClearBtn>}
+            </InputWrapper>
+          </FormGroup>
+          <FormGroup>
+            <Label $mode={theme}>Kategorie</Label>
+            <Input $mode={theme} value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="z.B. Development, Marketing" />
+          </FormGroup>
+          <FormGroup>
+            <Label $mode={theme}>Beschreibung</Label>
+            <Textarea $mode={theme} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Projektbeschreibung" rows={2} />
+          </FormGroup>
+          <FormGroup>
+            <Label $mode={theme}>Link</Label>
+            <Input $mode={theme} type="url" value={form.link} onChange={e => setForm({ ...form, link: e.target.value })} placeholder="https://..." />
+          </FormGroup>
+          <FormGroup>
+            <Label $mode={theme}>Status</Label>
+            <StatusSelect>
+              {(['', 'ok', 'warning', 'delay', 'complete'] as const).map(s => (
+                <StatusOption key={s} $mode={theme} $selected={form.status === s} onClick={() => setForm({ ...form, status: s })} title={s || 'Kein Status'}>
+                  <StatusIcon status={s} />
+                </StatusOption>
+              ))}
+            </StatusSelect>
+          </FormGroup>
+          <FormGroup>
+            <Label $mode={theme}>Farbe</Label>
+            <ColorPicker>
+              {DEFAULT_COLORS.map(c => (
+                <ColorOption key={c} $mode={theme} $color={c} $selected={form.color === c} onClick={() => setForm({ ...form, color: c })} />
+              ))}
+            </ColorPicker>
+          </FormGroup>
+        </div>
+        {form.status && (
+          <StatusNoteColumn>
+            <Label $mode={theme}>Statusnotiz</Label>
+            <Textarea $mode={theme} value={form.statusNote} onChange={e => setForm({ ...form, statusNote: e.target.value })} placeholder="Warum dieser Status? Aktueller Stand..." style={{ flex: 1 }} />
+          </StatusNoteColumn>
+        )}
+      </ModalColumns>
     </Modal>
   );
 };
+
+const ModalColumns = styled.div<{ $hasStatus: boolean }>`
+  display: flex;
+  gap: ${t('dark').space.lg};
+  
+  > div:first-of-type {
+    width: 320px;
+    flex-shrink: 0;
+  }
+`;
+
+const StatusNoteColumn = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+`;
 
 const FormGroup = styled.div`
   margin-bottom: ${t('dark').space.md};

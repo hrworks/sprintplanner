@@ -3,8 +3,8 @@ import { RefObject, useState, useCallback, useEffect, useMemo } from 'react';
 import { useStore } from '@/store';
 import { useGanttStore, generateId } from '../store';
 import { t, ThemeMode } from '@/styles';
-import { Phase, DEFAULT_COLORS } from '../types';
-import { StatusIcon } from './ProjectModal';
+import { Phase, Project, DEFAULT_COLORS } from '../types';
+import { StatusIcon, ProjectModal } from './ProjectModal';
 import { ConfirmModal } from './ConfirmModal';
 import { generatePhaseName } from '../utils/nameGenerator';
 
@@ -119,7 +119,7 @@ const StyledLabels = styled.div<{ $mode: ThemeMode }>`
   border-right: 2px solid ${p => t(p.$mode).action};
   position: sticky;
   left: 0;
-  z-index: 20;
+  z-index: 200;
 `;
 
 const StyledLabelHeader = styled.div<{ $mode: ThemeMode }>`
@@ -147,6 +147,7 @@ const StyledLabelRow = styled.div<{ $mode: ThemeMode; $selected: boolean; $heigh
   gap: 6px;
   background: ${p => p.$selected ? t(p.$mode).panel : 'transparent'};
   border-left: ${p => p.$selected ? '3px solid #6366f1' : 'none'};
+  user-select: none;
   &:hover { background: ${p => t(p.$mode).panel}; }
 `;
 
@@ -352,19 +353,21 @@ const StyledContextMenu = styled.div<{ $x: number; $y: number; $mode: ThemeMode 
   left: ${p => p.$x}px;
   top: ${p => p.$y}px;
   background: ${p => t(p.$mode).board};
-  border: 1px solid ${p => t(p.$mode).panel};
-  border-radius: 6px;
-  padding: 4px 0;
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
   min-width: 160px;
   z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: ${t('dark').shadow.lg};
+  overflow: hidden;
 `;
 
 const StyledContextMenuItem = styled.div<{ $mode: ThemeMode; $danger?: boolean }>`
-  padding: 8px 12px;
+  padding: ${t('dark').space.sm} ${t('dark').space.md};
   cursor: pointer;
-  color: ${p => p.$danger ? '#e94560' : t(p.$mode).ink};
-  &:hover { background: ${p => t(p.$mode).panel}; }
+  font-size: ${t('dark').fontSize.sm};
+  color: ${p => p.$danger ? t(p.$mode).danger : t(p.$mode).ink};
+  transition: background ${t('dark').transition.fast};
+  &:hover { background: ${p => p.$danger ? t(p.$mode).dangerMuted : t(p.$mode).actionMuted}; }
 `;
 
 const StyledConnectionSvg = styled.svg`
@@ -429,10 +432,19 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
   const { 
     data, dayWidth, rowHeight, chartStartDate, chartEndDate,
     selectedProjectId, selectedPhaseId, selectedPhaseIds, boardRole, showConnections, remoteSelections,
+    hideCompleted, hideLocked, statusFilter,
     selectProject, selectPhase, togglePhaseSelection, clearSelection, setStatusNoteProject,
     updateProject, updatePhase, updatePhaseLocal, addPhase, addConnection, deleteConnection, deletePhase, movePhase, movePhaseLocal,
     syncPhases, unsyncPhase
   } = useGanttStore();
+
+  const filteredProjects = data.projects.filter(p => {
+    if (hideCompleted && p.status === 'complete') return false;
+    if (hideLocked && p.locked) return false;
+    if (statusFilter === 'active' && (!p.status || p.status === 'complete')) return false;
+    if (statusFilter === 'problems' && p.status !== 'warning' && p.status !== 'delay') return false;
+    return true;
+  });
 
   // Build map of phaseId -> color for remote selections
   const remoteSelectionColors = useMemo(() => {
@@ -445,6 +457,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
 
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; type: 'connection' } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; phaseId: string; projectId: string } | null>(null);
+  const [editProject, setEditProject] = useState<Project | null>(null);
 
   // Horizontal scroll with mouse wheel
   useHorizontalScroll(scrollRef);
@@ -472,7 +485,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
 
   // Helper to update phase and all synced phases
   const updatePhaseWithSync = useCallback((phaseId: string, updates: { start?: string; end?: string }) => {
-    const phase = data.projects.flatMap(p => p.phases).find(ph => ph._id === phaseId);
+    const phase = filteredProjects.flatMap(p => p.phases).find(ph => ph._id === phaseId);
     updatePhaseLocal(phaseId, updates);
     if (phase?.syncWith?.length) {
       phase.syncWith.forEach(syncId => updatePhaseLocal(syncId, updates));
@@ -566,8 +579,8 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
     return { phaseToLane, laneCount: lanes.length, phaseOverlapCount };
   };
 
-  const projectLanes = data.projects.map(p => calculateLanes(p.phases));
-  const totalHeight = data.projects.length * rowHeight;
+  const projectLanes = filteredProjects.map(p => calculateLanes(p.phases));
+  const totalHeight = filteredProjects.length * rowHeight;
   const barPadding = 4;
   const barHeight = rowHeight - barPadding * 2;
 
@@ -712,7 +725,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
           const rect = ganttBody.getBoundingClientRect();
           const relY = e.clientY - rect.top;
           const targetRowIdx = Math.floor(relY / rowHeight);
-          if (targetRowIdx >= 0 && targetRowIdx < data.projects.length) {
+          if (targetRowIdx >= 0 && targetRowIdx < filteredProjects.length) {
             const targetProject = data.projects[targetRowIdx];
             // Don't allow moving to locked projects
             if (targetProject._id !== dragState.projectId && !targetProject.locked) {
@@ -789,7 +802,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
     
     // Send final update when drag ends
     if (dragState?.dragging) {
-      const phase = data.projects.flatMap(p => p.phases).find(ph => ph._id === dragState.phaseId);
+      const phase = filteredProjects.flatMap(p => p.phases).find(ph => ph._id === dragState.phaseId);
       if (phase) {
         // Check if moved to different project
         if (dragState.projectId !== dragState.originalProjectId) {
@@ -917,13 +930,14 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
         {/* Labels */}
         <StyledLabels $mode={theme}>
           <StyledLabelHeader $mode={theme}>Projekte</StyledLabelHeader>
-          {data.projects.map((project) => (
+          {filteredProjects.map((project) => (
             <StyledLabelRow 
               key={project._id} 
               $mode={theme} 
               $selected={selectedProjectId === project._id}
               $height={rowHeight}
               onClick={() => selectProject(project._id)}
+              onDoubleClick={() => boardRole !== 'viewer' && setEditProject(project)}
             >
               <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}>
                 {project.status && <span onClick={e => { e.stopPropagation(); setStatusNoteProject(project); }} style={{ cursor: 'pointer' }}><StatusIcon status={project.status} size={14} /></span>}
@@ -998,7 +1012,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
             {showTodayLine && <StyledTodayLine $left={todayOffset * dayWidth} />}
             
             {/* Milestone lines for phases with showStartLine/showEndLine */}
-            {data.projects.flatMap(p => p.phases).map(phase => {
+            {filteredProjects.flatMap(p => p.phases).map(phase => {
               const lines = [];
               const phaseStart = parseDate(phase.start);
               const phaseEnd = parseDate(phase.end);
@@ -1014,7 +1028,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
               return lines;
             })}
             
-            {data.projects.map((project, idx) => {
+            {filteredProjects.map((project, idx) => {
               const { phaseToLane, laneCount, phaseOverlapCount } = projectLanes[idx];
               const availableHeight = rowHeight - barPadding * 2;
               const baseLaneHeight = availableHeight / Math.max(laneCount, 1);
@@ -1160,7 +1174,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
           ) : (
             <>
               <StyledContextMenuItem $mode={theme} onClick={() => {
-                const phase = data.projects.flatMap(p => p.phases).find(ph => ph._id === contextMenu.phaseId);
+                const phase = filteredProjects.flatMap(p => p.phases).find(ph => ph._id === contextMenu.phaseId);
                 if (phase) {
                   const newPhase = { ...phase, _id: '', name: phase.name + ' (Kopie)' };
                   addPhase(contextMenu.projectId, newPhase);
@@ -1170,7 +1184,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
                 📋 Duplizieren
               </StyledContextMenuItem>
               {(() => {
-                const phase = data.projects.flatMap(p => p.phases).find(ph => ph._id === contextMenu.phaseId);
+                const phase = filteredProjects.flatMap(p => p.phases).find(ph => ph._id === contextMenu.phaseId);
                 return phase?.syncWith?.length ? (
                   <StyledContextMenuItem $mode={theme} onClick={() => { unsyncPhase(contextMenu.phaseId); setContextMenu(null); }}>
                     🔓 Sync auflösen
@@ -1183,6 +1197,14 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
             </>
           )}
         </StyledContextMenu>
+      )}
+
+      {editProject && (
+        <ProjectModal
+          project={editProject}
+          onSave={(p) => { updateProject(p._id, p); setEditProject(null); }}
+          onClose={() => setEditProject(null)}
+        />
       )}
     </StyledScrollContainer>
   );
