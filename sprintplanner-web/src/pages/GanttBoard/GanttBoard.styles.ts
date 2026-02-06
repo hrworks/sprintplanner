@@ -9,17 +9,56 @@ export const Container = styled.div<{ $mode: ThemeMode }>`
   background: ${p => t(p.$mode).canvas};
   color: ${p => t(p.$mode).ink};
   overflow: hidden;
+  
+  @media (max-width: 768px) {
+    @media (orientation: portrait) {
+      &::before {
+        content: 'Bitte Gerät drehen';
+        position: fixed;
+        inset: 0;
+        background: ${p => t(p.$mode).canvas};
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        z-index: 9999;
+      }
+    }
+  }
 `;
 
 // === TOOLBAR ===
-export const Toolbar = styled.div<{ $mode: ThemeMode }>`
+export const Toolbar = styled.div<{ $mode: ThemeMode; $collapsed?: boolean }>`
   background: ${p => t(p.$mode).panel};
-  padding: ${t('dark').space.sm} ${t('dark').space.lg};
+  padding: ${p => p.$collapsed ? `${t('dark').space.xs} ${t('dark').space.lg}` : `${t('dark').space.sm} ${t('dark').space.lg}`};
   display: flex;
   align-items: center;
   gap: ${t('dark').space.lg};
   border-bottom: 1px solid ${p => t(p.$mode).strokeSubtle};
   flex-shrink: 0;
+  transition: padding 0.15s;
+  
+  @media (max-width: 768px) and (orientation: landscape) {
+    display: none;
+  }
+`;
+
+export const CollapseTopbarBtn = styled.button<{ $mode: ThemeMode }>`
+  background: transparent;
+  border: none;
+  color: ${p => t(p.$mode).inkMuted};
+  cursor: pointer;
+  padding: ${t('dark').space.xs};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: ${t('dark').radius.sm};
+  transition: all ${t('dark').transition.fast};
+  
+  &:hover {
+    background: ${p => t(p.$mode).canvas};
+    color: ${p => t(p.$mode).ink};
+  }
 `;
 
 export const TitleGroup = styled.div`
@@ -223,6 +262,10 @@ export const ChartToolbar = styled.div<{ $mode: ThemeMode }>`
   border-bottom: 1px solid ${p => t(p.$mode).strokeSubtle};
   flex-wrap: wrap;
   gap: ${t('dark').space.sm};
+  
+  @media (max-width: 768px) and (orientation: landscape) {
+    display: none;
+  }
 `;
 
 export const ToolbarLeft = styled.div`
@@ -411,6 +454,7 @@ export const S = {
   StyledIconBtn: IconBtn,
   StyledCursorSettings: CursorSettings,
   StyledActiveUsers: ActiveUsers,
+  StyledCollapseTopbarBtn: CollapseTopbarBtn,
   StyledCursorDropdown: CursorDropdown,
   StyledCursorDropdownBtn: CursorDropdownBtn,
   StyledCursorDropdownMenu: CursorDropdownMenu,

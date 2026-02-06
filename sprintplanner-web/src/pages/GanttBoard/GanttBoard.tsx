@@ -25,9 +25,9 @@ export const GanttBoard = () => {
   const {
     boardName, boardDescription, boardRole, selectedPhaseId, showDetailPanel,
     dayWidth, rowHeight, chartStartDate, chartEndDate,
-    showConnections, cursorSettings, activeUsers,
+    showConnections, cursorSettings, activeUsers, topbarCollapsed,
     setBoard, setBoardDescription, setDayWidth, setRowHeight, setDateRange,
-    toggleDetailPanel, toggleConnections, setCursorSettings
+    toggleDetailPanel, toggleConnections, setCursorSettings, toggleTopbar
   } = useGanttStore();
 
   // Realtime: SSE for updates, WebSocket for cursors
@@ -105,7 +105,55 @@ export const GanttBoard = () => {
   return (
     <S.StyledContainer $mode={theme}>
       {/* Top Toolbar */}
-      <S.StyledToolbar $mode={theme}>
+      <S.StyledToolbar $mode={theme} $collapsed={topbarCollapsed}>
+        {topbarCollapsed ? (
+          <>
+            <S.StyledBackLink to="/dashboard">
+              <S.StyledBackBtn $mode={theme} as="span">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                </svg>
+              </S.StyledBackBtn>
+            </S.StyledBackLink>
+            <S.StyledBoardName>{boardName}</S.StyledBoardName>
+            <div style={{ flex: 1 }} />
+            <S.StyledActiveUsers>
+              {activeUsers.slice(0, 5).map((u, i) => (
+                <Avatar key={`${u.id}-${i}`} name={u.name} avatarUrl={u.avatar} size={28} />
+              ))}
+              {activeUsers.length > 5 && <span style={{ fontSize: 11, color: '#888' }}>+{activeUsers.length - 5}</span>}
+            </S.StyledActiveUsers>
+            {boardRole === 'owner' && (
+              <S.StyledIconBtn $mode={theme} title="Teilen" onClick={() => setShowShare(true)}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+                </svg>
+              </S.StyledIconBtn>
+            )}
+            <S.StyledCursorDropdown $mode={theme}>
+              <S.StyledCursorDropdownBtn $mode={theme}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87c.48 0 .72-.58.38-.92L5.94 2.35a.5.5 0 0 0-.44.86z"/>
+                </svg>
+              </S.StyledCursorDropdownBtn>
+              <S.StyledCursorDropdownMenu $mode={theme}>
+                <S.StyledCursorDropdownItem $mode={theme} onClick={() => handleCursorSettingChange('showOthers', !cursorSettings.showOthers)}>
+                  <S.StyledCheckIcon $visible={cursorSettings.showOthers} /> Cursor anderer
+                </S.StyledCursorDropdownItem>
+                <S.StyledCursorDropdownItem $mode={theme} onClick={() => handleCursorSettingChange('showMy', !cursorSettings.showMy)}>
+                  <S.StyledCheckIcon $visible={cursorSettings.showMy} /> Mein Cursor
+                </S.StyledCursorDropdownItem>
+              </S.StyledCursorDropdownMenu>
+            </S.StyledCursorDropdown>
+            <S.StyledCollapseTopbarBtn $mode={theme} onClick={toggleTopbar} title="Toolbar einblenden">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </S.StyledCollapseTopbarBtn>
+            <UserMenu />
+          </>
+        ) : (
+          <>
         <S.StyledBackLink to="/dashboard">
           <S.StyledBackBtn $mode={theme} as="span">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -152,6 +200,13 @@ export const GanttBoard = () => {
           )}
         </S.StyledToolbarRight>
         <UserMenu />
+        <S.StyledCollapseTopbarBtn $mode={theme} onClick={toggleTopbar} title="Toolbar ausblenden">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="18 15 12 9 6 15" />
+          </svg>
+        </S.StyledCollapseTopbarBtn>
+          </>
+        )}
       </S.StyledToolbar>
 
       <S.StyledMainContainer>
@@ -161,6 +216,7 @@ export const GanttBoard = () => {
         {/* Main Content */}
         <S.StyledMainContent>
           {/* Chart Toolbar */}
+          {!topbarCollapsed && (
           <S.StyledChartToolbar $mode={theme}>
             <S.StyledToolbarLeft>
               <S.StyledToolbarGroup $mode={theme}>
@@ -189,6 +245,7 @@ export const GanttBoard = () => {
               <Button $variant="secondary" $size="small" onClick={toggleDetailPanel}>Details ☰</Button>
             )}
           </S.StyledChartToolbar>
+          )}
 
           {/* Gantt Chart */}
           <S.StyledGanttOuter>
