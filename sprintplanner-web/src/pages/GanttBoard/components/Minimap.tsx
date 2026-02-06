@@ -59,8 +59,8 @@ export const Minimap = ({ scrollRef }: MinimapProps) => {
       const container = scrollRef.current;
       const chartWidth = totalDays * dayWidth;
       const scrollLeft = container.scrollLeft;
-      const sidebarWidth = sidebarCollapsed ? 48 : 220;
-      const containerWidth = container.clientWidth - sidebarWidth;
+      const labelsWidth = 220; // Fixed labels column width
+      const containerWidth = container.clientWidth - labelsWidth;
       
       // Calculate visible portion
       const visibleRatio = Math.min(1, containerWidth / chartWidth);
@@ -72,20 +72,30 @@ export const Minimap = ({ scrollRef }: MinimapProps) => {
     const handleResize = () => {
       const el = scrollRef.current?.parentElement?.querySelector('.minimap');
       if (el) setMinimapWidth(el.clientWidth);
+      updateViewport();
     };
 
-    handleResize();
+    // Animate during sidebar transition
+    let frame: number;
+    const animateResize = (start: number) => {
+      handleResize();
+      if (Date.now() - start < 200) {
+        frame = requestAnimationFrame(() => animateResize(start));
+      }
+    };
+    animateResize(Date.now());
+    
     window.addEventListener('resize', handleResize);
     scrollRef.current?.addEventListener('scroll', updateViewport);
-    updateViewport();
 
     return () => {
+      cancelAnimationFrame(frame);
       window.removeEventListener('resize', handleResize);
       scrollRef.current?.removeEventListener('scroll', updateViewport);
     };
   }, [scrollRef, minimapWidth, dayWidth, totalDays, sidebarCollapsed]);
 
-  const sidebarWidth = sidebarCollapsed ? 48 : 220;
+  const sidebarWidth = sidebarCollapsed ? 48 : 380;
 
   const handleMinimapClick = (e: React.MouseEvent) => {
     if (dragState.current || wasDragging.current) {
