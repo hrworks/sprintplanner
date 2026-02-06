@@ -3,9 +3,24 @@ import styled from '@emotion/styled';
 import { Modal, Button } from '@/components';
 import { useStore } from '@/store';
 import { t, ThemeMode } from '@/styles';
-import { DEFAULT_COLORS, STATUS_ICONS, Project } from '../types';
+import { DEFAULT_COLORS, Project } from '../types';
 import { generateId } from '../store';
 import { generatePhaseName } from '../utils/nameGenerator';
+
+export const StatusIcon = ({ status, size = 18 }: { status: string; size?: number }) => {
+  switch (status) {
+    case 'ok':
+      return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#10b981"/><path d="M8 12l3 3 5-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+    case 'warning':
+      return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M12 3L2 21h20L12 3z" fill="#f59e0b"/><path d="M12 10v4M12 17v.5" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>;
+    case 'delay':
+      return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#ef4444"/><path d="M12 7v5l3 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+    case 'complete':
+      return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" fill="#6366f1"/><path d="M7 13l3 3 7-7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+    default:
+      return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#6b7280" strokeWidth="2" strokeDasharray="4 2"/></svg>;
+  }
+};
 
 interface Props {
   project?: Project;
@@ -71,8 +86,8 @@ export const ProjectModal = ({ project, onSave, onClose }: Props) => {
         <Label $mode={theme}>Status</Label>
         <StatusSelect>
           {(['', 'ok', 'warning', 'delay', 'complete'] as const).map(s => (
-            <StatusOption key={s} $mode={theme} $selected={form.status === s} onClick={() => setForm({ ...form, status: s })}>
-              {STATUS_ICONS[s] || '—'} {s || 'Kein Status'}
+            <StatusOption key={s} $mode={theme} $selected={form.status === s} onClick={() => setForm({ ...form, status: s })} title={s || 'Kein Status'}>
+              <StatusIcon status={s} />
             </StatusOption>
           ))}
         </StatusSelect>
@@ -165,12 +180,16 @@ const StatusSelect = styled.div`
 `;
 
 const StatusOption = styled.div<{ $mode: ThemeMode; $selected: boolean }>`
-  padding: ${t('dark').space.sm} ${t('dark').space.md};
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: ${t('dark').radius.md};
   cursor: pointer;
-  font-size: ${t('dark').fontSize.xs};
+  font-size: 18px;
   background: ${p => p.$selected ? t(p.$mode).action : t(p.$mode).panel};
-  color: ${p => p.$selected ? 'white' : t(p.$mode).ink};
+  border: 2px solid ${p => p.$selected ? t(p.$mode).action : 'transparent'};
   transition: all ${t('dark').transition.fast};
   
   &:hover {

@@ -66,10 +66,10 @@ export const DEFAULT_COLORS = [
 ];
 
 export const STATUS_ICONS: Record<string, string> = {
-  'ok': '✓',
-  'warning': '⚠',
-  'delay': '●',
-  'complete': '⚑',
+  'ok': 'ok',
+  'warning': 'warning',
+  'delay': 'delay',
+  'complete': 'complete',
   '': ''
 };
 

@@ -3,7 +3,8 @@ import { useRef, useState } from 'react';
 import { useStore } from '@/store';
 import { useGanttStore } from '../store';
 import { t, ThemeMode } from '@/styles';
-import { Project, STATUS_ICONS } from '../types';
+import { Project } from '../types';
+import { StatusIcon } from './ProjectModal';
 import { ProjectModal } from './ProjectModal';
 import { PhaseModal } from './PhaseModal';
 import { ConfirmModal } from './ConfirmModal';
@@ -524,7 +525,7 @@ export const Sidebar = () => {
                   <div>
                     <ProjectName $mode={theme}>
                       <AccordionToggle $expanded={isExpanded}>▶</AccordionToggle>
-                      {STATUS_ICONS[project.status || '']} {project.name}
+                      {project.status && <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}><StatusIcon status={project.status} size={14} /></span>} {project.name}
                       <PhaseCount $mode={theme}> ({project.phases.length})</PhaseCount>
                     </ProjectName>
                     <ProjectCategory $mode={theme}>

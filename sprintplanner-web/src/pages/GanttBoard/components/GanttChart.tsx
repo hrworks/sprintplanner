@@ -3,7 +3,8 @@ import { RefObject, useState, useCallback, useEffect, useMemo } from 'react';
 import { useStore } from '@/store';
 import { useGanttStore, generateId } from '../store';
 import { t, ThemeMode } from '@/styles';
-import { Phase, DEFAULT_COLORS, STATUS_ICONS, STATUS_COLORS } from '../types';
+import { Phase, DEFAULT_COLORS } from '../types';
+import { StatusIcon } from './ProjectModal';
 import { ConfirmModal } from './ConfirmModal';
 import { generatePhaseName } from '../utils/nameGenerator';
 
@@ -925,7 +926,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
               onClick={() => selectProject(project._id)}
             >
               <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}>
-                {project.status && <span style={{ color: STATUS_COLORS[project.status] }}>{STATUS_ICONS[project.status]}</span>}
+                {project.status && <StatusIcon status={project.status} size={14} />}
                 {project.name}
               </span>
               <StyledLockBtn 
