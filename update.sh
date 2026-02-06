@@ -19,9 +19,9 @@ else
     exit 1
 fi
 
-# Rebuild and restart containers
-$DOCKER_COMPOSE down
-$DOCKER_COMPOSE up -d --build
+# Rebuild and restart containers (minimal downtime)
+$DOCKER_COMPOSE build
+$DOCKER_COMPOSE up -d
 
 echo "✅ Update complete!"
 echo "📊 Application running at http://localhost:8080"
