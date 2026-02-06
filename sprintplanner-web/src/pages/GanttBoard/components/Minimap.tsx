@@ -10,6 +10,10 @@ const StyledMinimap = styled.div<{ $mode: string }>`
   border-top: 1px solid ${p => getColors(p.$mode as 'dark' | 'light').bgPrimary};
   position: relative;
   cursor: pointer;
+  
+  @media (max-width: 768px) and (orientation: landscape) {
+    display: none;
+  }
 `;
 
 const StyledViewport = styled.div<{ $left: number; $width: number }>`

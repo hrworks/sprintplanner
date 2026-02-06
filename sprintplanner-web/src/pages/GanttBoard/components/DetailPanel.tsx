@@ -104,6 +104,10 @@ const Panel = styled.div<{ $mode: ThemeMode; $visible: boolean }>`
   flex-direction: column;
   overflow: hidden;
   flex-shrink: 0;
+  
+  @media (max-width: 768px) and (orientation: landscape) {
+    display: none;
+  }
 `;
 
 const Header = styled.div<{ $mode: ThemeMode }>`
