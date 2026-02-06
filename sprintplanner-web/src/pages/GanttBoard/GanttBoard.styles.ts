@@ -36,6 +36,7 @@ export const Toolbar = styled.div<{ $mode: ThemeMode; $collapsed?: boolean }>`
   gap: ${t('dark').space.lg};
   border-bottom: 1px solid ${p => t(p.$mode).strokeSubtle};
   flex-shrink: 0;
+  flex-wrap: nowrap;
   transition: padding 0.15s;
   
   @media (max-width: 768px) and (orientation: landscape) {
@@ -72,6 +73,7 @@ export const ToolbarRight = styled.div`
   display: flex;
   align-items: center;
   gap: ${t('dark').space.md};
+  flex-shrink: 0;
 `;
 
 import { Link } from 'react-router-dom';
@@ -146,9 +148,35 @@ export const ActiveUsers = styled.div`
   align-items: center;
 `;
 
+export const CursorDropdownMenu = styled.div<{ $mode: ThemeMode }>`
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: ${p => t(p.$mode).board};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  box-shadow: ${t('dark').shadow.lg};
+  z-index: 1000;
+  min-width: 250px;
+  padding-top: 4px;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 0;
+    right: 0;
+    height: 10px;
+  }
+`;
+
 export const CursorDropdown = styled.div<{ $mode: ThemeMode }>`
   position: relative;
-  &:hover > div:last-child { display: block; }
+  
+  &:hover > div:last-of-type {
+    display: block;
+  }
 `;
 
 export const CursorDropdownBtn = styled.button<{ $mode: ThemeMode }>`
@@ -161,19 +189,6 @@ export const CursorDropdownBtn = styled.button<{ $mode: ThemeMode }>`
   transition: color ${t('dark').transition.fast};
   
   &:hover { color: ${p => t(p.$mode).ink}; }
-`;
-
-export const CursorDropdownMenu = styled.div<{ $mode: ThemeMode }>`
-  display: none;
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: ${p => t(p.$mode).board};
-  border: 1px solid ${p => t(p.$mode).stroke};
-  border-radius: ${t('dark').radius.md};
-  box-shadow: ${t('dark').shadow.lg};
-  z-index: 1000;
-  min-width: 250px;
 `;
 
 export const CursorDropdownItem = styled.div<{ $mode: ThemeMode }>`
@@ -260,7 +275,7 @@ export const ChartToolbar = styled.div<{ $mode: ThemeMode }>`
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid ${p => t(p.$mode).strokeSubtle};
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: ${t('dark').space.sm};
   
   @media (max-width: 768px) and (orientation: landscape) {
@@ -272,7 +287,7 @@ export const ToolbarLeft = styled.div`
   display: flex;
   align-items: center;
   gap: ${t('dark').space.md};
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 `;
 
 export const ToolbarGroup = styled.div<{ $mode: ThemeMode }>`
@@ -338,11 +353,94 @@ export const ToggleBtn = styled.button<{ $mode: ThemeMode; $active: boolean }>`
   cursor: pointer;
   font-size: ${t('dark').fontSize.xs};
   height: 36px;
+  display: flex;
+  align-items: center;
+  gap: ${t('dark').space.sm};
   transition: all ${t('dark').transition.fast};
+  white-space: nowrap;
+  flex-shrink: 0;
   
   &:hover {
     background: ${p => p.$active ? t(p.$mode).actionHover : t(p.$mode).board};
     color: ${p => p.$active ? 'white' : t(p.$mode).ink};
+  }
+`;
+
+export const SliderPopover = styled.div<{ $mode: ThemeMode; $compact?: boolean }>`
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: ${t('dark').space.sm};
+  background: ${p => t(p.$mode).canvas};
+  padding: 0 ${t('dark').space.md};
+  border-radius: ${t('dark').radius.md};
+  height: 36px;
+  flex-shrink: 0;
+  
+  label {
+    font-size: ${t('dark').fontSize.xs};
+    color: ${p => t(p.$mode).inkMuted};
+  }
+  
+  .inline-slider {
+    display: flex;
+    align-items: center;
+    gap: ${t('dark').space.sm};
+  }
+  
+  &:hover > div:last-child {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+`;
+
+export const SliderBtn = styled.button<{ $mode: ThemeMode }>`
+  background: transparent;
+  border: none;
+  color: ${p => t(p.$mode).inkMuted};
+  padding: ${t('dark').space.sm};
+  border-radius: ${t('dark').radius.md};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all ${t('dark').transition.fast};
+  
+  &:hover {
+    background: ${p => t(p.$mode).board};
+    color: ${p => t(p.$mode).ink};
+  }
+`;
+
+export const SliderDropdown = styled.div<{ $mode: ThemeMode }>`
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  margin-top: ${t('dark').space.sm};
+  background: ${p => t(p.$mode).board};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  padding: ${t('dark').space.md};
+  box-shadow: ${t('dark').shadow.lg};
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.15s ease;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: ${t('dark').space.sm};
+  min-width: 120px;
+  
+  input[type="range"] {
+    width: 100px;
+  }
+  
+  span {
+    font-size: ${t('dark').fontSize.xs};
+    color: ${p => t(p.$mode).inkMuted};
   }
 `;
 
@@ -474,6 +572,9 @@ export const S = {
   StyledNavButtons: NavButtons,
   StyledNavBtn: NavBtn,
   StyledToggleBtn: ToggleBtn,
+  StyledSliderPopover: SliderPopover,
+  StyledSliderBtn: SliderBtn,
+  StyledSliderDropdown: SliderDropdown,
   StyledGanttOuter: GanttOuter,
   StyledDetailPanel: DetailPanel,
   StyledDetailHeader: DetailHeader,

@@ -22,9 +22,11 @@ export const GanttBoard = () => {
   const navigate = useNavigate();
   const { theme } = useStore();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const [showShare, setShowShare] = useState(false);
   const [showEditBoard, setShowEditBoard] = useState(false);
   const [boardForm, setBoardForm] = useState({ name: '', description: '' });
+  const [compactMode, setCompactMode] = useState(0); // 0=full, 1=no labels, 2=icons only
   
   const {
     boardName, boardDescription, boardRole, selectedPhaseId, showDetailPanel,
@@ -33,6 +35,34 @@ export const GanttBoard = () => {
     setBoard, setBoardDescription, setDayWidth, setRowHeight, setDateRange,
     toggleDetailPanel, toggleConnections, setCursorSettings, toggleTopbar
   } = useGanttStore();
+
+  // Measure toolbar and set compact mode
+  const collapseRef = useRef<HTMLButtonElement>(null);
+  const thresholds = useRef<number[]>([0, 0, 0]); // Breiten bei denen kompaktiert wurde
+  
+  useEffect(() => {
+    const toolbar = toolbarRef.current;
+    const btn = collapseRef.current;
+    if (!toolbar || !btn) return;
+    
+    const check = () => {
+      const toolbarRect = toolbar.getBoundingClientRect();
+      const btnRect = btn.getBoundingClientRect();
+      const w = toolbar.clientWidth;
+      const isVisible = btnRect.right <= toolbarRect.right + 5;
+      
+      if (!isVisible && compactMode < 3) {
+        thresholds.current[compactMode] = w; // Merke Breite
+        setCompactMode(m => m + 1);
+      } else if (isVisible && compactMode > 0 && w > thresholds.current[compactMode - 1] + 50) {
+        setCompactMode(m => m - 1);
+      }
+    };
+    
+    const observer = new ResizeObserver(check);
+    observer.observe(toolbar);
+    return () => observer.disconnect();
+  }, [compactMode]);
 
   // Realtime: SSE for updates, WebSocket for cursors
   useRealtime(id);
@@ -223,7 +253,7 @@ export const GanttBoard = () => {
         <S.StyledMainContent>
           {/* Chart Toolbar */}
           {!topbarCollapsed && (
-          <S.StyledChartToolbar $mode={theme}>
+          <S.StyledChartToolbar $mode={theme} ref={toolbarRef}>
             <S.StyledToolbarLeft>
               <S.StyledToolbarGroup $mode={theme}>
                 <S.StyledNavBtn $mode={theme} style={{ borderRadius: 16, padding: '4px 12px' }} onClick={scrollToToday}>Heute</S.StyledNavBtn>
@@ -233,25 +263,69 @@ export const GanttBoard = () => {
                 <span style={{ margin: '0 4px' }}>–</span>
                 <S.StyledDateInput $mode={theme} type="date" defaultValue={formatDate(chartEndDate)} onBlur={e => handleDateChange('end', e.target.value)} />
               </S.StyledToolbarGroup>
-              <S.StyledToolbarGroup $mode={theme}>
-                <label>Zoom:</label>
-                <S.StyledSlider type="range" min={0.5} max={60} step={0.5} value={dayWidth} onChange={e => setDayWidth(Number(e.target.value))} />
-                <span style={{ fontSize: 11, color: '#888', width: 35 }}>{dayWidth}px</span>
-              </S.StyledToolbarGroup>
-              <S.StyledToolbarGroup $mode={theme}>
-                <label>Höhe:</label>
-                <S.StyledSlider type="range" min={45} max={135} value={rowHeight} onChange={e => setRowHeight(Number(e.target.value))} />
-                <span style={{ fontSize: 11, color: '#888', width: 35 }}>{rowHeight}px</span>
-              </S.StyledToolbarGroup>
-              <S.StyledToggleBtn $mode={theme} $active={showConnections} onClick={toggleConnections}>
-                Verbindungen
+              <S.StyledSliderPopover $mode={theme} $compact={compactMode >= 3}>
+                {compactMode < 3 && <label>Zoom:</label>}
+                {compactMode < 3 ? (
+                  <div className="inline-slider">
+                    <S.StyledSlider type="range" min={0.5} max={60} step={0.5} value={dayWidth} onChange={e => setDayWidth(Number(e.target.value))} />
+                    <span style={{ fontSize: 11, color: '#888', width: 35 }}>{dayWidth}px</span>
+                  </div>
+                ) : (
+                  <>
+                    <S.StyledSliderBtn $mode={theme} title="Zoom">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        <line x1="8" y1="11" x2="14" y2="11" />
+                        <line x1="11" y1="8" x2="11" y2="14" />
+                      </svg>
+                    </S.StyledSliderBtn>
+                    <S.StyledSliderDropdown $mode={theme}>
+                      <S.StyledSlider type="range" min={0.5} max={60} step={0.5} value={dayWidth} onChange={e => setDayWidth(Number(e.target.value))} />
+                      <span>{dayWidth}px</span>
+                    </S.StyledSliderDropdown>
+                  </>
+                )}
+              </S.StyledSliderPopover>
+              <S.StyledSliderPopover $mode={theme} $compact={compactMode >= 2}>
+                {compactMode < 2 && <label>Höhe:</label>}
+                {compactMode < 2 ? (
+                  <div className="inline-slider">
+                    <S.StyledSlider type="range" min={45} max={135} value={rowHeight} onChange={e => setRowHeight(Number(e.target.value))} />
+                    <span style={{ fontSize: 11, color: '#888', width: 35 }}>{rowHeight}px</span>
+                  </div>
+                ) : (
+                  <>
+                    <S.StyledSliderBtn $mode={theme} title="Höhe">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="12" y1="3" x2="12" y2="21" />
+                        <polyline points="8 7 12 3 16 7" />
+                        <polyline points="8 17 12 21 16 17" />
+                      </svg>
+                    </S.StyledSliderBtn>
+                    <S.StyledSliderDropdown $mode={theme}>
+                      <S.StyledSlider type="range" min={45} max={135} value={rowHeight} onChange={e => setRowHeight(Number(e.target.value))} />
+                      <span>{rowHeight}px</span>
+                    </S.StyledSliderDropdown>
+                  </>
+                )}
+              </S.StyledSliderPopover>
+              <S.StyledToggleBtn $mode={theme} $active={showConnections} onClick={toggleConnections} title="Verbindungen">
+                {compactMode >= 1 && (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="5" cy="12" r="2" />
+                    <circle cx="19" cy="12" r="2" />
+                    <path d="M7 12 C 10 6, 14 18, 17 12" />
+                  </svg>
+                )}
+                {compactMode < 1 && <span>Verbindungen</span>}
               </S.StyledToggleBtn>
             </S.StyledToolbarLeft>
             <S.StyledToolbarRight>
               {selectedPhaseId && !showDetailPanel && (
                 <Button $variant="secondary" $size="small" onClick={toggleDetailPanel}>Details ☰</Button>
               )}
-              <S.StyledCollapseTopbarBtn $mode={theme} onClick={toggleTopbar} title="Navigation ausblenden">
+              <S.StyledCollapseTopbarBtn ref={collapseRef} $mode={theme} onClick={toggleTopbar} title="Navigation ausblenden">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="18 15 12 9 6 15" />
                 </svg>
