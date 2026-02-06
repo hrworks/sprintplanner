@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import { useState } from 'react';
 import { Button } from '@/components';
 import { useStore } from '@/store';
 import { useGanttStore } from '../store';
@@ -7,6 +8,7 @@ import { DEFAULT_COLORS } from '../types';
 
 export const DetailPanel = () => {
   const { theme } = useStore();
+  const [expandedField, setExpandedField] = useState<string | null>(null);
   const { 
     data, selectedProjectId, selectedPhaseId, showDetailPanel, boardRole,
     toggleDetailPanel, updatePhase, deletePhase
@@ -61,7 +63,17 @@ export const DetailPanel = () => {
             </FormGroup>
             <FormGroup>
               <Label $mode={theme}>Beschreibung</Label>
-              <Textarea $mode={theme} value={phase.description || ''} placeholder="Details zur Phase..." onChange={e => handleChange('description', e.target.value)} disabled={boardRole === 'viewer'} />
+              <TextareaWrapper>
+                <Textarea $mode={theme} value={phase.description || ''} placeholder="Details zur Phase..." onChange={e => handleChange('description', e.target.value)} disabled={boardRole === 'viewer'} />
+                <ExpandBtn $mode={theme} onClick={() => setExpandedField('description')} title="Vergrößern">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="15 3 21 3 21 9" />
+                    <polyline points="9 21 3 21 3 15" />
+                    <line x1="21" y1="3" x2="14" y2="10" />
+                    <line x1="3" y1="21" x2="10" y2="14" />
+                  </svg>
+                </ExpandBtn>
+              </TextareaWrapper>
             </FormGroup>
             <FormGroup>
               <Label $mode={theme}>Milestone-Linien</Label>
@@ -92,6 +104,25 @@ export const DetailPanel = () => {
           </>
         )}
       </Content>
+      
+      {expandedField === 'description' && phase && (
+        <ExpandModal $mode={theme} onClick={() => setExpandedField(null)}>
+          <ExpandContent $mode={theme} onClick={e => e.stopPropagation()}>
+            <ExpandHeader $mode={theme}>
+              <span>Beschreibung</span>
+              <CloseBtn $mode={theme} onClick={() => setExpandedField(null)}>✕</CloseBtn>
+            </ExpandHeader>
+            <ExpandTextarea 
+              $mode={theme} 
+              value={phase.description || ''} 
+              placeholder="Details zur Phase..." 
+              onChange={e => handleChange('description', e.target.value)} 
+              disabled={boardRole === 'viewer'}
+              autoFocus
+            />
+          </ExpandContent>
+        </ExpandModal>
+      )}
     </Panel>
   );
 };
@@ -227,6 +258,20 @@ const Textarea = styled.textarea<{ $mode: ThemeMode }>`
     opacity: 0.6;
     cursor: not-allowed;
   }
+  
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+  &::-webkit-scrollbar-track {
+    background: ${p => t(p.$mode).canvas};
+  }
+  &::-webkit-scrollbar-thumb {
+    background: ${p => t(p.$mode).panel};
+    border-radius: 5px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: ${p => t(p.$mode).action};
+  }
 `;
 
 const CheckboxGroup = styled.div`
@@ -268,5 +313,106 @@ const ColorOption = styled.div<{ $mode: ThemeMode; $color: string; $selected: bo
   
   &:hover {
     transform: scale(1.1);
+  }
+`;
+
+const TextareaWrapper = styled.div`
+  position: relative;
+`;
+
+const ExpandBtn = styled.button<{ $mode: ThemeMode }>`
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${p => t(p.$mode).panel};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.sm};
+  color: ${p => t(p.$mode).inkMuted};
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all ${t('dark').transition.fast};
+  
+  &:hover {
+    opacity: 1;
+    color: ${p => t(p.$mode).ink};
+    background: ${p => t(p.$mode).canvas};
+  }
+`;
+
+const ExpandModal = styled.div<{ $mode: ThemeMode }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ExpandContent = styled.div<{ $mode: ThemeMode }>`
+  background: ${p => t(p.$mode).board};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.lg};
+  padding: ${t('dark').space.lg};
+  width: 700px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: ${t('dark').shadow.lg};
+`;
+
+const ExpandHeader = styled.div<{ $mode: ThemeMode }>`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${t('dark').space.md};
+  color: ${p => t(p.$mode).ink};
+  font-weight: 600;
+`;
+
+const ExpandTextarea = styled.textarea<{ $mode: ThemeMode }>`
+  flex: 1;
+  min-height: 400px;
+  padding: ${t('dark').space.md};
+  border-radius: ${t('dark').radius.md};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  background: ${p => t(p.$mode).canvas};
+  color: ${p => t(p.$mode).ink};
+  font-size: ${t('dark').fontSize.base};
+  font-family: inherit;
+  resize: none;
+  
+  &:focus {
+    outline: none;
+    border-color: ${p => t(p.$mode).action};
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+  &::-webkit-scrollbar-track {
+    background: ${p => t(p.$mode).canvas};
+  }
+  &::-webkit-scrollbar-thumb {
+    background: ${p => t(p.$mode).panel};
+    border-radius: 5px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: ${p => t(p.$mode).action};
   }
 `;
