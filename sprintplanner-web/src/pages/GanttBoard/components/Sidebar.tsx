@@ -11,20 +11,96 @@ import { ImportBoardModal } from './ImportBoardModal';
 import { DropdownMenu } from '@/components';
 
 // === SIDEBAR LAYOUT ===
-const Container = styled.div<{ $mode: ThemeMode }>`
-  width: 380px;
+const Container = styled.div<{ $mode: ThemeMode; $collapsed?: boolean }>`
+  width: ${p => p.$collapsed ? '48px' : '380px'};
   background: ${p => t(p.$mode).board};
   border-right: 1px solid ${p => t(p.$mode).stroke};
   display: flex;
   flex-direction: column;
   overflow: hidden;
   flex-shrink: 0;
+  transition: width 0.15s;
+  
+  @media (max-width: 768px) and (orientation: landscape) {
+    display: none;
+  }
 `;
 
-const Header = styled.div<{ $mode: ThemeMode }>`
-  padding: ${t('dark').space.lg};
+const Header = styled.div<{ $mode: ThemeMode; $collapsed?: boolean }>`
+  padding: ${p => p.$collapsed ? t('dark').space.sm : t('dark').space.lg};
   background: ${p => t(p.$mode).panel};
   border-bottom: 1px solid ${p => t(p.$mode).strokeSubtle};
+  display: flex;
+  flex-direction: ${p => p.$collapsed ? 'column' : 'row'};
+  justify-content: ${p => p.$collapsed ? 'center' : 'flex-start'};
+  align-items: center;
+  gap: ${t('dark').space.xs};
+`;
+
+const CollapseBtn = styled.button<{ $mode: ThemeMode }>`
+  background: transparent;
+  border: none;
+  color: ${p => t(p.$mode).inkMuted};
+  cursor: pointer;
+  padding: ${t('dark').space.xs};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: ${t('dark').radius.sm};
+  transition: all ${t('dark').transition.fast};
+  
+  &:hover {
+    background: ${p => t(p.$mode).canvas};
+    color: ${p => t(p.$mode).ink};
+  }
+`;
+
+const CollapsedAddBtn = styled.button<{ $mode: ThemeMode }>`
+  background: ${p => t(p.$mode).action};
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: ${t('dark').space.xs};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: ${t('dark').radius.sm};
+  transition: all ${t('dark').transition.fast};
+  
+  &:hover {
+    background: ${p => t(p.$mode).actionHover};
+  }
+`;
+
+const CollapsedProjectList = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: ${t('dark').space.xs};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: ${t('dark').space.xs};
+`;
+
+const CollapsedProjectIcon = styled.div<{ $mode: ThemeMode; $color: string; $selected: boolean }>`
+  width: 32px;
+  height: 32px;
+  border-radius: ${t('dark').radius.sm};
+  background: ${p => p.$color};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  border: 2px solid ${p => p.$selected ? 'white' : 'transparent'};
+  box-shadow: ${p => p.$selected ? `0 0 0 2px ${t(p.$mode).action}` : 'none'};
+  transition: transform ${t('dark').transition.fast};
+  
+  &:hover {
+    transform: scale(1.1);
+  }
 `;
 
 const BtnGroup = styled.div`
@@ -250,7 +326,7 @@ const PhaseCount = styled.span<{ $mode: ThemeMode }>`
 export const Sidebar = () => {
   const { theme } = useStore();
   const { 
-    data, selectedProjectId, expandedProjects, boardRole,
+    data, selectedProjectId, expandedProjects, boardRole, sidebarCollapsed, toggleSidebar,
     selectPhase, toggleProjectExpanded, addProject, updateProject, deleteProject, reorderProjects, importData, addPhase
   } = useGanttStore();
   const dragItem = useRef<number | null>(null);
@@ -344,19 +420,35 @@ export const Sidebar = () => {
   }));
 
   return (
-    <Container $mode={theme}>
-      <Header $mode={theme}>
-        <BtnGroup>
-          {boardRole !== 'viewer' && (
-            <div style={{ position: 'relative' }}>
-              <SplitBtnGroup>
-                <CreateBtn $mode={theme} onClick={() => setProjectModal({})}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                  </svg>
-                  Projekt
-                </CreateBtn>
-                <SplitBtn $mode={theme} onClick={() => setSplitMenuOpen(!splitMenuOpen)}>
+    <Container $mode={theme} $collapsed={sidebarCollapsed}>
+      <Header $mode={theme} $collapsed={sidebarCollapsed}>
+        {sidebarCollapsed ? (
+          <>
+            {boardRole !== 'viewer' && (
+              <CollapsedAddBtn $mode={theme} onClick={() => setProjectModal({})} title="Neues Projekt">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+              </CollapsedAddBtn>
+            )}
+            <CollapseBtn $mode={theme} onClick={toggleSidebar} title="Sidebar einblenden">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </CollapseBtn>
+          </>
+        ) : (
+          <BtnGroup>
+            {boardRole !== 'viewer' && (
+              <div style={{ position: 'relative' }}>
+                <SplitBtnGroup>
+                  <CreateBtn $mode={theme} onClick={() => setProjectModal({})}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    </svg>
+                    Projekt
+                  </CreateBtn>
+                  <SplitBtn $mode={theme} onClick={() => setSplitMenuOpen(!splitMenuOpen)}>
                   ▼
                 </SplitBtn>
               </SplitBtnGroup>
@@ -383,9 +475,16 @@ export const Sidebar = () => {
               )}
             </MenuWrapper>
           )}
+          <CollapseBtn $mode={theme} onClick={toggleSidebar} title="Sidebar ausblenden">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </CollapseBtn>
           <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
         </BtnGroup>
+        )}
       </Header>
+      {!sidebarCollapsed && (
       <ProjectList>
         {sortedProjects.map((project, index) => {
           const isExpanded = expandedProjects.has(project._id);
@@ -443,6 +542,27 @@ export const Sidebar = () => {
           );
         })}
       </ProjectList>
+      )}
+      {sidebarCollapsed && (
+        <CollapsedProjectList>
+          {sortedProjects.map((project, index) => (
+            <CollapsedProjectIcon
+              key={project._id}
+              $mode={theme}
+              $color={project.color}
+              $selected={selectedProjectId === project._id}
+              onClick={() => toggleProjectExpanded(project._id)}
+              title={project.name}
+              draggable
+              onDragStart={e => handleDragStart(e, index)}
+              onDragOver={e => handleDragOver(e, index)}
+              onDragEnd={handleDragEnd}
+            >
+              {project.name.charAt(0).toUpperCase()}
+            </CollapsedProjectIcon>
+          ))}
+        </CollapsedProjectList>
+      )}
       
       {projectModal && (
         <ProjectModal

@@ -21,6 +21,8 @@ interface GanttState {
   expandedProjects: Set<string>;
   showDetailPanel: boolean;
   showConnections: boolean;
+  sidebarCollapsed: boolean;
+  topbarCollapsed: boolean;
   
   // Chart settings
   dayWidth: number;
@@ -46,6 +48,8 @@ interface GanttState {
   toggleProjectExpanded: (id: string) => void;
   toggleDetailPanel: () => void;
   toggleConnections: () => void;
+  toggleSidebar: () => void;
+  toggleTopbar: () => void;
   
   setDayWidth: (width: number) => void;
   setRowHeight: (height: number) => void;
@@ -103,6 +107,8 @@ export const useGanttStore = create<GanttState>((set, get) => ({
   expandedProjects: new Set(),
   showDetailPanel: false,
   showConnections: true,
+  sidebarCollapsed: false,
+  topbarCollapsed: false,
   
   dayWidth: 20,
   rowHeight: 45,
@@ -164,6 +170,8 @@ export const useGanttStore = create<GanttState>((set, get) => ({
   }),
   toggleDetailPanel: () => set(state => ({ showDetailPanel: !state.showDetailPanel })),
   toggleConnections: () => set(state => ({ showConnections: !state.showConnections })),
+  toggleSidebar: () => set(state => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+  toggleTopbar: () => set(state => ({ topbarCollapsed: !state.topbarCollapsed })),
   
   setDayWidth: (dayWidth) => set(state => {
     if (state.boardId) {
