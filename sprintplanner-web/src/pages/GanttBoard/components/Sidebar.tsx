@@ -37,21 +37,21 @@ const Header = styled.div<{ $mode: ThemeMode; $collapsed?: boolean }>`
   gap: ${t('dark').space.xs};
 `;
 
-const CollapseBtn = styled.button<{ $mode: ThemeMode }>`
-  background: transparent;
-  border: none;
-  color: ${p => t(p.$mode).inkMuted};
+const CollapseBtn = styled.button<{ $mode: ThemeMode; $collapsed?: boolean }>`
+  background: ${p => t(p.$mode).board};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  color: ${p => t(p.$mode).ink};
   cursor: pointer;
-  padding: ${t('dark').space.xs};
+  padding: ${p => p.$collapsed ? t('dark').space.xs : t('dark').space.sm};
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: ${t('dark').radius.sm};
   transition: all ${t('dark').transition.fast};
   
   &:hover {
-    background: ${p => t(p.$mode).canvas};
-    color: ${p => t(p.$mode).ink};
+    background: ${p => t(p.$mode).panel};
+    border-color: ${p => t(p.$mode).action};
   }
 `;
 
@@ -172,10 +172,24 @@ const MenuBtn = styled.button<{ $mode: ThemeMode }>`
 `;
 
 // === PROJECT LIST ===
-const ProjectList = styled.div`
+const ProjectList = styled.div<{ $mode: ThemeMode }>`
   flex: 1;
   overflow-y: auto;
   padding: ${t('dark').space.sm};
+  
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+  &::-webkit-scrollbar-track {
+    background: ${p => t(p.$mode).canvas};
+  }
+  &::-webkit-scrollbar-thumb {
+    background: ${p => t(p.$mode).panel};
+    border-radius: 5px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: ${p => t(p.$mode).action};
+  }
 `;
 
 const ProjectItem = styled.div<{ $mode: ThemeMode; $selected: boolean; $dragging?: boolean }>`
@@ -431,7 +445,7 @@ export const Sidebar = () => {
                 </svg>
               </CollapsedAddBtn>
             )}
-            <CollapseBtn $mode={theme} onClick={toggleSidebar} title="Sidebar einblenden">
+            <CollapseBtn $mode={theme} $collapsed onClick={toggleSidebar} title="Sidebar einblenden">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
@@ -485,7 +499,7 @@ export const Sidebar = () => {
         )}
       </Header>
       {!sidebarCollapsed && (
-      <ProjectList>
+      <ProjectList $mode={theme}>
         {sortedProjects.map((project, index) => {
           const isExpanded = expandedProjects.has(project._id);
           const isSelected = selectedProjectId === project._id;

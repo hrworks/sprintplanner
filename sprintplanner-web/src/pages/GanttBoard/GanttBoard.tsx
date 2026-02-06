@@ -13,8 +13,12 @@ import { ShareModal } from './components/ShareModal';
 import { useRealtime } from './hooks/useRealtime';
 import { useAutoSave } from './hooks/useAutoSave';
 
+const slugify = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const extractId = (slug: string) => slug.match(/[a-f0-9-]{36}$/)?.[0] || slug;
+
 export const GanttBoard = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = rawId ? extractId(rawId) : undefined;
   const navigate = useNavigate();
   const { theme } = useStore();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -50,6 +54,10 @@ export const GanttBoard = () => {
       const boardData = JSON.parse(board.data || '{"projects":[],"connections":[]}');
       setBoard(board.id, board.name, board.role, boardData);
       setBoardDescription(board.description || '');
+      
+      // Update URL with board name slug
+      const slug = `${slugify(board.name)}-${board.id}`;
+      window.history.replaceState(null, '', `/gantt/${slug}`);
       
       if (boardData.viewStart && boardData.viewEnd) {
         // Use internal setter to avoid sending action on load
@@ -99,6 +107,9 @@ export const GanttBoard = () => {
     if (!id) return;
     await api.updateBoard(id, { name: boardForm.name, description: boardForm.description });
     setBoard(id, boardForm.name, boardRole!, useGanttStore.getState().data);
+    // Update URL with new board name slug
+    const slug = `${slugify(boardForm.name)}-${id}`;
+    window.history.replaceState(null, '', `/gantt/${slug}`);
     setShowEditBoard(false);
   };
 
@@ -117,19 +128,6 @@ export const GanttBoard = () => {
             </S.StyledBackLink>
             <S.StyledBoardName>{boardName}</S.StyledBoardName>
             <div style={{ flex: 1 }} />
-            <S.StyledActiveUsers>
-              {activeUsers.slice(0, 5).map((u, i) => (
-                <Avatar key={`${u.id}-${i}`} name={u.name} avatarUrl={u.avatar} size={28} />
-              ))}
-              {activeUsers.length > 5 && <span style={{ fontSize: 11, color: '#888' }}>+{activeUsers.length - 5}</span>}
-            </S.StyledActiveUsers>
-            {boardRole === 'owner' && (
-              <S.StyledIconBtn $mode={theme} title="Teilen" onClick={() => setShowShare(true)}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
-                </svg>
-              </S.StyledIconBtn>
-            )}
             <S.StyledCursorDropdown $mode={theme}>
               <S.StyledCursorDropdownBtn $mode={theme}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -145,12 +143,25 @@ export const GanttBoard = () => {
                 </S.StyledCursorDropdownItem>
               </S.StyledCursorDropdownMenu>
             </S.StyledCursorDropdown>
-            <S.StyledCollapseTopbarBtn $mode={theme} onClick={toggleTopbar} title="Toolbar einblenden">
+            <S.StyledActiveUsers>
+              {activeUsers.slice(0, 5).map((u, i) => (
+                <Avatar key={`${u.id}-${i}`} name={u.name} avatarUrl={u.avatar} size={28} />
+              ))}
+              {activeUsers.length > 5 && <span style={{ fontSize: 11, color: '#888' }}>+{activeUsers.length - 5}</span>}
+            </S.StyledActiveUsers>
+            {boardRole === 'owner' && (
+              <S.StyledIconBtn $mode={theme} title="Teilen" onClick={() => setShowShare(true)}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+                </svg>
+              </S.StyledIconBtn>
+            )}
+            <S.StyledCollapseTopbarBtn $mode={theme} onClick={toggleTopbar} title="Navigation einblenden">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </S.StyledCollapseTopbarBtn>
-            <UserMenu />
+            <UserMenu size={32} />
           </>
         ) : (
           <>
@@ -200,11 +211,6 @@ export const GanttBoard = () => {
           )}
         </S.StyledToolbarRight>
         <UserMenu />
-        <S.StyledCollapseTopbarBtn $mode={theme} onClick={toggleTopbar} title="Toolbar ausblenden">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="18 15 12 9 6 15" />
-          </svg>
-        </S.StyledCollapseTopbarBtn>
           </>
         )}
       </S.StyledToolbar>
@@ -241,9 +247,16 @@ export const GanttBoard = () => {
                 Verbindungen
               </S.StyledToggleBtn>
             </S.StyledToolbarLeft>
-            {selectedPhaseId && !showDetailPanel && (
-              <Button $variant="secondary" $size="small" onClick={toggleDetailPanel}>Details ☰</Button>
-            )}
+            <S.StyledToolbarRight>
+              {selectedPhaseId && !showDetailPanel && (
+                <Button $variant="secondary" $size="small" onClick={toggleDetailPanel}>Details ☰</Button>
+              )}
+              <S.StyledCollapseTopbarBtn $mode={theme} onClick={toggleTopbar} title="Navigation ausblenden">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="18 15 12 9 6 15" />
+                </svg>
+              </S.StyledCollapseTopbarBtn>
+            </S.StyledToolbarRight>
           </S.StyledChartToolbar>
           )}
 

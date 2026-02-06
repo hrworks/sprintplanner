@@ -44,20 +44,20 @@ export const Toolbar = styled.div<{ $mode: ThemeMode; $collapsed?: boolean }>`
 `;
 
 export const CollapseTopbarBtn = styled.button<{ $mode: ThemeMode }>`
-  background: transparent;
-  border: none;
-  color: ${p => t(p.$mode).inkMuted};
+  background: ${p => t(p.$mode).board};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.md};
+  color: ${p => t(p.$mode).ink};
   cursor: pointer;
-  padding: ${t('dark').space.xs};
+  padding: ${t('dark').space.sm};
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: ${t('dark').radius.sm};
   transition: all ${t('dark').transition.fast};
   
   &:hover {
-    background: ${p => t(p.$mode).canvas};
-    color: ${p => t(p.$mode).ink};
+    background: ${p => t(p.$mode).panel};
+    border-color: ${p => t(p.$mode).action};
   }
 `;
 
