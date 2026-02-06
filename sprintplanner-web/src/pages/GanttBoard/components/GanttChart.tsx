@@ -940,7 +940,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
               onDoubleClick={() => boardRole !== 'viewer' && setEditProject(project)}
             >
               <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}>
-                {project.status && <span onClick={e => { e.stopPropagation(); setStatusNoteProject(project); }} style={{ cursor: 'pointer' }}><StatusIcon status={project.status} size={14} /></span>}
+                {project.status && <span onClick={e => { e.stopPropagation(); setStatusNoteProject(project); }} style={{ cursor: 'pointer', display: 'inline-flex', verticalAlign: 'middle', marginTop: 0 }}><StatusIcon status={project.status} size={14} /></span>}
                 {project.name}
               </span>
               <StyledLockBtn 

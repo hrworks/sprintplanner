@@ -309,13 +309,17 @@ export const ToolbarGroup = styled.div<{ $mode: ThemeMode }>`
 export const DateInput = styled.input<{ $mode: ThemeMode }>`
   background: transparent;
   border: none;
-  color: ${p => t(p.$mode).ink};
+  color: ${p => t(p.$mode).inkMuted};
   padding: ${t('dark').space.xs} ${t('dark').space.sm};
   font-size: ${t('dark').fontSize.sm};
+  font-family: inherit;
   width: 120px;
   color-scheme: ${p => p.$mode === 'dark' ? 'dark' : 'light'};
   
   &:focus { outline: none; }
+  
+  &::-webkit-datetime-edit { font-family: inherit; }
+  &::-webkit-calendar-picker-indicator { cursor: pointer; }
 `;
 
 export const Slider = styled.input`

@@ -222,8 +222,11 @@ const Input = styled.input<{ $mode: ThemeMode }>`
   background: ${p => t(p.$mode).canvas};
   color: ${p => t(p.$mode).ink};
   font-size: ${t('dark').fontSize.sm};
+  font-family: inherit;
   color-scheme: ${p => p.$mode === 'dark' ? 'dark' : 'light'};
   transition: border-color ${t('dark').transition.fast};
+  
+  &::-webkit-datetime-edit { font-family: inherit; }
   
   &:focus {
     outline: none;
