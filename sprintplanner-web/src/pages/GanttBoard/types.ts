@@ -20,6 +20,7 @@ export interface Project {
   description?: string;
   link?: string;
   status?: '' | 'ok' | 'warning' | 'delay' | 'complete';
+  statusNote?: string;
   color: string;
   locked?: boolean;
   phases: Phase[];

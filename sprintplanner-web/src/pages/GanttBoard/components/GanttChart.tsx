@@ -429,7 +429,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
   const { 
     data, dayWidth, rowHeight, chartStartDate, chartEndDate,
     selectedProjectId, selectedPhaseId, selectedPhaseIds, boardRole, showConnections, remoteSelections,
-    selectProject, selectPhase, togglePhaseSelection, clearSelection,
+    selectProject, selectPhase, togglePhaseSelection, clearSelection, setStatusNoteProject,
     updateProject, updatePhase, updatePhaseLocal, addPhase, addConnection, deleteConnection, deletePhase, movePhase, movePhaseLocal,
     syncPhases, unsyncPhase
   } = useGanttStore();
@@ -926,7 +926,7 @@ export const GanttChart = ({ scrollRef }: GanttChartProps) => {
               onClick={() => selectProject(project._id)}
             >
               <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}>
-                {project.status && <StatusIcon status={project.status} size={14} />}
+                {project.status && <span onClick={e => { e.stopPropagation(); setStatusNoteProject(project); }} style={{ cursor: 'pointer' }}><StatusIcon status={project.status} size={14} /></span>}
                 {project.name}
               </span>
               <StyledLockBtn 

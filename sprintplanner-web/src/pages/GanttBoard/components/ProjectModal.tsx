@@ -38,6 +38,7 @@ export const ProjectModal = ({ project, onSave, onClose }: Props) => {
     description: project?.description || '',
     link: project?.link || '',
     status: (project?.status || '') as '' | 'ok' | 'warning' | 'delay' | 'complete',
+    statusNote: project?.statusNote || '',
     color: project?.color || DEFAULT_COLORS[Math.floor(Math.random() * DEFAULT_COLORS.length)]
   }));
 
@@ -50,6 +51,7 @@ export const ProjectModal = ({ project, onSave, onClose }: Props) => {
       description: form.description,
       link: form.link,
       status: form.status,
+      statusNote: form.statusNote,
       color: form.color,
       phases: project?.phases || [],
       _fieldUpdates: project?._fieldUpdates || {}
@@ -92,6 +94,12 @@ export const ProjectModal = ({ project, onSave, onClose }: Props) => {
           ))}
         </StatusSelect>
       </FormGroup>
+      {form.status && (
+        <FormGroup>
+          <Label $mode={theme}>Statusnotiz</Label>
+          <Textarea $mode={theme} value={form.statusNote} onChange={e => setForm({ ...form, statusNote: e.target.value })} placeholder="Warum dieser Status? Aktueller Stand..." rows={3} />
+        </FormGroup>
+      )}
       <FormGroup>
         <Label $mode={theme}>Farbe</Label>
         <ColorPicker>
