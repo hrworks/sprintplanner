@@ -32,6 +32,12 @@ export class UsersController {
     return this.usersService.updateRole(id, body.role);
   }
 
+  @Get(':id/boards')
+  @UseGuards(AdminGuard)
+  getUserBoards(@Param('id') id: string) {
+    return this.usersService.getUserBoards(id);
+  }
+
   @Get('me/settings')
   getSettings(@Req() req: any) {
     return this.usersService.getSettings(req.user.id);

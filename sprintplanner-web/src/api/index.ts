@@ -48,6 +48,7 @@ export const api = {
   
   // Users (admin)
   getUsers: () => fetchApi<User[]>('/api/users'),
+  getUserBoards: (userId: string) => fetchApi<{ id: string; name: string; description?: string; data?: string; isPublic?: boolean; updatedAt: string; members: { id: string; name?: string; email: string; avatarUrl?: string; role: string }[] }[]>(`/api/users/${userId}/boards`),
   inviteUser: (email: string) => 
     fetchApi<User>('/api/users/invite', { method: 'POST', body: JSON.stringify({ email }) }),
   deleteUser: (id: string) => 

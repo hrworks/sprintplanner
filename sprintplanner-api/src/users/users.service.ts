@@ -77,6 +77,47 @@ export class UsersService {
     return this.findById(id);
   }
 
+  async getUserBoards(userId: string) {
+    const boards = await this.db.query.boards.findMany({
+      where: eq(schema.boards.ownerId, userId),
+      columns: {
+        id: true,
+        name: true,
+        description: true,
+        data: true,
+        isPublic: true,
+        updatedAt: true,
+      },
+    });
+
+    const boardIds = boards.map(b => b.id);
+    if (boardIds.length === 0) return [];
+
+    const members = await this.db
+      .select({
+        boardId: schema.boardMembers.boardId,
+        role: schema.boardMembers.role,
+        userId: schema.users.id,
+        userName: schema.users.name,
+        userEmail: schema.users.email,
+        userAvatar: schema.users.avatarUrl,
+      })
+      .from(schema.boardMembers)
+      .leftJoin(schema.users, eq(schema.users.id, schema.boardMembers.userId))
+      .where(sql`${schema.boardMembers.boardId} IN (${sql.join(boardIds.map(id => sql`${id}`), sql`, `)})`);
+
+    const membersByBoard = members.reduce((acc, m) => {
+      if (!acc[m.boardId]) acc[m.boardId] = [];
+      acc[m.boardId].push({ id: m.userId, name: m.userName, email: m.userEmail, avatarUrl: m.userAvatar, role: m.role });
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    return boards.map(b => ({
+      ...b,
+      members: membersByBoard[b.id] || [],
+    }));
+  }
+
   async getSettings(userId: string) {
     return this.db.query.userSettings.findFirst({
       where: eq(schema.userSettings.userId, userId),

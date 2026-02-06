@@ -62,14 +62,17 @@ export const Table = styled.div<{ $mode: ThemeMode }>`
   overflow: hidden;
 `;
 
-export const Row = styled.div<{ $mode: ThemeMode }>`
+export const UserItem = styled.div``;
+
+export const Row = styled.div<{ $mode: ThemeMode; $expandable?: boolean }>`
   display: grid;
-  grid-template-columns: auto 1fr auto auto auto auto;
+  grid-template-columns: ${p => p.$expandable ? 'auto auto 1fr auto auto auto auto' : 'auto 1fr auto auto auto auto'};
   gap: ${t('dark').space.md};
   padding: ${t('dark').space.md};
   border-bottom: 1px solid ${p => t(p.$mode).strokeSubtle};
   align-items: center;
   transition: background ${t('dark').transition.fast};
+  cursor: ${p => p.$expandable ? 'pointer' : 'default'};
   
   &:last-child {
     border-bottom: none;
@@ -78,6 +81,12 @@ export const Row = styled.div<{ $mode: ThemeMode }>`
   &:hover {
     background: ${p => t(p.$mode).panel};
   }
+`;
+
+export const ExpandIcon = styled.span<{ $expanded: boolean }>`
+  font-size: 10px;
+  transition: transform 0.15s;
+  transform: rotate(${p => p.$expanded ? '90deg' : '0deg'});
 `;
 
 export const UserInfo = styled.div``;
@@ -205,6 +214,87 @@ export const ChipInput = styled.input<{ $mode: ThemeMode }>`
   &::placeholder { color: ${p => t(p.$mode).inkFaint}; }
 `;
 
+// === BOARD LIST (Accordion) ===
+export const BoardList = styled.div<{ $mode: ThemeMode }>`
+  background: ${p => t(p.$mode).canvas};
+  border-top: 1px solid ${p => t(p.$mode).strokeSubtle};
+  padding: ${t('dark').space.sm} ${t('dark').space.md} ${t('dark').space.sm} 60px;
+`;
+
+export const BoardItem = styled.div<{ $mode: ThemeMode }>`
+  display: flex;
+  align-items: center;
+  gap: ${t('dark').space.md};
+  padding: ${t('dark').space.sm} ${t('dark').space.md};
+  border-radius: ${t('dark').radius.md};
+  text-decoration: none;
+  transition: background ${t('dark').transition.fast};
+  
+  &:hover {
+    background: ${p => t(p.$mode).panel};
+  }
+`;
+
+export const BoardInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+export const BoardName = styled.div<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).ink};
+  font-weight: 500;
+  font-size: ${t('dark').fontSize.sm};
+`;
+
+export const BoardDesc = styled.div<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).inkMuted};
+  font-size: ${t('dark').fontSize.xs};
+  margin-top: 2px;
+`;
+
+export const BoardMeta = styled.div<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).inkFaint};
+  font-size: ${t('dark').fontSize.xs};
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: ${t('dark').space.md};
+`;
+
+export const BoardMembers = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: ${t('dark').space.sm};
+  
+  span {
+    font-size: 10px;
+    margin-left: 2px;
+  }
+`;
+
+export const BoardMinimap = styled.div<{ $mode: ThemeMode }>`
+  width: 120px;
+  background: ${p => t(p.$mode).canvas};
+  border-radius: ${t('dark').radius.sm};
+  flex-shrink: 0;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+export const MinimapRow = styled.div`
+  height: 4px;
+  position: relative;
+`;
+
+export const MinimapPhase = styled.div`
+  position: absolute;
+  height: 100%;
+  border-radius: 2px;
+`;
+
 // Export mit alten Namen für Kompatibilität
 export const S = {
   StyledContainer: Container,
@@ -216,7 +306,9 @@ export const S = {
   StyledSectionHeader: SectionHeader,
   StyledSectionTitle: SectionTitle,
   StyledTable: Table,
+  StyledUserItem: UserItem,
   StyledRow: Row,
+  StyledExpandIcon: ExpandIcon,
   StyledUserInfo: UserInfo,
   StyledUserName: UserName,
   StyledUserEmail: UserEmail,
@@ -230,4 +322,14 @@ export const S = {
   StyledChip: Chip,
   StyledChipRemove: ChipRemove,
   StyledChipInput: ChipInput,
+  StyledBoardList: BoardList,
+  StyledBoardItem: BoardItem,
+  StyledBoardInfo: BoardInfo,
+  StyledBoardName: BoardName,
+  StyledBoardDesc: BoardDesc,
+  StyledBoardMeta: BoardMeta,
+  StyledBoardMembers: BoardMembers,
+  StyledBoardMinimap: BoardMinimap,
+  StyledMinimapRow: MinimapRow,
+  StyledMinimapPhase: MinimapPhase,
 };
