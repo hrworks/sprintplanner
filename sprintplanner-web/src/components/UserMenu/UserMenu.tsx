@@ -4,7 +4,7 @@ import { S } from './UserMenu.styles';
 import { Avatar } from '@/components/Avatar';
 import { useStore } from '@/store';
 
-export const UserMenu = () => {
+export const UserMenu = ({ size = 36 }: { size?: number }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ export const UserMenu = () => {
   return (
     <S.StyledWrapper ref={ref}>
       <S.StyledTrigger onClick={() => setOpen(!open)}>
-        <Avatar name={user?.name} avatarUrl={user?.avatarUrl} size={36} />
+        <Avatar name={user?.name} avatarUrl={user?.avatarUrl} size={size} />
       </S.StyledTrigger>
       <S.StyledDropdown $mode={theme} $visible={open}>
         <S.StyledHeader $mode={theme}>
