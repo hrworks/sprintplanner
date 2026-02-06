@@ -185,6 +185,16 @@ export const CardMeta = styled.div<{ $mode: ThemeMode }>`
   font-size: ${t('dark').fontSize.xs};
   margin-top: auto;
   padding-top: ${t('dark').space.sm};
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${t('dark').space.sm};
+`;
+
+export const OwnerInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${t('dark').space.xs};
 `;
 
 export const CardFooter = styled.div`
@@ -436,7 +446,7 @@ export const SkeletonCard = styled(Skeleton)`
 export const S = {
   Container, Header, HeaderLeft, Nav, NavItem, Title, SearchBtn, Content,
   Section, SectionHeader, SectionTitle, SectionCount, Empty, EmptyIcon, EmptyText, Grid,
-  CardLink, Card, CardHeader, CardTitle, CardDesc, CardBody, CardMeta, CardFooter,
+  CardLink, Card, CardHeader, CardTitle, CardDesc, CardBody, CardMeta, OwnerInfo, CardFooter,
   TimelinePreview, TimelineSegment, Minimap, MinimapRow, MinimapPhase, MinimapToday, CardProgress, ProgressDot,
   CardMembers, MemberOverflow, BadgeGroup, Badge,
   Menu, MenuBtn,

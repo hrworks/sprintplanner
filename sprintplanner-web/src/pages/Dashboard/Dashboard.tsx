@@ -180,7 +180,7 @@ export const Dashboard = () => {
 
   const formatDate = (date: string) => new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-  const renderSection = (title: string, list: Board[], canEdit: boolean) => {
+  const renderSection = (title: string, list: Board[], canEdit: boolean, isShared = false) => {
     const isEmpty = list.length === 0 && !loading;
     const isOwned = title === 'Meine Boards';
 
@@ -214,6 +214,7 @@ export const Dashboard = () => {
                 theme={theme}
                 menuOpen={menuOpen === board.id}
                 canEdit={canEdit}
+                isShared={isShared}
                 onMenuToggle={() => setMenuOpen(menuOpen === board.id ? null : board.id)}
                 onEdit={() => openEditModal(board)}
                 onDuplicate={() => openDuplicateModal(board)}
@@ -256,8 +257,8 @@ export const Dashboard = () => {
 
       <S.Content>
         {renderSection('Meine Boards', boards.owned, true)}
-        {renderSection('Geteilt mit mir', boards.shared, false)}
-        {renderSection('Öffentliche Boards', boards.public, false)}
+        {renderSection('Geteilt mit mir', boards.shared, false, true)}
+        {renderSection('Öffentliche Boards', boards.public, false, true)}
       </S.Content>
 
       {user?.role !== 'viewer' && (
@@ -340,6 +341,7 @@ interface BoardCardProps {
   theme: 'dark' | 'light';
   menuOpen: boolean;
   canEdit: boolean;
+  isShared?: boolean;
   onMenuToggle: () => void;
   onEdit: () => void;
   onDuplicate: () => void;
@@ -349,7 +351,7 @@ interface BoardCardProps {
   minimap: MinimapData | null;
 }
 
-const BoardCard = ({ board, theme, menuOpen, canEdit, onMenuToggle, onEdit, onDuplicate, onShare, onDelete, formatDate, minimap }: BoardCardProps) => {
+const BoardCard = ({ board, theme, menuOpen, canEdit, isShared, onMenuToggle, onEdit, onDuplicate, onShare, onDelete, formatDate, minimap }: BoardCardProps) => {
   const hasMembers = board.members && board.members.length > 0;
   const hasBadges = board.isPublic || board.allowedDomain;
 
@@ -412,7 +414,15 @@ const BoardCard = ({ board, theme, menuOpen, canEdit, onMenuToggle, onEdit, onDu
         )}
       </S.CardBody>
       
-      <S.CardMeta $mode={theme}>Aktualisiert: {formatDate(board.updatedAt)}</S.CardMeta>
+      <S.CardMeta $mode={theme}>
+        {isShared && board.owner && (
+          <S.OwnerInfo>
+            <Avatar name={board.owner.name || board.owner.email} avatarUrl={board.owner.avatarUrl} size={18} />
+            <span>{board.owner.name || board.owner.email}</span>
+          </S.OwnerInfo>
+        )}
+        <span>Aktualisiert: {formatDate(board.updatedAt)}</span>
+      </S.CardMeta>
       
       <S.CardFooter>
         {hasMembers ? (
