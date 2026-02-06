@@ -22,7 +22,23 @@ export const StyledModal = styled.div<{ $mode: ThemeMode }>`
   padding: ${t('dark').space.lg};
   min-width: 350px;
   max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
   box-shadow: ${t('dark').shadow.lg};
+  
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+  &::-webkit-scrollbar-track {
+    background: ${p => t(p.$mode).canvas};
+  }
+  &::-webkit-scrollbar-thumb {
+    background: ${p => t(p.$mode).panel};
+    border-radius: 5px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: ${p => t(p.$mode).action};
+  }
 `;
 
 export const StyledTitle = styled.h3<{ $mode: ThemeMode }>`
