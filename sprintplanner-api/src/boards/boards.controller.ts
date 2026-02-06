@@ -25,7 +25,7 @@ export class BoardsController {
   @Get(':id')
   @UseGuards(OptionalAuthGuard)
   async findOne(@Param('id') id: string, @Req() req: any) {
-    const role = await this.boardsService.getMemberRole(id, req.user?.id);
+    const role = await this.boardsService.getMemberRole(id, req.user?.id, req.user?.email);
     if (!role) throw new ForbiddenException();
     const board = await this.boardsService.findOne(id);
     return { ...board, role };
@@ -34,7 +34,7 @@ export class BoardsController {
   @Put(':id')
   @UseGuards(JwtAuthGuard)
   async update(@Param('id') id: string, @Req() req: any, @Body() body: any) {
-    const role = await this.boardsService.getMemberRole(id, req.user.id);
+    const role = await this.boardsService.getMemberRole(id, req.user.id, req.user.email);
     if (!role || role === 'viewer') throw new ForbiddenException();
     return this.boardsService.update(id, body);
   }
@@ -42,7 +42,7 @@ export class BoardsController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   async delete(@Param('id') id: string, @Req() req: any) {
-    const role = await this.boardsService.getMemberRole(id, req.user.id);
+    const role = await this.boardsService.getMemberRole(id, req.user.id, req.user.email);
     if (role !== 'owner') throw new ForbiddenException();
     await this.boardsService.delete(id);
     return { success: true };
@@ -51,7 +51,7 @@ export class BoardsController {
   @Patch(':id/visibility')
   @UseGuards(JwtAuthGuard)
   async setVisibility(@Param('id') id: string, @Req() req: any, @Body('isPublic') isPublic: boolean) {
-    const role = await this.boardsService.getMemberRole(id, req.user.id);
+    const role = await this.boardsService.getMemberRole(id, req.user.id, req.user.email);
     if (role !== 'owner') throw new ForbiddenException();
     return this.boardsService.update(id, { isPublic });
   }

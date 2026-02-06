@@ -97,6 +97,14 @@ export class BoardsService {
   }
 
   async getMemberRole(boardId: string, userId: string, userEmail?: string) {
+    // Admins haben vollen Zugriff auf alle Boards
+    if (userId) {
+      const user = await this.db.query.users.findFirst({
+        where: eq(schema.users.id, userId),
+      });
+      if (user?.role === 'admin') return 'owner';
+    }
+
     const board = await this.db.query.boards.findFirst({
       where: eq(schema.boards.id, boardId),
     });

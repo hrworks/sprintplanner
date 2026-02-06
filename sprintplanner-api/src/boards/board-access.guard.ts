@@ -18,11 +18,11 @@ export class BoardAccessGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const boardId = request.params.id || request.params.boardId;
-    const userId = request.user?.id;
+    const user = request.user;
 
     if (!boardId) return true;
 
-    const role = await this.boardsService.getMemberRole(boardId, userId);
+    const role = await this.boardsService.getMemberRole(boardId, user?.id, user?.email);
     if (!role) throw new ForbiddenException('No access to this board');
 
     const requiredRoles = this.reflector.get<string[]>(ROLES_KEY, context.getHandler());

@@ -45,7 +45,7 @@ interface MinimapProps {
 
 export const Minimap = ({ scrollRef }: MinimapProps) => {
   const { theme } = useStore();
-  const { data, dayWidth, chartStartDate, chartEndDate } = useGanttStore();
+  const { data, dayWidth, chartStartDate, chartEndDate, sidebarCollapsed } = useGanttStore();
   const [viewport, setViewport] = useState({ left: 0, width: 100 });
   const [minimapWidth, setMinimapWidth] = useState(0);
   const dragState = useRef<{ startX: number; startScrollLeft: number } | null>(null);
@@ -59,7 +59,8 @@ export const Minimap = ({ scrollRef }: MinimapProps) => {
       const container = scrollRef.current;
       const chartWidth = totalDays * dayWidth;
       const scrollLeft = container.scrollLeft;
-      const containerWidth = container.clientWidth - 220;
+      const sidebarWidth = sidebarCollapsed ? 48 : 220;
+      const containerWidth = container.clientWidth - sidebarWidth;
       
       // Calculate visible portion
       const visibleRatio = Math.min(1, containerWidth / chartWidth);
@@ -82,7 +83,9 @@ export const Minimap = ({ scrollRef }: MinimapProps) => {
       window.removeEventListener('resize', handleResize);
       scrollRef.current?.removeEventListener('scroll', updateViewport);
     };
-  }, [scrollRef, minimapWidth, dayWidth, totalDays]);
+  }, [scrollRef, minimapWidth, dayWidth, totalDays, sidebarCollapsed]);
+
+  const sidebarWidth = sidebarCollapsed ? 48 : 220;
 
   const handleMinimapClick = (e: React.MouseEvent) => {
     if (dragState.current || wasDragging.current) {
@@ -93,8 +96,8 @@ export const Minimap = ({ scrollRef }: MinimapProps) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const ratio = clickX / minimapWidth;
-    const scrollWidth = scrollRef.current.scrollWidth - 220;
-    const clientWidth = scrollRef.current.clientWidth - 220;
+    const scrollWidth = scrollRef.current.scrollWidth - sidebarWidth;
+    const clientWidth = scrollRef.current.clientWidth - sidebarWidth;
     scrollRef.current.scrollLeft = (ratio * scrollWidth) - (clientWidth / 2);
   };
 
@@ -111,7 +114,7 @@ export const Minimap = ({ scrollRef }: MinimapProps) => {
       if (!dragState.current || !scrollRef.current) return;
       wasDragging.current = true;
       const deltaX = e.clientX - dragState.current.startX;
-      const scrollWidth = scrollRef.current.scrollWidth - 220;
+      const scrollWidth = scrollRef.current.scrollWidth - sidebarWidth;
       const scrollDelta = (deltaX / minimapWidth) * scrollWidth;
       scrollRef.current.scrollLeft = dragState.current.startScrollLeft + scrollDelta;
     };

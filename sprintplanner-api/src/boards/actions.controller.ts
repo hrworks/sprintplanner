@@ -46,7 +46,7 @@ export class ActionsController {
     @Body() body: { action: BoardAction; clientId: string },
   ) {
     console.log('Received action:', body.action.type, 'for board:', boardId);
-    const role = await this.boardsService.getMemberRole(boardId, req.user.id);
+    const role = await this.boardsService.getMemberRole(boardId, req.user.id, req.user.email);
     if (!role || role === 'viewer') throw new ForbiddenException();
 
     return withLock(boardId, async () => {

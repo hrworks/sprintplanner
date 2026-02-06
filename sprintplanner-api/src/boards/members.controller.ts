@@ -21,7 +21,7 @@ export class MembersController {
 
   @Get()
   async findAll(@Param('boardId') boardId: string, @Req() req: any) {
-    const role = await this.boardsService.getMemberRole(boardId, req.user.id);
+    const role = await this.boardsService.getMemberRole(boardId, req.user.id, req.user.email);
     if (!role) throw new ForbiddenException();
     return this.membersService.findAll(boardId);
   }
