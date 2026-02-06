@@ -98,6 +98,38 @@ export const SectionCount = styled.span<{ $mode: ThemeMode }>`
   font-size: ${t('dark').fontSize.xs};
 `;
 
+export const SectionActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${t('dark').space.md};
+`;
+
+export const ViewToggle = styled.div<{ $mode: ThemeMode }>`
+  display: flex;
+  background: ${p => t(p.$mode).canvas};
+  border: 1px solid ${p => t(p.$mode).strokeSubtle};
+  border-radius: ${t('dark').radius.sm};
+  padding: 2px;
+`;
+
+export const ViewToggleBtn = styled.button<{ $mode: ThemeMode; $active: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: ${t('dark').radius.sm};
+  background: ${p => p.$active ? t(p.$mode).board : 'transparent'};
+  color: ${p => p.$active ? t(p.$mode).ink : t(p.$mode).inkMuted};
+  cursor: pointer;
+  transition: all ${t('dark').transition.fast};
+  
+  &:hover {
+    color: ${p => t(p.$mode).ink};
+  }
+`;
+
 export const Empty = styled.div<{ $mode: ThemeMode }>`
   color: ${p => t(p.$mode).inkMuted};
   padding: ${t('dark').space.lg};
@@ -241,6 +273,8 @@ export const Minimap = styled.div<{ $mode: ThemeMode }>`
   display: flex;
   flex-direction: column;
   gap: 2px;
+  height: 45px;
+  overflow: hidden;
 `;
 
 export const MinimapRow = styled.div`
@@ -400,6 +434,7 @@ export const Input = styled.input<{ $mode: ThemeMode }>`
 
 export const Textarea = styled.textarea<{ $mode: ThemeMode }>`
   width: 100%;
+  min-height: 120px;
   padding: ${t('dark').space.sm} ${t('dark').space.md};
   background: ${p => t(p.$mode).canvas};
   border: 1px solid ${p => t(p.$mode).stroke};
@@ -417,6 +452,20 @@ export const Textarea = styled.textarea<{ $mode: ThemeMode }>`
   
   &::placeholder {
     color: ${p => t(p.$mode).inkFaint};
+  }
+  
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+  &::-webkit-scrollbar-track {
+    background: ${p => t(p.$mode).canvas};
+  }
+  &::-webkit-scrollbar-thumb {
+    background: ${p => t(p.$mode).panel};
+    border-radius: 5px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: ${p => t(p.$mode).action};
   }
 `;
 
@@ -442,13 +491,99 @@ export const SkeletonCard = styled(Skeleton)`
   height: 180px;
 `;
 
+// === TABLE VIEW ===
+export const Table = styled.div<{ $mode: ThemeMode }>`
+  display: flex;
+  flex-direction: column;
+  background: ${p => t(p.$mode).board};
+  border: 1px solid ${p => t(p.$mode).stroke};
+  border-radius: ${t('dark').radius.lg};
+  overflow: hidden;
+`;
+
+export const TableRow = styled.div<{ $mode: ThemeMode; $header?: boolean }>`
+  display: grid;
+  grid-template-columns: 1fr 300px 200px 40px;
+  align-items: center;
+  padding: ${p => p.$header ? t('dark').space.sm : t('dark').space.md} ${t('dark').space.lg};
+  gap: ${t('dark').space.md};
+  border-bottom: 1px solid ${p => t(p.$mode).strokeSubtle};
+  background: ${p => p.$header ? t(p.$mode).canvas : 'transparent'};
+  cursor: ${p => p.$header ? 'default' : 'pointer'};
+  transition: background ${t('dark').transition.fast};
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  &:hover {
+    background: ${p => p.$header ? t(p.$mode).canvas : t(p.$mode).panel};
+  }
+`;
+
+export const TableHeader = styled.span<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).inkMuted};
+  font-size: ${t('dark').fontSize.xs};
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
+export const TableCell = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${t('dark').space.sm};
+  min-width: 0;
+  width: 100%;
+`;
+
+export const TableName = styled.div<{ $mode: ThemeMode }>`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+`;
+
+export const TableTitle = styled.span<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).ink};
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+export const TableDesc = styled.span<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).inkMuted};
+  font-size: ${t('dark').fontSize.sm};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+export const TableMinimap = styled.div<{ $mode: ThemeMode }>`
+  position: relative;
+  height: 32px;
+  width: 300px;
+  background: ${p => t(p.$mode).canvas};
+  border: 1px solid ${p => t(p.$mode).strokeSubtle};
+  border-radius: ${t('dark').radius.sm};
+  overflow: hidden;
+`;
+
+export const TableDate = styled.span<{ $mode: ThemeMode }>`
+  color: ${p => t(p.$mode).inkMuted};
+  font-size: ${t('dark').fontSize.sm};
+`;
+
 // Export als S für Kompatibilität
 export const S = {
   Container, Header, HeaderLeft, Nav, NavItem, Title, SearchBtn, Content,
-  Section, SectionHeader, SectionTitle, SectionCount, Empty, EmptyIcon, EmptyText, Grid,
+  Section, SectionHeader, SectionTitle, SectionCount, SectionActions, ViewToggle, ViewToggleBtn,
+  Empty, EmptyIcon, EmptyText, Grid,
   CardLink, Card, CardHeader, CardTitle, CardDesc, CardBody, CardMeta, OwnerInfo, CardFooter,
   TimelinePreview, TimelineSegment, Minimap, MinimapRow, MinimapPhase, MinimapToday, CardProgress, ProgressDot,
   CardMembers, MemberOverflow, BadgeGroup, Badge,
+  Table, TableRow, TableHeader, TableCell, TableName, TableTitle, TableDesc, TableMinimap, TableDate,
   Menu, MenuBtn,
   Fab, Input, Textarea,
   Skeleton, SkeletonCard,

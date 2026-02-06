@@ -95,6 +95,7 @@ export const Dashboard = () => {
   const [shareModal, setShareModal] = useState<{ boardId: string; boardName: string } | null>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [form, setForm] = useState({ name: '', description: '' });
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
   useEffect(() => {
     loadBoards();
@@ -188,7 +189,26 @@ export const Dashboard = () => {
       <S.Section>
         <S.SectionHeader>
           <S.SectionTitle $mode={theme}>{title}</S.SectionTitle>
-          {!loading && <S.SectionCount $mode={theme}>{list.length}</S.SectionCount>}
+          <S.SectionActions>
+            {!loading && <S.SectionCount $mode={theme}>{list.length} {list.length === 1 ? 'Board' : 'Boards'}</S.SectionCount>}
+            <S.ViewToggle $mode={theme}>
+              <S.ViewToggleBtn $mode={theme} $active={viewMode === 'grid'} onClick={() => setViewMode('grid')} title="Kachelansicht">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="7" height="7" rx="1" />
+                  <rect x="14" y="3" width="7" height="7" rx="1" />
+                  <rect x="3" y="14" width="7" height="7" rx="1" />
+                  <rect x="14" y="14" width="7" height="7" rx="1" />
+                </svg>
+              </S.ViewToggleBtn>
+              <S.ViewToggleBtn $mode={theme} $active={viewMode === 'table'} onClick={() => setViewMode('table')} title="Tabellenansicht">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+              </S.ViewToggleBtn>
+            </S.ViewToggle>
+          </S.SectionActions>
         </S.SectionHeader>
         
         {loading ? (
@@ -205,7 +225,7 @@ export const Dashboard = () => {
               <Button onClick={openCreateModal}>Erstes Board erstellen</Button>
             )}
           </S.Empty>
-        ) : (
+        ) : viewMode === 'grid' ? (
           <S.Grid>
             {list.map(board => (
               <BoardCard
@@ -225,6 +245,75 @@ export const Dashboard = () => {
               />
             ))}
           </S.Grid>
+        ) : (
+          <S.Table $mode={theme}>
+            <S.TableRow $mode={theme} $header>
+              <S.TableHeader $mode={theme}>Name</S.TableHeader>
+              <S.TableHeader $mode={theme}>Timeline</S.TableHeader>
+              <S.TableHeader $mode={theme}>Geteilt mit</S.TableHeader>
+              <div />
+            </S.TableRow>
+            {list.map(board => {
+              const minimap = getBoardMinimap(board);
+              const hasMembers = board.members && board.members.length > 0;
+              return (
+                <S.TableRow key={board.id} $mode={theme} onClick={() => openBoard(board.id)}>
+                  <S.TableCell>
+                    <S.TableName $mode={theme}>
+                      <S.TableTitle $mode={theme}>{board.name}</S.TableTitle>
+                    </S.TableName>
+                  </S.TableCell>
+                  <S.TableCell>
+                    <S.TableMinimap $mode={theme}>
+                      {minimap?.todayPosition !== null && minimap?.todayPosition !== undefined && (
+                        <S.MinimapToday $mode={theme} style={{ left: `${minimap.todayPosition}%` }} />
+                      )}
+                      {minimap?.projects.map((project, i) => (
+                        <S.MinimapRow key={i} style={{ position: 'absolute', top: 2 + i * 4, left: 4, right: 4, height: 3 }}>
+                          {project.phases.map((phase, j) => (
+                            <S.MinimapPhase
+                              key={j}
+                              $mode={theme}
+                              $status={phase.status}
+                              style={{ left: `${phase.left}%`, width: `${phase.width}%`, background: phase.color }}
+                            />
+                          ))}
+                        </S.MinimapRow>
+                      ))}
+                    </S.TableMinimap>
+                  </S.TableCell>
+                  <S.TableCell>
+                    {hasMembers && (
+                      <S.CardMembers>
+                        {board.members!.slice(0, 3).map((m, i) => <Avatar key={i} name={m.name} avatarUrl={m.avatarUrl} size={20} />)}
+                        {board.members!.length > 3 && <S.MemberOverflow $mode={theme}>+{board.members!.length - 3}</S.MemberOverflow>}
+                      </S.CardMembers>
+                    )}
+                    {board.isPublic && <S.Badge $mode={theme}>Öffentlich</S.Badge>}
+                    {board.allowedDomain && <S.Badge $mode={theme} title={`Lesezugriff für alle mit @${board.allowedDomain} E-Mail-Adresse`}>@{board.allowedDomain}</S.Badge>}
+                  </S.TableCell>
+                  <S.TableCell>
+                    {canEdit && (
+                      <S.Menu onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
+                        <S.MenuBtn $mode={theme} onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === board.id ? null : board.id); }}>⋮</S.MenuBtn>
+                        {menuOpen === board.id && (
+                          <DropdownMenu
+                            items={[
+                              { label: 'Bearbeiten', onClick: () => openEditModal(board) },
+                              { label: 'Duplizieren', onClick: () => openDuplicateModal(board) },
+                              { label: 'Teilen', onClick: () => shareBoard(board) },
+                              { label: 'Löschen', onClick: () => openDeleteModal(board), danger: true },
+                            ]}
+                            onClose={() => setMenuOpen(null)}
+                          />
+                        )}
+                      </S.Menu>
+                    )}
+                  </S.TableCell>
+                </S.TableRow>
+              );
+            })}
+          </S.Table>
         )}
       </S.Section>
     );
@@ -382,36 +471,27 @@ const BoardCard = ({ board, theme, menuOpen, canEdit, isShared, onMenuToggle, on
         </S.CardHeader>
       
       <S.CardBody>
-        {minimap ? (
-          <>
-            <S.Minimap $mode={theme}>
-              {minimap.todayPosition !== null && (
-                <S.MinimapToday $mode={theme} style={{ left: `${minimap.todayPosition}%` }} />
-              )}
-              {minimap.projects.map((project, i) => (
-                <S.MinimapRow key={i}>
-                  {project.phases.map((phase, j) => (
-                    <S.MinimapPhase
-                      key={j}
-                      $mode={theme}
-                      $status={phase.status}
-                      style={{ left: `${phase.left}%`, width: `${phase.width}%`, background: phase.color }}
-                    />
-                  ))}
-                </S.MinimapRow>
+        <S.Minimap $mode={theme}>
+          {minimap?.todayPosition !== null && minimap?.todayPosition !== undefined && (
+            <S.MinimapToday $mode={theme} style={{ left: `${minimap.todayPosition}%` }} />
+          )}
+          {minimap?.projects.map((project, i) => (
+            <S.MinimapRow key={i}>
+              {project.phases.map((phase, j) => (
+                <S.MinimapPhase
+                  key={j}
+                  $mode={theme}
+                  $status={phase.status}
+                  style={{ left: `${phase.left}%`, width: `${phase.width}%`, background: phase.color }}
+                />
               ))}
-            </S.Minimap>
-            <S.CardProgress $mode={theme}>
-              <S.ProgressDot $mode={theme} $status={minimap.completePhases === minimap.totalPhases ? 'complete' : minimap.completePhases > 0 ? 'active' : 'planned'} />
-              {minimap.completePhases} von {minimap.totalPhases} Phasen · {minimap.projects.length} Projekte
-            </S.CardProgress>
-          </>
-        ) : (
-          <S.CardProgress $mode={theme}>
-            <S.ProgressDot $mode={theme} $status="planned" />
-            Noch keine Phasen
-          </S.CardProgress>
-        )}
+            </S.MinimapRow>
+          ))}
+        </S.Minimap>
+        <S.CardProgress $mode={theme}>
+          <S.ProgressDot $mode={theme} $status={minimap ? (minimap.completePhases === minimap.totalPhases ? 'complete' : minimap.completePhases > 0 ? 'active' : 'planned') : 'planned'} />
+          {minimap ? `${minimap.completePhases} von ${minimap.totalPhases} Phasen · ${minimap.projects.length} Projekte` : 'Noch keine Phasen'}
+        </S.CardProgress>
       </S.CardBody>
       
       <S.CardMeta $mode={theme}>
