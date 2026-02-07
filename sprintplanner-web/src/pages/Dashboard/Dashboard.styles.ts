@@ -533,10 +533,10 @@ export const Table = styled.div<{ $mode: ThemeMode }>`
 
 export const TableRow = styled.div<{ $mode: ThemeMode; $header?: boolean }>`
   display: grid;
-  grid-template-columns: 1fr 300px 200px 40px;
+  grid-template-columns: minmax(200px, 1fr) 300px 120px 180px 40px;
   align-items: center;
   padding: ${p => p.$header ? t('dark').space.sm : t('dark').space.md} ${t('dark').space.lg};
-  gap: ${t('dark').space.md};
+  gap: ${t('dark').space.lg};
   border-bottom: 1px solid ${p => t(p.$mode).strokeSubtle};
   background: ${p => p.$header ? t(p.$mode).canvas : 'transparent'};
   cursor: ${p => p.$header ? 'default' : 'pointer'};

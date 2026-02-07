@@ -259,6 +259,7 @@ export const Dashboard = () => {
             <S.TableRow $mode={theme} $header>
               <S.TableHeader $mode={theme}>Name</S.TableHeader>
               <S.TableHeader $mode={theme}>Timeline</S.TableHeader>
+              <S.TableHeader $mode={theme}>Aktualisiert</S.TableHeader>
               <S.TableHeader $mode={theme}>Geteilt mit</S.TableHeader>
               <div />
             </S.TableRow>
@@ -270,6 +271,7 @@ export const Dashboard = () => {
                   <S.TableCell>
                     <S.TableName $mode={theme}>
                       <S.TableTitle $mode={theme}>{board.name}</S.TableTitle>
+                      {board.description && <S.TableDesc $mode={theme}>{board.description}</S.TableDesc>}
                     </S.TableName>
                   </S.TableCell>
                   <S.TableCell>
@@ -290,6 +292,9 @@ export const Dashboard = () => {
                         </S.MinimapRow>
                       ))}
                     </S.TableMinimap>
+                  </S.TableCell>
+                  <S.TableCell>
+                    <S.TableDate $mode={theme}>{formatDate(board.updatedAt)}</S.TableDate>
                   </S.TableCell>
                   <S.TableCell>
                     {hasMembers && (
