@@ -267,6 +267,32 @@ export const TimelineSegment = styled.div<{ $mode: ThemeMode; $status: 'complete
 `;
 
 // === MINIMAP ===
+export const MinimapWrapper = styled.div`
+  position: relative;
+  cursor: pointer;
+  
+  &:hover > div:last-child {
+    opacity: 1;
+  }
+`;
+
+export const MinimapOverlay = styled.div<{ $mode: ThemeMode }>`
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: ${t('dark').radius.md};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+  color: white;
+  
+  svg {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  }
+`;
+
 export const Minimap = styled.div<{ $mode: ThemeMode }>`
   position: relative;
   background: ${p => t(p.$mode).canvas};
@@ -585,7 +611,7 @@ export const S = {
   Section, SectionHeader, SectionTitle, SectionCount, SectionActions, ViewToggle, ViewToggleBtn,
   Empty, EmptyIcon, EmptyText, Grid,
   CardLink, Card, CardHeader, CardTitle, CardDesc, CardBody, CardMeta, OwnerInfo, CardFooter,
-  TimelinePreview, TimelineSegment, Minimap, MinimapRow, MinimapPhase, MinimapToday, CardProgress, ProgressDot,
+  TimelinePreview, TimelineSegment, MinimapWrapper, MinimapOverlay, Minimap, MinimapRow, MinimapPhase, MinimapToday, CardProgress, ProgressDot,
   CardMembers, MemberOverflow, BadgeGroup, Badge,
   Table, TableRow, TableHeader, TableCell, TableName, TableTitle, TableDesc, TableMinimap, TableDate,
   Menu, MenuBtn,
