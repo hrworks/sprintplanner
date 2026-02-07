@@ -98,6 +98,13 @@ export const Dashboard = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
   useEffect(() => {
+    const checkWidth = () => { if (window.innerWidth < 900) setViewMode('grid'); };
+    checkWidth();
+    window.addEventListener('resize', checkWidth);
+    return () => window.removeEventListener('resize', checkWidth);
+  }, []);
+
+  useEffect(() => {
     loadBoards();
     const handleFocus = () => loadBoards();
     window.addEventListener('focus', handleFocus);

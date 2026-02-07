@@ -110,6 +110,10 @@ export const ViewToggle = styled.div<{ $mode: ThemeMode }>`
   border: 1px solid ${p => t(p.$mode).strokeSubtle};
   border-radius: ${t('dark').radius.sm};
   padding: 2px;
+  
+  @media (max-width: 900px) {
+    display: none;
+  }
 `;
 
 export const ViewToggleBtn = styled.button<{ $mode: ThemeMode; $active: boolean }>`
