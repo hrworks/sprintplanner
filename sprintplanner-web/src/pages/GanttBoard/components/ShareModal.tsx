@@ -142,8 +142,11 @@ export const ShareModal = ({ boardId, boardName, onClose, onUpdate }: Props) => 
     }
   };
 
+  const slugify = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
   const copyLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/gantt/${boardId}`);
+    const slug = boardName ? `${slugify(boardName)}-${boardId}` : boardId;
+    navigator.clipboard.writeText(`${window.location.origin}/board/${slug}`);
   };
 
   const goBack = () => {

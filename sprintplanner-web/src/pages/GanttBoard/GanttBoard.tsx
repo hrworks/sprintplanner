@@ -14,7 +14,7 @@ import { useRealtime } from './hooks/useRealtime';
 import { useAutoSave } from './hooks/useAutoSave';
 
 const slugify = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-const extractId = (slug: string) => slug.match(/[a-f0-9-]{36}$/)?.[0] || slug;
+const extractId = (slug: string) => slug.match(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/)?.[0] || slug;
 
 export const GanttBoard = () => {
   const { id: rawId } = useParams<{ id: string }>();
@@ -39,6 +39,7 @@ export const GanttBoard = () => {
   // Measure toolbar and set compact mode
   const collapseRef = useRef<HTMLButtonElement>(null);
   const thresholds = useRef<number[]>([0, 0, 0]); // Breiten bei denen kompaktiert wurde
+  const lastWidth = useRef<number>(0);
   
   useEffect(() => {
     const toolbar = toolbarRef.current;
@@ -46,9 +47,13 @@ export const GanttBoard = () => {
     if (!toolbar || !btn) return;
     
     const check = () => {
+      const w = toolbar.clientWidth;
+      // Nur prüfen wenn sich die Breite signifikant geändert hat
+      if (Math.abs(w - lastWidth.current) < 10) return;
+      lastWidth.current = w;
+      
       const toolbarRect = toolbar.getBoundingClientRect();
       const btnRect = btn.getBoundingClientRect();
-      const w = toolbar.clientWidth;
       const isVisible = btnRect.right <= toolbarRect.right + 5;
       
       if (!isVisible && compactMode < 3) {
@@ -71,6 +76,8 @@ export const GanttBoard = () => {
   useAutoSave();
 
   useEffect(() => {
+    // Reset data immediately when board ID changes
+    useGanttStore.setState({ data: { projects: [], connections: [] } });
     loadBoard();
   }, [id]);
 
@@ -81,13 +88,17 @@ export const GanttBoard = () => {
     }
     try {
       const board = await api.getBoard(id);
+      if (!board?.id) {
+        navigate('/dashboard');
+        return;
+      }
       const boardData = JSON.parse(board.data || '{"projects":[],"connections":[]}');
       setBoard(board.id, board.name, board.role, boardData);
       setBoardDescription(board.description || '');
       
       // Update URL with board name slug
-      const slug = `${slugify(board.name)}-${board.id}`;
-      window.history.replaceState(null, '', `/gantt/${slug}`);
+      const slug = board.name ? `${slugify(board.name)}-${board.id}` : board.id;
+      window.history.replaceState(null, '', `/board/${slug}`);
       
       if (boardData.viewStart && boardData.viewEnd) {
         // Use internal setter to avoid sending action on load
@@ -103,7 +114,8 @@ export const GanttBoard = () => {
           chartEndDate: new Date(year, 11, 31) 
         });
       }
-    } catch {
+    } catch (err) {
+      console.error('Failed to load board:', err);
       navigate('/dashboard');
     }
   };
@@ -139,7 +151,7 @@ export const GanttBoard = () => {
     setBoard(id, boardForm.name, boardRole!, useGanttStore.getState().data);
     // Update URL with new board name slug
     const slug = `${slugify(boardForm.name)}-${id}`;
-    window.history.replaceState(null, '', `/gantt/${slug}`);
+    window.history.replaceState(null, '', `/board/${slug}`);
     setShowEditBoard(false);
   };
 
@@ -281,8 +293,10 @@ export const GanttBoard = () => {
                       </svg>
                     </S.StyledSliderBtn>
                     <S.StyledSliderDropdown $mode={theme}>
-                      <S.StyledSlider type="range" min={0.5} max={60} step={0.5} value={dayWidth} onChange={e => setDayWidth(Number(e.target.value))} />
-                      <span>{dayWidth}px</span>
+                      <div>
+                        <S.StyledSlider type="range" min={0.5} max={60} step={0.5} value={dayWidth} onChange={e => setDayWidth(Number(e.target.value))} />
+                        <span>{dayWidth}px</span>
+                      </div>
                     </S.StyledSliderDropdown>
                   </>
                 )}
@@ -304,8 +318,10 @@ export const GanttBoard = () => {
                       </svg>
                     </S.StyledSliderBtn>
                     <S.StyledSliderDropdown $mode={theme}>
-                      <S.StyledSlider type="range" min={45} max={135} value={rowHeight} onChange={e => setRowHeight(Number(e.target.value))} />
-                      <span>{rowHeight}px</span>
+                      <div>
+                        <S.StyledSlider type="range" min={45} max={135} value={rowHeight} onChange={e => setRowHeight(Number(e.target.value))} />
+                        <span>{rowHeight}px</span>
+                      </div>
                     </S.StyledSliderDropdown>
                   </>
                 )}

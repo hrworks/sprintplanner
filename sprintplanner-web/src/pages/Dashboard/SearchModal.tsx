@@ -19,7 +19,7 @@ interface SearchResult {
 
 interface Props {
   onClose: () => void;
-  onNavigate: (boardId: string) => void;
+  onNavigate: (boardId: string, boardName: string) => void;
 }
 
 export const SearchModal = ({ onClose, onNavigate }: Props) => {
@@ -98,7 +98,7 @@ export const SearchModal = ({ onClose, onNavigate }: Props) => {
       e.preventDefault();
       setSelectedIndex(i => Math.max(i - 1, 0));
     } else if (e.key === 'Enter' && results[selectedIndex]) {
-      onNavigate(results[selectedIndex].boardId);
+      onNavigate(results[selectedIndex].boardId, results[selectedIndex].boardName);
       onClose();
     } else if (e.key === 'Escape') {
       onClose();
@@ -154,7 +154,7 @@ export const SearchModal = ({ onClose, onNavigate }: Props) => {
               key={`${r.boardId}-${r.type}-${r.name}-${i}`}
               $mode={theme}
               $selected={i === selectedIndex}
-              onClick={() => { onNavigate(r.boardId); onClose(); }}
+              onClick={() => { onNavigate(r.boardId, r.boardName); onClose(); }}
               onMouseEnter={() => setSelectedIndex(i)}
             >
               <ResultIcon>{getIcon(r.type)}</ResultIcon>

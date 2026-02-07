@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { S } from './Dashboard.styles';
 import { Button, Modal, Avatar, UserMenu, DropdownMenu } from '@/components';
@@ -8,6 +8,8 @@ import { Board } from '@/api/types';
 import { ShareModal } from '../GanttBoard/components/ShareModal';
 import { SearchModal } from './SearchModal';
 import type { BoardData, Phase } from '../GanttBoard/types';
+
+const slugify = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 interface BoardGroups {
   owned: Board[];
@@ -127,14 +129,14 @@ export const Dashboard = () => {
     }
   };
 
-  const openBoard = (id: string) => {
-    navigate(`/gantt/${id}`);
+  const openBoard = (id: string, name: string) => {
+    navigate(`/board/${slugify(name)}-${id}`);
   };
 
   const handleCreate = async () => {
     const board = await api.createBoard(form.name || 'Neues Board', form.description);
     setModal(null);
-    openBoard(board.id);
+    openBoard(board.id, board.name);
   };
 
   const handleEdit = async () => {
@@ -156,7 +158,7 @@ export const Dashboard = () => {
     const original = await api.getBoard(modal.board.id);
     const board = await api.createBoard(form.name || 'Kopie', modal.board.description, original.data);
     setModal(null);
-    openBoard(board.id);
+    openBoard(board.id, board.name);
   };
 
   const openCreateModal = () => {
@@ -264,7 +266,7 @@ export const Dashboard = () => {
               const minimap = getBoardMinimap(board);
               const hasMembers = board.members && board.members.length > 0;
               return (
-                <S.TableRow key={board.id} $mode={theme} onClick={() => openBoard(board.id)}>
+                <S.TableRow key={board.id} $mode={theme} onClick={() => openBoard(board.id, board.name)}>
                   <S.TableCell>
                     <S.TableName $mode={theme}>
                       <S.TableTitle $mode={theme}>{board.name}</S.TableTitle>
@@ -425,7 +427,7 @@ export const Dashboard = () => {
       {showSearch && (
         <SearchModal
           onClose={() => setShowSearch(false)}
-          onNavigate={(boardId) => openBoard(boardId)}
+          onNavigate={(boardId, boardName) => openBoard(boardId, boardName)}
         />
       )}
     </S.Container>
@@ -450,9 +452,17 @@ interface BoardCardProps {
 const BoardCard = ({ board, theme, menuOpen, canEdit, isShared, onMenuToggle, onEdit, onDuplicate, onShare, onDelete, formatDate, minimap }: BoardCardProps) => {
   const hasMembers = board.members && board.members.length > 0;
   const hasBadges = board.isPublic || board.allowedDomain;
+  const navigate = useNavigate();
+  const minimapRef = useRef<HTMLDivElement>(null);
+
+  const handleMinimapClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/board/${slugify(board.name)}-${board.id}`);
+  };
 
   return (
-    <S.CardLink to={`/gantt/${board.id}`}>
+    <S.CardLink to={`/board/${slugify(board.name)}-${board.id}`}>
       <S.Card $mode={theme}>
         <S.CardHeader>
           <div>
@@ -478,23 +488,33 @@ const BoardCard = ({ board, theme, menuOpen, canEdit, isShared, onMenuToggle, on
         </S.CardHeader>
       
       <S.CardBody>
-        <S.Minimap $mode={theme}>
-          {minimap?.todayPosition !== null && minimap?.todayPosition !== undefined && (
-            <S.MinimapToday $mode={theme} style={{ left: `${minimap.todayPosition}%` }} />
-          )}
-          {minimap?.projects.map((project, i) => (
-            <S.MinimapRow key={i}>
-              {project.phases.map((phase, j) => (
-                <S.MinimapPhase
-                  key={j}
-                  $mode={theme}
-                  $status={phase.status}
-                  style={{ left: `${phase.left}%`, width: `${phase.width}%`, background: phase.color }}
-                />
-              ))}
-            </S.MinimapRow>
-          ))}
-        </S.Minimap>
+        <S.MinimapWrapper ref={minimapRef} onClick={handleMinimapClick}>
+          <S.Minimap $mode={theme}>
+            {minimap?.todayPosition !== null && minimap?.todayPosition !== undefined && (
+              <S.MinimapToday $mode={theme} style={{ left: `${minimap.todayPosition}%` }} />
+            )}
+            {minimap?.projects.map((project, i) => (
+              <S.MinimapRow key={i}>
+                {project.phases.map((phase, j) => (
+                  <S.MinimapPhase
+                    key={j}
+                    $mode={theme}
+                    $status={phase.status}
+                    style={{ left: `${phase.left}%`, width: `${phase.width}%`, background: phase.color }}
+                  />
+                ))}
+              </S.MinimapRow>
+            ))}
+          </S.Minimap>
+          <S.MinimapOverlay $mode={theme}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              <line x1="11" y1="8" x2="11" y2="14" />
+              <line x1="8" y1="11" x2="14" y2="11" />
+            </svg>
+          </S.MinimapOverlay>
+        </S.MinimapWrapper>
         <S.CardProgress $mode={theme}>
           <S.ProgressDot $mode={theme} $status={minimap ? (minimap.completePhases === minimap.totalPhases ? 'complete' : minimap.completePhases > 0 ? 'active' : 'planned') : 'planned'} />
           {minimap ? `${minimap.completePhases} von ${minimap.totalPhases} Phasen · ${minimap.projects.length} Projekte` : 'Noch keine Phasen'}

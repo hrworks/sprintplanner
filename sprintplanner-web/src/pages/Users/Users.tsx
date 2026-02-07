@@ -206,7 +206,7 @@ export const Users = () => {
                       {userBoards[u.id].map(board => {
                         const minimap = getBoardMinimap(board);
                         return (
-                          <Link key={board.id} to={`/gantt/${board.id}`} style={{ textDecoration: 'none' }}>
+                          <Link key={board.id} to={`/board/${board.id}`} style={{ textDecoration: 'none' }}>
                             <S.StyledBoardItem $mode={theme}>
                               <S.StyledBoardInfo>
                                 <S.StyledBoardName $mode={theme}>{board.name}</S.StyledBoardName>
