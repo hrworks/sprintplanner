@@ -357,25 +357,19 @@ const PhaseCount = styled.span<{ $mode: ThemeMode }>`
   font-weight: normal;
 `;
 
-const StatusNoteModal = styled.div<{ $mode: ThemeMode }>`
+const StatusNotePanel = styled.div<{ $mode: ThemeMode }>`
   position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-`;
-
-const StatusNoteContent = styled.div<{ $mode: ThemeMode }>`
+  top: 0;
+  right: 0;
+  width: 350px;
+  height: 100vh;
   background: ${p => t(p.$mode).canvas};
-  border-radius: ${t('dark').radius.lg};
+  border-left: 1px solid ${p => t(p.$mode).stroke};
   padding: ${t('dark').space.lg};
-  width: 90%;
-  max-width: 700px;
-  height: 70vh;
   display: flex;
   flex-direction: column;
+  z-index: 1000;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.15);
 `;
 
 const StatusNoteHeader = styled.div<{ $mode: ThemeMode }>`
@@ -410,9 +404,28 @@ const StatusNoteTextarea = styled.textarea<{ $mode: ThemeMode }>`
   padding: ${t('dark').space.md};
   color: ${p => t(p.$mode).ink};
   font-size: ${t('dark').fontSize.sm};
+  font-family: inherit;
   flex: 1;
   resize: none;
   &:focus { outline: none; border-color: ${p => t(p.$mode).action}; }
+`;
+
+const StatusSelect = styled.div`
+  display: flex;
+  gap: ${t('dark').space.xs};
+  margin-bottom: ${t('dark').space.md};
+`;
+
+const StatusOption = styled.button<{ $mode: ThemeMode; $selected: boolean }>`
+  padding: ${t('dark').space.sm};
+  border-radius: ${t('dark').radius.md};
+  border: 2px solid ${p => p.$selected ? t(p.$mode).action : 'transparent'};
+  background: ${p => p.$selected ? t(p.$mode).board : 'transparent'};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &:hover { background: ${p => t(p.$mode).board}; }
 `;
 
 const StatusNoteFooter = styled.div`
@@ -766,29 +779,35 @@ export const Sidebar = () => {
       )}
 
       {statusNoteProject && (
-        <StatusNoteModal $mode={theme} onClick={() => setStatusNoteProject(null)}>
-          <StatusNoteContent $mode={theme} onClick={e => e.stopPropagation()}>
-            <StatusNoteHeader $mode={theme}>
-              <StatusIcon status={statusNoteProject.status || 'ok'} size={20} />
-              <span>{statusNoteProject.name}</span>
-              <CloseBtn $mode={theme} onClick={() => setStatusNoteProject(null)}>×</CloseBtn>
-            </StatusNoteHeader>
-            {boardRole === 'viewer' ? (
-              <StatusNoteText $mode={theme}>{statusNoteProject.statusNote || 'Keine Statusnotiz vorhanden.'}</StatusNoteText>
-            ) : (
-              <StatusNoteTextarea
-                $mode={theme}
-                value={statusNoteProject.statusNote || ''}
-                onChange={e => setStatusNoteProject({ ...statusNoteProject, statusNote: e.target.value })}
-                onBlur={() => updateProject(statusNoteProject._id, { statusNote: statusNoteProject.statusNote })}
-                placeholder="Statusnotiz eingeben..."
-              />
-            )}
-            <StatusNoteFooter>
-              <FooterBtn $mode={theme} onClick={() => { updateProject(statusNoteProject._id, { statusNote: statusNoteProject.statusNote }); setStatusNoteProject(null); }}>Schließen</FooterBtn>
-            </StatusNoteFooter>
-          </StatusNoteContent>
-        </StatusNoteModal>
+        <StatusNotePanel $mode={theme}>
+          <StatusNoteHeader $mode={theme}>
+            <span>{statusNoteProject.name}</span>
+            <CloseBtn $mode={theme} onClick={() => setStatusNoteProject(null)}>×</CloseBtn>
+          </StatusNoteHeader>
+          {boardRole !== 'viewer' && (
+            <StatusSelect>
+              {(['', 'ok', 'warning', 'delay', 'complete'] as const).map(s => (
+                <StatusOption key={s} $mode={theme} $selected={statusNoteProject.status === s} onClick={() => { setStatusNoteProject({ ...statusNoteProject, status: s }); updateProject(statusNoteProject._id, { status: s }); }}>
+                  <StatusIcon status={s} size={20} />
+                </StatusOption>
+              ))}
+            </StatusSelect>
+          )}
+          {boardRole === 'viewer' ? (
+            <StatusNoteText $mode={theme}>{statusNoteProject.statusNote || 'Keine Statusnotiz vorhanden.'}</StatusNoteText>
+          ) : (
+            <StatusNoteTextarea
+              $mode={theme}
+              value={statusNoteProject.statusNote || ''}
+              onChange={e => setStatusNoteProject({ ...statusNoteProject, statusNote: e.target.value })}
+              onBlur={() => updateProject(statusNoteProject._id, { statusNote: statusNoteProject.statusNote })}
+              placeholder="Statusnotiz eingeben..."
+            />
+          )}
+          <StatusNoteFooter>
+            <FooterBtn $mode={theme} onClick={() => { updateProject(statusNoteProject._id, { statusNote: statusNoteProject.statusNote }); setStatusNoteProject(null); }}>Schließen</FooterBtn>
+          </StatusNoteFooter>
+        </StatusNotePanel>
       )}
     </Container>
   );
