@@ -391,12 +391,6 @@ export const SliderPopover = styled.div<{ $mode: ThemeMode; $compact?: boolean }
     align-items: center;
     gap: ${t('dark').space.sm};
   }
-  
-  &:hover > div:last-child {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(0);
-  }
 `;
 
 export const SliderBtn = styled.button<{ $mode: ThemeMode }>`
@@ -414,6 +408,12 @@ export const SliderBtn = styled.button<{ $mode: ThemeMode }>`
   &:hover {
     background: ${p => t(p.$mode).board};
     color: ${p => t(p.$mode).ink};
+    
+    + div {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
   }
 `;
 
@@ -422,18 +422,37 @@ export const SliderDropdown = styled.div<{ $mode: ThemeMode }>`
   top: 100%;
   left: 50%;
   transform: translateX(-50%) translateY(-8px);
-  margin-top: ${t('dark').space.sm};
-  background: ${p => t(p.$mode).board};
-  border: 1px solid ${p => t(p.$mode).stroke};
-  border-radius: ${t('dark').radius.md};
-  padding: ${t('dark').space.md};
-  box-shadow: ${t('dark').shadow.lg};
+  padding-top: ${t('dark').space.sm};
   opacity: 0;
   visibility: hidden;
   transition: all 0.15s ease;
   z-index: 100;
-  display: flex;
-  flex-direction: column;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: ${t('dark').space.sm};
+  }
+  
+  > div {
+    background: ${p => t(p.$mode).board};
+    border: 1px solid ${p => t(p.$mode).stroke};
+    border-radius: ${t('dark').radius.md};
+    padding: ${t('dark').space.md};
+    box-shadow: ${t('dark').shadow.lg};
+    display: flex;
+    flex-direction: column;
+    gap: ${t('dark').space.sm};
+  }
+  
+  &:hover {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
   align-items: center;
   gap: ${t('dark').space.sm};
   min-width: 120px;
